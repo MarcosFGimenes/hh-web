@@ -57,6 +57,7 @@ FIREBASE_ADMIN_PRIVATE_KEY=changeme
 - `npm run build` — gera a build de produção.
 - `npm run start` — inicia o servidor em modo produção.
 - `npm run lint` — executa linting com as regras do Next.js.
+- `npm run format` — formata os arquivos com Prettier.
 
 ## Próximos passos
 - Integrar Firebase (client + admin) com variáveis de ambiente seguras.
