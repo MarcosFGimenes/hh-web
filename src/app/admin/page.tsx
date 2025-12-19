@@ -1,7 +1,12 @@
+"use client";
+
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 export default function AdminDashboardPlaceholder() {
+  const { user, signOut } = useAdminAuth();
+
   return (
     <main>
       <div className="container">
@@ -14,6 +19,14 @@ export default function AdminDashboardPlaceholder() {
             Em etapas futuras, esta página permitirá criar pastas de serviço, cadastrar O.S, gerar links privados e
             acompanhar lançamentos dos terceiros.
           </p>
+          {user ? (
+            <div className="list">
+              <div className="list-item">Administrador autenticado: {user.email}</div>
+              <Button variant="ghost" type="button" onClick={signOut}>
+                Sair
+              </Button>
+            </div>
+          ) : null}
         </Card>
       </div>
     </main>
