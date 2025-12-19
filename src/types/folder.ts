@@ -1,7 +1,7 @@
 export type Folder = {
   id: string;
   name: string;
-  linkHash: string;
+  linkKeyHash: string;
   createdAt: number;
   updatedAt: number;
 };
