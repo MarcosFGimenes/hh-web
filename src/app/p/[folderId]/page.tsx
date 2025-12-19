@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/Button';
@@ -12,7 +12,7 @@ import { Toast } from '@/components/Toast';
 import type { Employee } from '@/types/employee';
 import type { ServiceOrder } from '@/types/os';
 import type { Service } from '@/types/service';
-import { computeServiceMinutes as computeServiceMinutesLib, normalizeTimes, type TimeSequence } from '@/lib/time/service';
+import { computeServiceMinutes as computeServiceMinutesLib, type TimeSequence } from '@/lib/time/service';
 
 type FolderSummary = {
   id: string;
@@ -22,6 +22,15 @@ type FolderSummary = {
 type PageProps = {
   params: { folderId: string };
 };
+
+type VoiceTarget = { type: 'new' | 'existing'; employeeId: string; serviceId?: string };
+type SpeechRecognitionConstructor = new () => SpeechRecognition;
+
+declare global {
+  interface Window {
+    webkitSpeechRecognition?: SpeechRecognitionConstructor;
+  }
+}
 
 export default function PublicFolderAccessPage({ params }: PageProps) {
   const searchParams = useSearchParams();
@@ -53,8 +62,35 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
   const [serviceFormErrors, setServiceFormErrors] = useState<Record<string, string[]>>({});
   const [serviceErrors, setServiceErrors] = useState<Record<string, Record<string, string[]>>>({});
   const defaultServiceForm = { osId: '', description: '', t1In: '', t1Out: '', t2In: '', t2Out: '' };
+  const [speechSupported, setSpeechSupported] = useState(false);
+  const [speechChecked, setSpeechChecked] = useState(false);
+  const [speechError, setSpeechError] = useState<string | null>(null);
+  const [recordingTarget, setRecordingTarget] = useState<string | null>(null);
+  const [voiceMessageTarget, setVoiceMessageTarget] = useState<string | null>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+
+  const getRecognitionConstructor = () => {
+    if (typeof window === 'undefined') return null;
+    const Recognition =
+      (window as typeof window & { webkitSpeechRecognition?: SpeechRecognitionConstructor }).SpeechRecognition ||
+      window.webkitSpeechRecognition;
+    return Recognition || null;
+  };
 
   const linkKey = useMemo(() => searchParams.get('k') || '', [searchParams]);
+
+  useEffect(() => {
+    const Recognition = getRecognitionConstructor();
+    setSpeechSupported(Boolean(Recognition));
+    setSpeechChecked(true);
+
+    return () => {
+      recognitionRef.current?.stop();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const voiceUnavailable = speechChecked && !speechSupported;
 
   const fetchJSON = async (path: string) => {
     const response = await fetch(path, { cache: 'no-store' });
@@ -221,6 +257,88 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
     const h = Math.floor(minutes / 60);
     const m = minutes % 60;
     return `${h}h ${m}m`;
+  };
+
+  const voiceKey = (target: VoiceTarget) =>
+    target.type === 'new' ? `new-${target.employeeId}` : `existing-${target.serviceId || ''}`;
+
+  const appendTranscript = (current: string, transcript: string) =>
+    [current?.trim(), transcript.trim()].filter(Boolean).join(current.trim() ? ' ' : '').trim();
+
+  const startVoiceRecording = (target: VoiceTarget) => {
+    const targetKey = voiceKey(target);
+    const Recognition = getRecognitionConstructor();
+
+    if (!Recognition) {
+      setVoiceMessageTarget(targetKey);
+      setSpeechSupported(false);
+      setSpeechChecked(true);
+      setSpeechError('Seu navegador não suporta reconhecimento de voz. Digite a descrição normalmente.');
+      return;
+    }
+
+    if (recordingTarget && recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
+
+    setVoiceMessageTarget(targetKey);
+    setSpeechError(null);
+    const recognition = new Recognition();
+    recognition.lang = 'pt-BR';
+    recognition.interimResults = false;
+    recognition.continuous = false;
+    recognition.onstart = () => setRecordingTarget(targetKey);
+    recognition.onresult = (event) => {
+      const transcript = Array.from(event.results)
+        .map((result) => result[0]?.transcript ?? '')
+        .join(' ')
+        .trim();
+
+      if (!transcript) return;
+
+      if (target.type === 'new') {
+        setServiceForms((prev) => {
+          const current = prev[target.employeeId]?.description || '';
+          return {
+            ...prev,
+            [target.employeeId]: {
+              ...(prev[target.employeeId] || defaultServiceForm),
+              description: appendTranscript(current, transcript),
+            },
+          };
+        });
+      } else if (target.serviceId) {
+        setServices((prev) => ({
+          ...prev,
+          [target.employeeId]: (prev[target.employeeId] || []).map((item) =>
+            item.id === target.serviceId ? { ...item, description: appendTranscript(item.description, transcript) } : item
+          ),
+        }));
+      }
+    };
+    recognition.onerror = (event) => {
+      let message = 'Erro ao capturar áudio.';
+      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+        message = 'Permissão para usar o microfone foi negada.';
+      } else if (event.error === 'no-speech') {
+        message = 'Nenhuma fala detectada. Tente novamente.';
+      } else if (event.error === 'audio-capture') {
+        message = 'Microfone não disponível ou acesso bloqueado.';
+      }
+      setSpeechError(message);
+    };
+    recognition.onend = () => {
+      setRecordingTarget((current) => (current === targetKey ? null : current));
+      recognitionRef.current = null;
+    };
+
+    try {
+      recognition.start();
+      recognitionRef.current = recognition;
+    } catch (err) {
+      setSpeechError('Não foi possível iniciar a gravação. Verifique as permissões do navegador.');
+      setRecordingTarget(null);
+    }
   };
 
   const computeServiceMinutes = (t1In: string, t1Out: string, t2In: string, t2Out: string) => {
@@ -454,191 +572,253 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
             <Card title="Funcionários do dia" subtitle={`Data: ${date.split('-').reverse().join('/')}`}>
               {hasEmployees ? (
                 <div className="list">
-                  {employees.map((employee) => (
-                    <div key={employee.id} className="list-item" style={{ display: 'grid', gap: '0.75rem' }}>
-                      <div>
-                        <strong>{employee.name}</strong>
-                        <div className="footer-note">
-                          Atualizado em {new Date(employee.updatedAt).toLocaleString('pt-BR')}
-                        </div>
-                        <div className="footer-note">
-                          Horário geral: {employee.totalMinutes ? formatMinutes(employee.totalMinutes) : 'Defina o total do dia'}
-                        </div>
-                        <div className="footer-note">
-                          Soma dos serviços: {formatMinutes(currentServiceTotal(employee.id))}
-                        </div>
-                      </div>
-                      <Input
-                        type="number"
-                        min={0}
-                        label="Horário total (minutos)"
-                        value={employee.totalMinutes ?? ''}
-                        onChange={(event) =>
-                          setEmployees((prev) =>
-                            prev.map((item) =>
-                              item.id === employee.id
-                                ? { ...item, totalMinutes: Number(event.target.value) || 0 }
-                                : item
-                            )
-                          )
-                        }
-                      />
-                      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                        <Button
-                          type="button"
-                          onClick={() => handleUpdateMinutes(employee.id, employee.totalMinutes || 0)}
-                          disabled={savingEmployeeId === employee.id}
-                        >
-                          {savingEmployeeId === employee.id ? 'Salvando...' : 'Salvar horário'}
-                        </Button>
-                      </div>
+                  {employees.map((employee) => {
+                    const newVoiceKey = voiceKey({ type: 'new', employeeId: employee.id });
+                    const isRecordingNew = recordingTarget === newVoiceKey;
+                    const isBusyRecording = Boolean(recordingTarget && !isRecordingNew);
 
-                      <div className="stack">
-                        <div className="card" style={{ border: '1px dashed #cbd5e1', padding: '0.75rem', borderRadius: '10px' }}>
-                          <h4 style={{ margin: '0 0 0.5rem' }}>Novo serviço</h4>
-                          <div className="grid">
-                            <label className="ui-field">
-                              <span className="ui-field-label">O.S</span>
-                              <select
-                                className="ui-input"
-                                value={serviceForms[employee.id]?.osId || ''}
-                                onChange={(event) => updateServiceForm(employee.id, 'osId', event.target.value)}
-                              >
-                                <option value="">Selecione</option>
-                                {orders.map((order) => (
-                                  <option key={order.id} value={order.id}>
-                                    {order.osCode} — {order.tag}
-                                  </option>
-                                ))}
-                              </select>
-                            </label>
-                            <label className="ui-field">
-                              <span className="ui-field-label">Descrição</span>
-                              <textarea
-                                className="ui-input"
-                                rows={2}
-                                value={serviceForms[employee.id]?.description || ''}
-                                onChange={(event) => updateServiceForm(employee.id, 'description', event.target.value)}
-                              />
-                            </label>
-                          </div>
-                          <TimeSequenceInput
-                            value={serviceForms[employee.id] || defaultServiceForm}
-                            onChange={(times, errors) => handleNewServiceTimesChange(employee.id, times, errors)}
-                          />
+                    return (
+                      <div key={employee.id} className="list-item" style={{ display: 'grid', gap: '0.75rem' }}>
+                        <div>
+                          <strong>{employee.name}</strong>
                           <div className="footer-note">
-                            Total estimado:{' '}
-                            {computeServiceMinutes(
-                              serviceForms[employee.id]?.t1In || '',
-                              serviceForms[employee.id]?.t1Out || '',
-                              serviceForms[employee.id]?.t2In || '',
-                              serviceForms[employee.id]?.t2Out || ''
-                            ) !== null
-                              ? formatMinutes(
-                                  computeServiceMinutes(
-                                    serviceForms[employee.id]?.t1In || '',
-                                    serviceForms[employee.id]?.t1Out || '',
-                                    serviceForms[employee.id]?.t2In || '',
-                                    serviceForms[employee.id]?.t2Out || ''
-                                  ) || 0
-                                )
-                              : '—'}
+                            Atualizado em {new Date(employee.updatedAt).toLocaleString('pt-BR')}
                           </div>
-                          {serviceFormErrors[employee.id]?.length ? (
-                            <div className="footer-note" style={{ color: '#b91c1c' }}>
-                              {serviceFormErrors[employee.id].join(' ')}
-                            </div>
-                          ) : null}
-                          <Button type="button" onClick={() => handleCreateService(employee.id)}>
-                            Salvar serviço
+                          <div className="footer-note">
+                            Horário geral: {employee.totalMinutes ? formatMinutes(employee.totalMinutes) : 'Defina o total do dia'}
+                          </div>
+                          <div className="footer-note">
+                            Soma dos serviços: {formatMinutes(currentServiceTotal(employee.id))}
+                          </div>
+                        </div>
+                        <Input
+                          type="number"
+                          min={0}
+                          label="Horário total (minutos)"
+                          value={employee.totalMinutes ?? ''}
+                          onChange={(event) =>
+                            setEmployees((prev) =>
+                              prev.map((item) =>
+                                item.id === employee.id
+                                  ? { ...item, totalMinutes: Number(event.target.value) || 0 }
+                                  : item
+                              )
+                            )
+                          }
+                        />
+                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          <Button
+                            type="button"
+                            onClick={() => handleUpdateMinutes(employee.id, employee.totalMinutes || 0)}
+                            disabled={savingEmployeeId === employee.id}
+                          >
+                            {savingEmployeeId === employee.id ? 'Salvando...' : 'Salvar horário'}
                           </Button>
                         </div>
 
                         <div className="stack">
-                          {(services[employee.id] || []).map((service) => (
-                            <div key={service.id} className="card" style={{ border: '1px solid #e2e8f0', padding: '0.75rem', borderRadius: '10px' }}>
-                              {(() => {
-                                const { minutes } = computeServiceMinutesLib({
-                                  t1In: service.t1In,
-                                  t1Out: service.t1Out,
-                                  t2In: service.t2In,
-                                  t2Out: service.t2Out,
-                                });
-                                return (
-                                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                    <strong>Serviço</strong>
-                                    <div className="footer-note">Total: {formatMinutes(minutes ?? service.totalMinutes)}</div>
-                                  </div>
-                                );
-                              })()}
-                              <div className="grid">
-                                <label className="ui-field">
-                                  <span className="ui-field-label">O.S</span>
-                                  <select
-                                    className="ui-input"
-                                    value={service.osId}
-                                    onChange={(event) =>
-                                      setServices((prev) => ({
-                                        ...prev,
-                                        [employee.id]: (prev[employee.id] || []).map((item) =>
-                                          item.id === service.id ? { ...item, osId: event.target.value } : item
-                                        ),
-                                      }))
-                                    }
-                                  >
-                                    <option value="">Selecione</option>
-                                    {orders.map((order) => (
-                                      <option key={order.id} value={order.id}>
-                                        {order.osCode} — {order.tag}
-                                      </option>
-                                    ))}
-                                  </select>
-                                </label>
-                                <label className="ui-field">
+                          <div className="card" style={{ border: '1px dashed #cbd5e1', padding: '0.75rem', borderRadius: '10px' }}>
+                            <h4 style={{ margin: '0 0 0.5rem' }}>Novo serviço</h4>
+                            <div className="grid">
+                              <label className="ui-field">
+                                <span className="ui-field-label">O.S</span>
+                                <select
+                                  className="ui-input"
+                                  value={serviceForms[employee.id]?.osId || ''}
+                                  onChange={(event) => updateServiceForm(employee.id, 'osId', event.target.value)}
+                                >
+                                  <option value="">Selecione</option>
+                                  {orders.map((order) => (
+                                    <option key={order.id} value={order.id}>
+                                      {order.osCode} — {order.tag}
+                                    </option>
+                                  ))}
+                                </select>
+                              </label>
+                              <div className="ui-field">
+                                <div className="voice-input-row">
                                   <span className="ui-field-label">Descrição</span>
-                                  <textarea
-                                    className="ui-input"
-                                    rows={2}
-                                    value={service.description}
-                                    onChange={(event) =>
-                                      setServices((prev) => ({
-                                        ...prev,
-                                        [employee.id]: (prev[employee.id] || []).map((item) =>
-                                          item.id === service.id ? { ...item, description: event.target.value } : item
-                                        ),
-                                      }))
-                                    }
-                                  />
-                                </label>
-                                <TimeSequenceInput
-                                  value={{
-                                    t1In: service.t1In,
-                                    t1Out: service.t1Out,
-                                    t2In: service.t2In,
-                                    t2Out: service.t2Out,
-                                  }}
-                                  onChange={(times, errors) => handleExistingServiceTimesChange(employee.id, service.id, times, errors)}
-                                />
-                              </div>
-                              {serviceErrors[employee.id]?.[service.id]?.length ? (
-                                <div className="footer-note" style={{ color: '#b91c1c' }}>
-                                  {serviceErrors[employee.id][service.id].join(' ')}
+                                  <div className="voice-input-actions">
+                                    <button
+                                      type="button"
+                                      className={`mic-button ${isRecordingNew ? 'is-recording' : ''}`}
+                                      disabled={voiceUnavailable || isBusyRecording}
+                                      onClick={() => startVoiceRecording({ type: 'new', employeeId: employee.id })}
+                                    >
+                                      {isRecordingNew ? 'Gravando...' : 'Gravar descrição'}
+                                    </button>
+                                  </div>
                                 </div>
-                              ) : null}
-                              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                <Button type="button" onClick={() => handleUpdateService(employee.id, service)}>
-                                  Atualizar
-                                </Button>
-                                <Button type="button" variant="ghost" onClick={() => handleDeleteService(employee.id, service.id)}>
-                                  Excluir
-                                </Button>
+                                <textarea
+                                  className="ui-input"
+                                  rows={2}
+                                  value={serviceForms[employee.id]?.description || ''}
+                                  onChange={(event) => updateServiceForm(employee.id, 'description', event.target.value)}
+                                />
+                                {voiceUnavailable ? (
+                                  <div className="voice-warning">
+                                    Seu navegador não suporta reconhecimento de voz. Continue digitando.
+                                  </div>
+                                ) : null}
+                                {speechError && voiceMessageTarget === newVoiceKey ? (
+                                  <div className="voice-error">{speechError}</div>
+                                ) : null}
                               </div>
                             </div>
-                          ))}
+                            <TimeSequenceInput
+                              value={serviceForms[employee.id] || defaultServiceForm}
+                              onChange={(times, errors) => handleNewServiceTimesChange(employee.id, times, errors)}
+                            />
+                            <div className="footer-note">
+                              Total estimado:{' '}
+                              {computeServiceMinutes(
+                                serviceForms[employee.id]?.t1In || '',
+                                serviceForms[employee.id]?.t1Out || '',
+                                serviceForms[employee.id]?.t2In || '',
+                                serviceForms[employee.id]?.t2Out || ''
+                              ) !== null
+                                ? formatMinutes(
+                                    computeServiceMinutes(
+                                      serviceForms[employee.id]?.t1In || '',
+                                      serviceForms[employee.id]?.t1Out || '',
+                                      serviceForms[employee.id]?.t2In || '',
+                                      serviceForms[employee.id]?.t2Out || ''
+                                    ) || 0
+                                  )
+                                : '—'}
+                            </div>
+                            {serviceFormErrors[employee.id]?.length ? (
+                              <div className="footer-note" style={{ color: '#b91c1c' }}>
+                                {serviceFormErrors[employee.id].join(' ')}
+                              </div>
+                            ) : null}
+                            <Button type="button" onClick={() => handleCreateService(employee.id)}>
+                              Salvar serviço
+                            </Button>
+                          </div>
+
+                          <div className="stack">
+                            {(services[employee.id] || []).map((service) => {
+                              const existingVoiceKey = voiceKey({
+                                type: 'existing',
+                                employeeId: employee.id,
+                                serviceId: service.id,
+                              });
+                              const isRecordingExisting = recordingTarget === existingVoiceKey;
+                              const isBusyExisting = Boolean(recordingTarget && !isRecordingExisting);
+
+                              return (
+                                <div key={service.id} className="card" style={{ border: '1px solid #e2e8f0', padding: '0.75rem', borderRadius: '10px' }}>
+                                  {(() => {
+                                    const { minutes } = computeServiceMinutesLib({
+                                      t1In: service.t1In,
+                                      t1Out: service.t1Out,
+                                      t2In: service.t2In,
+                                      t2Out: service.t2Out,
+                                    });
+                                    return (
+                                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                        <strong>Serviço</strong>
+                                        <div className="footer-note">Total: {formatMinutes(minutes ?? service.totalMinutes)}</div>
+                                      </div>
+                                    );
+                                  })()}
+                                  <div className="grid">
+                                    <label className="ui-field">
+                                      <span className="ui-field-label">O.S</span>
+                                      <select
+                                        className="ui-input"
+                                        value={service.osId}
+                                        onChange={(event) =>
+                                          setServices((prev) => ({
+                                            ...prev,
+                                            [employee.id]: (prev[employee.id] || []).map((item) =>
+                                              item.id === service.id ? { ...item, osId: event.target.value } : item
+                                            ),
+                                          }))
+                                        }
+                                      >
+                                        <option value="">Selecione</option>
+                                        {orders.map((order) => (
+                                          <option key={order.id} value={order.id}>
+                                            {order.osCode} — {order.tag}
+                                          </option>
+                                        ))}
+                                      </select>
+                                    </label>
+                                    <div className="ui-field">
+                                      <div className="voice-input-row">
+                                        <span className="ui-field-label">Descrição</span>
+                                        <div className="voice-input-actions">
+                                          <button
+                                            type="button"
+                                            className={`mic-button ${isRecordingExisting ? 'is-recording' : ''}`}
+                                            disabled={voiceUnavailable || isBusyExisting}
+                                            onClick={() =>
+                                              startVoiceRecording({
+                                                type: 'existing',
+                                                employeeId: employee.id,
+                                                serviceId: service.id,
+                                              })
+                                            }
+                                          >
+                                            {isRecordingExisting ? 'Gravando...' : 'Gravar descrição'}
+                                          </button>
+                                        </div>
+                                      </div>
+                                      <textarea
+                                        className="ui-input"
+                                        rows={2}
+                                        value={service.description}
+                                        onChange={(event) =>
+                                          setServices((prev) => ({
+                                            ...prev,
+                                            [employee.id]: (prev[employee.id] || []).map((item) =>
+                                              item.id === service.id ? { ...item, description: event.target.value } : item
+                                            ),
+                                          }))
+                                        }
+                                      />
+                                      {voiceUnavailable ? (
+                                        <div className="voice-warning">
+                                          Seu navegador não suporta reconhecimento de voz. Continue digitando.
+                                        </div>
+                                      ) : null}
+                                      {speechError && voiceMessageTarget === existingVoiceKey ? (
+                                        <div className="voice-error">{speechError}</div>
+                                      ) : null}
+                                    </div>
+                                    <TimeSequenceInput
+                                      value={{
+                                        t1In: service.t1In,
+                                        t1Out: service.t1Out,
+                                        t2In: service.t2In,
+                                        t2Out: service.t2Out,
+                                      }}
+                                      onChange={(times, errors) => handleExistingServiceTimesChange(employee.id, service.id, times, errors)}
+                                    />
+                                  </div>
+                                  {serviceErrors[employee.id]?.[service.id]?.length ? (
+                                    <div className="footer-note" style={{ color: '#b91c1c' }}>
+                                      {serviceErrors[employee.id][service.id].join(' ')}
+                                    </div>
+                                  ) : null}
+                                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                    <Button type="button" onClick={() => handleUpdateService(employee.id, service)}>
+                                      Atualizar
+                                    </Button>
+                                    <Button type="button" variant="ghost" onClick={() => handleDeleteService(employee.id, service.id)}>
+                                      Excluir
+                                    </Button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <p className="footer-note">{loading ? 'Carregando...' : 'Nenhum funcionário lançado para esta data.'}</p>
