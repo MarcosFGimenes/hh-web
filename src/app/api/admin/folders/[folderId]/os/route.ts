@@ -12,6 +12,9 @@ function mapOs(doc: FirebaseFirestore.QueryDocumentSnapshot): ServiceOrder {
   return { id: doc.id, ...data };
 }
 
+export const osCollectionRef = collectionRef;
+export const mapOsDoc = mapOs;
+
 export async function GET(_request: Request, { params }: Params) {
   try {
     await getAdminFromRequest();
