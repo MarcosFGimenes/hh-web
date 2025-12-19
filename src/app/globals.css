@@ -191,6 +191,58 @@ main {
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
 }
 
+.voice-input-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.voice-input-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.mic-button {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #0f172a;
+  padding: 0.4rem 0.65rem;
+  border-radius: 8px;
+  font: inherit;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.mic-button:hover:not(:disabled) {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.mic-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.mic-button.is-recording {
+  background: #fee2e2;
+  border-color: #ef4444;
+  color: #991b1b;
+}
+
+.voice-warning {
+  margin-top: 0.35rem;
+  font-size: 0.9rem;
+  color: #b45309;
+}
+
+.voice-error {
+  margin-top: 0.35rem;
+  font-size: 0.9rem;
+  color: #b91c1c;
+}
+
 .ui-card {
   border: 1px solid #e2e8f0;
   border-radius: 12px;
