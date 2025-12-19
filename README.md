@@ -11,17 +11,42 @@ Projeto mobile-first em Next.js (App Router) + TypeScript e CSS puro para lança
 ```
 src/
   app/
-    layout.tsx       # Layout raiz e metadados
-    page.tsx         # Landing inicial da Etapa 1
-    globals.css      # Estilos globais em CSS puro
-next.config.mjs      # Configuração Next.js (strict mode)
-eslint.config.mjs    # Regras de lint baseadas no Next
-package.json         # Scripts e dependências (Next, React, TypeScript)
-tsconfig.json        # Path alias @/* e opções do TS
+    layout.tsx        # Layout raiz e metadados
+    page.tsx          # Landing inicial da Etapa 1
+    admin/
+      page.tsx        # Placeholder painel admin
+      login/page.tsx  # Placeholder login admin
+    p/demo/page.tsx   # Placeholder acesso de terceiro
+  components/         # UI base (Button, Input, Card, Modal, Toast)
+    Button.tsx
+    Card.tsx
+    Input.tsx
+    Modal.tsx
+    Toast.tsx
+  app/globals.css     # Estilos globais em CSS puro (mobile-first)
+next.config.mjs       # Configuração Next.js (strict mode)
+eslint.config.mjs     # Regras de lint baseadas no Next
+package.json          # Scripts e dependências (Next, React, TypeScript)
+tsconfig.json         # Path alias @/* e opções do TS
+```
+
+## Variáveis de ambiente (placeholders)
+Crie um arquivo `.env.local` com as chaves do Firebase (ajustar valores reais na integração):
+```
+NEXT_PUBLIC_FIREBASE_API_KEY=changeme
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=changeme
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=changeme
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=changeme
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=changeme
+NEXT_PUBLIC_FIREBASE_APP_ID=changeme
+
+FIREBASE_ADMIN_PROJECT_ID=changeme
+FIREBASE_ADMIN_CLIENT_EMAIL=changeme
+FIREBASE_ADMIN_PRIVATE_KEY=changeme
 ```
 
 ## Como testar localmente
-1. Configure o registro npm acessível para instalar dependências (por padrão: `https://registry.npmjs.org`).
+1. Garanta acesso ao registry npm (`https://registry.npmjs.org`) para baixar dependências.
 2. Instale as dependências: `npm install`.
 3. Rode o servidor de desenvolvimento: `npm run dev` e acesse `http://localhost:3000`.
 
