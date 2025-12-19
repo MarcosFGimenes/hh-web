@@ -1,7 +1,7 @@
-export type Folder = {
+export type Employee = {
   id: string;
   name: string;
-  linkKeyHash: string;
+  totalMinutes: number | null;
   createdAt: number;
   updatedAt: number;
 };
