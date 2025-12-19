@@ -26,6 +26,8 @@ src/
   app/api/p/folders/[folderId]/os/       # O.S. públicas com validação de link
   app/api/p/folders/[folderId]/days/[date]/employees/     # Funcionários do dia (GET/POST)
   app/api/p/folders/[folderId]/days/[date]/employees/[employeeId]/ # Atualização de horários do funcionário (PATCH)
+  app/api/p/folders/[folderId]/days/[date]/employees/[employeeId]/services/      # CRUD de serviços (GET/POST)
+  app/api/p/folders/[folderId]/days/[date]/employees/[employeeId]/services/[serviceId]/ # Atualização/remoção de serviços (PATCH/DELETE)
   components/         # UI base (Button, Input, Card, Modal, Toast)
     Button.tsx
     Card.tsx
