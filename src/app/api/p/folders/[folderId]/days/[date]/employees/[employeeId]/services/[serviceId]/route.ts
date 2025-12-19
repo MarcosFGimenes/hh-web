@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { verifyLinkKey } from '@/lib/linkAccess/verifyLinkKey';
 import { adminDb } from '@/lib/firebase/admin';
+import { computeServiceMinutes, type TimeSequence } from '@/lib/time/service';
 import type { Service } from '@/types/service';
 import type { Employee } from '@/types/employee';
 
@@ -13,32 +14,6 @@ const employeeRef = (folderId: string, date: string, employeeId: string) =>
 
 const servicesRef = (folderId: string, date: string, employeeId: string) =>
   employeeRef(folderId, date, employeeId).collection('services');
-
-const parseTime = (value: string) => {
-  if (!/^\d{2}:\d{2}$/.test(value)) return null;
-  const [h, m] = value.split(':').map(Number);
-  if (h < 0 || h > 23 || m < 0 || m > 59) return null;
-  return h * 60 + m;
-};
-
-const computeServiceMinutes = (t1In: string, t1Out: string, t2In: string, t2Out: string) => {
-  const p1 = parseTime(t1In);
-  const p2 = parseTime(t1Out);
-  const p3 = parseTime(t2In);
-  const p4 = parseTime(t2Out);
-
-  if (p1 === null || p2 === null || p1 > p2) throw new Error('Horário inválido no primeiro período.');
-  if ((t2In || t2Out) && (p3 === null || p4 === null || p3 > p4)) {
-    throw new Error('Horário inválido no segundo período.');
-  }
-
-  const first = p2 - p1;
-  const second = p3 !== null && p4 !== null ? p4 - p3 : 0;
-  const total = first + second;
-
-  if (total <= 0) throw new Error('Total do serviço precisa ser maior que zero.');
-  return total;
-};
 
 const getEmployee = async (folderId: string, date: string, employeeId: string) => {
   const snapshot = await employeeRef(folderId, date, employeeId).get();
@@ -80,7 +55,7 @@ export async function PATCH(request: Request, { params }: Params) {
     }
 
     const currentData = snapshot.data() as Omit<Service, 'id'>;
-    const merged = { ...currentData, ...updates };
+    const merged: Service = { id: serviceId, ...currentData, ...updates };
 
     if (!merged.osId || !merged.description) {
       return NextResponse.json({ error: 'O.S e descrição são obrigatórias.' }, { status: 400 });
@@ -94,9 +69,20 @@ export async function PATCH(request: Request, { params }: Params) {
       return NextResponse.json({ error: 'Defina o horário total do funcionário antes de atualizar serviços.' }, { status: 400 });
     }
 
-    const newTotal = needsRecalc
-      ? computeServiceMinutes(merged.t1In, merged.t1Out, merged.t2In, merged.t2Out)
-      : merged.totalMinutes;
+    let newTimes: TimeSequence = {
+      t1In: merged.t1In,
+      t1Out: merged.t1Out,
+      t2In: merged.t2In,
+      t2Out: merged.t2Out,
+    };
+
+    const { minutes, errors, normalizedTimes } = needsRecalc
+      ? computeServiceMinutes(newTimes)
+      : { minutes: merged.totalMinutes, errors: [] as string[], normalizedTimes: newTimes };
+
+    if (errors.length || minutes === null) {
+      return NextResponse.json({ error: errors.join(' ') || 'Horários inválidos.' }, { status: 400 });
+    }
 
     const existing = await servicesRef(folder.id, date, employeeId).get();
     const currentSum = existing.docs.reduce((acc, doc) => {
@@ -104,11 +90,16 @@ export async function PATCH(request: Request, { params }: Params) {
       return doc.id === serviceId ? acc : acc + (data.totalMinutes || 0);
     }, 0);
 
-    if (currentSum + newTotal > employeeData.totalMinutes) {
+    if (currentSum + (minutes ?? 0) > employeeData.totalMinutes) {
       return NextResponse.json({ error: 'Soma dos serviços excede o horário total do funcionário.' }, { status: 400 });
     }
 
-    updates.totalMinutes = newTotal;
+    newTimes = normalizedTimes;
+    updates.t1In = newTimes.t1In;
+    updates.t1Out = newTimes.t1Out;
+    updates.t2In = newTimes.t2In;
+    updates.t2Out = newTimes.t2Out;
+    updates.totalMinutes = minutes ?? merged.totalMinutes;
     updates.updatedAt = Date.now();
 
     await ref.update(updates);

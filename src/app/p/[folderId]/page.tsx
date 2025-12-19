@@ -7,10 +7,12 @@ import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { Input } from '@/components/Input';
 import { Modal } from '@/components/Modal';
+import { TimeSequenceInput } from '@/components/TimeSequenceInput';
 import { Toast } from '@/components/Toast';
 import type { Employee } from '@/types/employee';
 import type { ServiceOrder } from '@/types/os';
 import type { Service } from '@/types/service';
+import { computeServiceMinutes as computeServiceMinutesLib, normalizeTimes, type TimeSequence } from '@/lib/time/service';
 
 type FolderSummary = {
   id: string;
@@ -48,6 +50,9 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
       }
     >
   >({});
+  const [serviceFormErrors, setServiceFormErrors] = useState<Record<string, string[]>>({});
+  const [serviceErrors, setServiceErrors] = useState<Record<string, Record<string, string[]>>>({});
+  const defaultServiceForm = { osId: '', description: '', t1In: '', t1Out: '', t2In: '', t2Out: '' };
 
   const linkKey = useMemo(() => searchParams.get('k') || '', [searchParams]);
 
@@ -106,6 +111,9 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
 
   const handleChangeDate = async (nextDate: string) => {
     setDate(nextDate);
+    setServiceFormErrors({});
+    setServiceForms({});
+    setServiceErrors({});
     try {
       await loadEmployees(nextDate);
       await loadAllServices(nextDate, hasOrders);
@@ -171,6 +179,7 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
     }
     try {
       const allServices: Record<string, Service[]> = {};
+      const errors: Record<string, Record<string, string[]>> = {};
       await Promise.all(
         employees.map(async (employee) => {
           const data = await fetchJSON(
@@ -179,13 +188,16 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
             )}`
           );
           allServices[employee.id] = data.services;
+          errors[employee.id] = {};
         })
       );
       setServices(allServices);
+      setServiceErrors(errors);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao carregar serviços.';
       setError(message);
       setServices({});
+      setServiceErrors({});
     }
   };
 
@@ -212,29 +224,44 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
   };
 
   const computeServiceMinutes = (t1In: string, t1Out: string, t2In: string, t2Out: string) => {
-    const toMinutes = (value: string) => {
-      if (!/^\d{2}:\d{2}$/.test(value)) return null;
-      const [h, m] = value.split(':').map(Number);
-      if (h < 0 || h > 23 || m < 0 || m > 59) return null;
-      return h * 60 + m;
-    };
-
-    const p1 = toMinutes(t1In);
-    const p2 = toMinutes(t1Out);
-    const p3 = toMinutes(t2In);
-    const p4 = toMinutes(t2Out);
-
-    if (p1 === null || p2 === null || p1 > p2) return null;
-    if ((t2In || t2Out) && (p3 === null || p4 === null || p3 > p4)) return null;
-
-    const first = p2 - p1;
-    const second = p3 !== null && p4 !== null ? p4 - p3 : 0;
-    const total = first + second;
-    return total > 0 ? total : null;
+    const { minutes, errors } = computeServiceMinutesLib({
+      t1In,
+      t1Out,
+      t2In,
+      t2Out,
+    });
+    return errors.length ? null : minutes;
   };
 
   const currentServiceTotal = (employeeId: string) =>
     (services[employeeId] || []).reduce((acc, service) => acc + (service.totalMinutes || 0), 0);
+
+  const handleNewServiceTimesChange = (employeeId: string, times: TimeSequence, errors: string[]) => {
+    setServiceForms((prev) => ({
+      ...prev,
+      [employeeId]: { ...(prev[employeeId] || defaultServiceForm), ...times },
+    }));
+    setServiceFormErrors((prev) => ({ ...prev, [employeeId]: errors }));
+  };
+
+  const handleExistingServiceTimesChange = (
+    employeeId: string,
+    serviceId: string,
+    times: TimeSequence,
+    errors: string[]
+  ) => {
+    setServices((prev) => ({
+      ...prev,
+      [employeeId]: (prev[employeeId] || []).map((item) => (item.id === serviceId ? { ...item, ...times } : item)),
+    }));
+    setServiceErrors((prev) => ({
+      ...prev,
+      [employeeId]: {
+        ...(prev[employeeId] || {}),
+        [serviceId]: errors,
+      },
+    }));
+  };
 
   const handleCreateService = async (employeeId: string) => {
     const form = serviceForms[employeeId] || {
@@ -246,15 +273,20 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
       t2Out: '',
     };
 
+    if ((serviceFormErrors[employeeId] || []).length) {
+      setError('Corrija os horários antes de salvar o serviço.');
+      return;
+    }
+
     const employee = employees.find((emp) => emp.id === employeeId);
     if (!employee || !employee.totalMinutes || employee.totalMinutes <= 0) {
       setError('Defina o horário total do funcionário antes de lançar serviços.');
       return;
     }
 
-    const total = computeServiceMinutes(form.t1In, form.t1Out, form.t2In, form.t2Out);
-    if (total === null) {
-      setError('Horários inválidos para o serviço.');
+    const { minutes: total, errors, normalizedTimes } = computeServiceMinutesLib(form);
+    if (errors.length || total === null) {
+      setError(errors.join(' ') || 'Horários inválidos para o serviço.');
       return;
     }
 
@@ -269,7 +301,7 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(form),
+          body: JSON.stringify({ ...form, ...normalizedTimes }),
         }
       );
       const data = await response.json();
@@ -293,9 +325,14 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
       return;
     }
 
-    const total = computeServiceMinutes(service.t1In, service.t1Out, service.t2In, service.t2Out);
-    if (total === null) {
-      setError('Horários inválidos para o serviço.');
+    if (serviceErrors[employeeId]?.[service.id]?.length) {
+      setError('Corrija os horários antes de salvar o serviço.');
+      return;
+    }
+
+    const { minutes: total, errors, normalizedTimes } = computeServiceMinutesLib(service);
+    if (errors.length || total === null) {
+      setError(errors.join(' ') || 'Horários inválidos para o serviço.');
       return;
     }
 
@@ -311,7 +348,7 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...service, totalMinutes: total }),
+          body: JSON.stringify({ ...service, ...normalizedTimes, totalMinutes: total }),
         }
       );
       const data = await response.json();
@@ -454,9 +491,6 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
                         >
                           {savingEmployeeId === employee.id ? 'Salvando...' : 'Salvar horário'}
                         </Button>
-                        <Button type="button" variant="secondary" onClick={() => updateServiceForm(employee.id, 'osId', serviceForms[employee.id]?.osId || '')}>
-                          Adicionar serviço
-                        </Button>
                       </div>
 
                       <div className="stack">
@@ -487,33 +521,11 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
                                 onChange={(event) => updateServiceForm(employee.id, 'description', event.target.value)}
                               />
                             </label>
-                            <Input
-                              label="T1 Entrada"
-                              type="time"
-                              value={serviceForms[employee.id]?.t1In || ''}
-                              onChange={(event) => updateServiceForm(employee.id, 't1In', event.target.value)}
-                              required
-                            />
-                            <Input
-                              label="T1 Saída"
-                              type="time"
-                              value={serviceForms[employee.id]?.t1Out || ''}
-                              onChange={(event) => updateServiceForm(employee.id, 't1Out', event.target.value)}
-                              required
-                            />
-                            <Input
-                              label="T2 Entrada (opcional)"
-                              type="time"
-                              value={serviceForms[employee.id]?.t2In || ''}
-                              onChange={(event) => updateServiceForm(employee.id, 't2In', event.target.value)}
-                            />
-                            <Input
-                              label="T2 Saída (opcional)"
-                              type="time"
-                              value={serviceForms[employee.id]?.t2Out || ''}
-                              onChange={(event) => updateServiceForm(employee.id, 't2Out', event.target.value)}
-                            />
                           </div>
+                          <TimeSequenceInput
+                            value={serviceForms[employee.id] || defaultServiceForm}
+                            onChange={(times, errors) => handleNewServiceTimesChange(employee.id, times, errors)}
+                          />
                           <div className="footer-note">
                             Total estimado:{' '}
                             {computeServiceMinutes(
@@ -532,6 +544,11 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
                                 )
                               : '—'}
                           </div>
+                          {serviceFormErrors[employee.id]?.length ? (
+                            <div className="footer-note" style={{ color: '#b91c1c' }}>
+                              {serviceFormErrors[employee.id].join(' ')}
+                            </div>
+                          ) : null}
                           <Button type="button" onClick={() => handleCreateService(employee.id)}>
                             Salvar serviço
                           </Button>
@@ -540,10 +557,20 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
                         <div className="stack">
                           {(services[employee.id] || []).map((service) => (
                             <div key={service.id} className="card" style={{ border: '1px solid #e2e8f0', padding: '0.75rem', borderRadius: '10px' }}>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                <strong>Serviço</strong>
-                                <div className="footer-note">Total: {formatMinutes(service.totalMinutes)}</div>
-                              </div>
+                              {(() => {
+                                const { minutes } = computeServiceMinutesLib({
+                                  t1In: service.t1In,
+                                  t1Out: service.t1Out,
+                                  t2In: service.t2In,
+                                  t2Out: service.t2Out,
+                                });
+                                return (
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                    <strong>Serviço</strong>
+                                    <div className="footer-note">Total: {formatMinutes(minutes ?? service.totalMinutes)}</div>
+                                  </div>
+                                );
+                              })()}
                               <div className="grid">
                                 <label className="ui-field">
                                   <span className="ui-field-label">O.S</span>
@@ -583,59 +610,21 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
                                     }
                                   />
                                 </label>
-                                <Input
-                                  label="T1 Entrada"
-                                  type="time"
-                                  value={service.t1In}
-                                  onChange={(event) =>
-                                    setServices((prev) => ({
-                                      ...prev,
-                                      [employee.id]: (prev[employee.id] || []).map((item) =>
-                                        item.id === service.id ? { ...item, t1In: event.target.value } : item
-                                      ),
-                                    }))
-                                  }
-                                />
-                                <Input
-                                  label="T1 Saída"
-                                  type="time"
-                                  value={service.t1Out}
-                                  onChange={(event) =>
-                                    setServices((prev) => ({
-                                      ...prev,
-                                      [employee.id]: (prev[employee.id] || []).map((item) =>
-                                        item.id === service.id ? { ...item, t1Out: event.target.value } : item
-                                      ),
-                                    }))
-                                  }
-                                />
-                                <Input
-                                  label="T2 Entrada (opcional)"
-                                  type="time"
-                                  value={service.t2In}
-                                  onChange={(event) =>
-                                    setServices((prev) => ({
-                                      ...prev,
-                                      [employee.id]: (prev[employee.id] || []).map((item) =>
-                                        item.id === service.id ? { ...item, t2In: event.target.value } : item
-                                      ),
-                                    }))
-                                  }
-                                />
-                                <Input
-                                  label="T2 Saída (opcional)"
-                                  type="time"
-                                  value={service.t2Out}
-                                  onChange={(event) =>
-                                    setServices((prev) => ({
-                                      ...prev,
-                                      [employee.id]: (prev[employee.id] || []).map((item) =>
-                                        item.id === service.id ? { ...item, t2Out: event.target.value } : item
-                                      ),
-                                    }))
-                                  }
+                                <TimeSequenceInput
+                                  value={{
+                                    t1In: service.t1In,
+                                    t1Out: service.t1Out,
+                                    t2In: service.t2In,
+                                    t2Out: service.t2Out,
+                                  }}
+                                  onChange={(times, errors) => handleExistingServiceTimesChange(employee.id, service.id, times, errors)}
                                 />
                               </div>
+                              {serviceErrors[employee.id]?.[service.id]?.length ? (
+                                <div className="footer-note" style={{ color: '#b91c1c' }}>
+                                  {serviceErrors[employee.id][service.id].join(' ')}
+                                </div>
+                              ) : null}
                               <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                                 <Button type="button" onClick={() => handleUpdateService(employee.id, service)}>
                                   Atualizar
