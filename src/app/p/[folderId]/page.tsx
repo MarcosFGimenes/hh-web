@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/Button';
@@ -21,6 +21,12 @@ type FolderSummary = {
 
 type PageProps = {
   params: { folderId: string };
+};
+
+type DaySignature = {
+  url: string | null;
+  name: string | null;
+  signedAt: number | null;
 };
 
 type VoiceTarget = { type: 'new' | 'existing'; employeeId: string; serviceId?: string };
@@ -68,6 +74,15 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
   const [recordingTarget, setRecordingTarget] = useState<string | null>(null);
   const [voiceMessageTarget, setVoiceMessageTarget] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const [signature, setSignature] = useState<DaySignature>({ url: null, name: null, signedAt: null });
+  const [signatureLoading, setSignatureLoading] = useState(false);
+  const [savingSignature, setSavingSignature] = useState(false);
+  const [replaceSignature, setReplaceSignature] = useState(false);
+  const [signatureName, setSignatureName] = useState('');
+  const [hasSignatureDrawing, setHasSignatureDrawing] = useState(false);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [confirmReplaceOpen, setConfirmReplaceOpen] = useState(false);
+  const signatureCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const getRecognitionConstructor = () => {
     if (typeof window === 'undefined') return null;
@@ -109,6 +124,29 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
     setEmployees(data.employees);
   };
 
+  const loadSignature = async (targetDate: string) => {
+    setSignatureLoading(true);
+    try {
+      const data = await fetchJSON(
+        `/api/p/folders/${folderId}/days/${targetDate}?k=${encodeURIComponent(linkKey)}`
+      );
+      setSignature({
+        url: data.signatureUrl || null,
+        name: data.signatureName || null,
+        signedAt: data.signedAt || null,
+      });
+      setSignatureName(data.signatureName || '');
+      setReplaceSignature(false);
+      clearSignatureCanvas();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro ao buscar assinatura.';
+      setError(message);
+      setSignature({ url: null, name: null, signedAt: null });
+    } finally {
+      setSignatureLoading(false);
+    }
+  };
+
   useEffect(() => {
     const validate = async () => {
       setLoading(true);
@@ -126,6 +164,7 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
 
         await loadEmployees(date);
         await loadAllServices(date, osData.orders.length > 0);
+        await loadSignature(date);
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Link inválido ou expirado.';
         setError(message);
@@ -153,12 +192,63 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
     try {
       await loadEmployees(nextDate);
       await loadAllServices(nextDate, hasOrders);
+      await loadSignature(nextDate);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao buscar funcionários.';
       setError(message);
       setEmployees([]);
       setServices({});
     }
+  };
+
+  const startDrawingSignature = (event: PointerEvent<HTMLCanvasElement>) => {
+    const canvas = signatureCanvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !ctx) return;
+    event.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    setIsDrawing(true);
+  };
+
+  const drawSignature = (event: PointerEvent<HTMLCanvasElement>) => {
+    if (!isDrawing) return;
+    const canvas = signatureCanvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !ctx) return;
+    event.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    setHasSignatureDrawing(true);
+  };
+
+  const endDrawingSignature = (event?: PointerEvent<HTMLCanvasElement>) => {
+    if (!isDrawing) return;
+    event?.preventDefault();
+    const canvas = signatureCanvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (ctx) {
+      ctx.closePath();
+    }
+    setIsDrawing(false);
+  };
+
+  const clearSignatureCanvas = () => {
+    const canvas = signatureCanvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !ctx) return;
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.restore();
+    prepareSignatureCanvas();
   };
 
   const handleCreateEmployee = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -264,6 +354,33 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
 
   const appendTranscript = (current: string, transcript: string) =>
     [current?.trim(), transcript.trim()].filter(Boolean).join(current.trim() ? ' ' : '').trim();
+
+  const prepareSignatureCanvas = () => {
+    if (typeof window === 'undefined') return;
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const ratio = window.devicePixelRatio || 1;
+    canvas.width = rect.width * ratio;
+    canvas.height = rect.height * ratio;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#111827';
+      ctx.clearRect(0, 0, rect.width, rect.height);
+    }
+    setHasSignatureDrawing(false);
+  };
+
+  useEffect(() => {
+    prepareSignatureCanvas();
+    const handleResize = () => prepareSignatureCanvas();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const startVoiceRecording = (target: VoiceTarget) => {
     const targetKey = voiceKey(target);
@@ -498,6 +615,49 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao excluir serviço.';
       setError(message);
+    }
+  };
+
+  const handleSaveSignature = async () => {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) {
+      setError('Canvas de assinatura não disponível.');
+      return;
+    }
+
+    if (!hasSignatureDrawing) {
+      setError('Desenhe a assinatura antes de salvar.');
+      return;
+    }
+
+    const dataUrl = canvas.toDataURL('image/png');
+    setSavingSignature(true);
+    try {
+      const response = await fetch(
+        `/api/p/folders/${folderId}/days/${date}/signature?k=${encodeURIComponent(linkKey)}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ dataUrl, name: signatureName.trim() }),
+        }
+      );
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Erro ao salvar assinatura.');
+
+      setSignature({
+        url: data.signatureUrl || null,
+        name: data.signatureName || null,
+        signedAt: data.signedAt || null,
+      });
+      setReplaceSignature(false);
+      setHasSignatureDrawing(false);
+      clearSignatureCanvas();
+      setSuccess('Assinatura salva com sucesso.');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro ao salvar assinatura.';
+      setError(message);
+    } finally {
+      setSavingSignature(false);
     }
   };
 
@@ -824,6 +984,71 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
                 <p className="footer-note">{loading ? 'Carregando...' : 'Nenhum funcionário lançado para esta data.'}</p>
               )}
             </Card>
+
+            <Card title="Assinatura do dia" subtitle={`Data: ${date.split('-').reverse().join('/')}`}>
+              {signatureLoading ? (
+                <p className="footer-note">Carregando assinatura...</p>
+              ) : signature.url && !replaceSignature ? (
+                <div className="stack">
+                  <div className="signature-preview">
+                    <img src={signature.url} alt="Assinatura do dia" />
+                  </div>
+                  <div className="footer-note">
+                    Assinado {signature.name ? `por ${signature.name} ` : ''}em{' '}
+                    {signature.signedAt ? new Date(signature.signedAt).toLocaleString('pt-BR') : '—'}
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <Button type="button" onClick={() => setConfirmReplaceOpen(true)}>
+                      Substituir assinatura
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="stack">
+                  <p className="footer-note">
+                    Desenhe a assinatura com o mouse ou toque. Você pode informar o nome do responsável (opcional).
+                  </p>
+                  <Input
+                    label="Nome (opcional)"
+                    placeholder="Ex: Responsável do terceiro"
+                    value={signatureName}
+                    onChange={(event) => setSignatureName(event.target.value)}
+                  />
+                  <div className="signature-pad">
+                    <canvas
+                      ref={signatureCanvasRef}
+                      className="signature-canvas"
+                      onPointerDown={startDrawingSignature}
+                      onPointerMove={drawSignature}
+                      onPointerUp={endDrawingSignature}
+                      onPointerLeave={endDrawingSignature}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <Button type="button" variant="ghost" onClick={clearSignatureCanvas} disabled={savingSignature}>
+                      Limpar
+                    </Button>
+                    {replaceSignature && signature.url ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={() => {
+                          setReplaceSignature(false);
+                          setHasSignatureDrawing(false);
+                          clearSignatureCanvas();
+                        }}
+                        disabled={savingSignature}
+                      >
+                        Cancelar substituição
+                      </Button>
+                    ) : null}
+                    <Button type="button" onClick={handleSaveSignature} disabled={savingSignature}>
+                      {savingSignature ? 'Salvando...' : 'Salvar assinatura'}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </Card>
           </>
         ) : null}
 
@@ -844,6 +1069,31 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
             Adicionar
           </Button>
         </form>
+      </Modal>
+
+      <Modal title="Substituir assinatura" open={confirmReplaceOpen} onClose={() => setConfirmReplaceOpen(false)}>
+        <div className="stack">
+          <p className="footer-note">
+            Já existe uma assinatura salva para esta data. Deseja substituí-la? A imagem atual será mantida no histórico do
+            armazenamento, mas o dia passará a exibir somente a nova assinatura.
+          </p>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+            <Button type="button" variant="ghost" onClick={() => setConfirmReplaceOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                setConfirmReplaceOpen(false);
+                setReplaceSignature(true);
+                setHasSignatureDrawing(false);
+                prepareSignatureCanvas();
+              }}
+            >
+              Substituir
+            </Button>
+          </div>
+        </div>
       </Modal>
     </main>
   );
