@@ -1,8 +1,8 @@
 "use client";
 
 import Link from 'next/link';
-import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
+import { Card } from '@/components/Card';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 export default function AdminDashboardPlaceholder() {
@@ -14,7 +14,13 @@ export default function AdminDashboardPlaceholder() {
         <Card
           title="Área do administrador"
           subtitle="Placeholder para gerenciamento de pastas, O.S e links privados."
-          action={<Button variant="secondary">Nova pasta</Button>}
+          action={
+            <Link href="/admin/pastas">
+              <Button variant="secondary" type="button">
+                Gerenciar pastas
+              </Button>
+            </Link>
+          }
         >
           <p className="footer-note">
             Em etapas futuras, esta página permitirá criar pastas de serviço, cadastrar O.S, gerar links privados e

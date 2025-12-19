@@ -15,8 +15,10 @@ src/
     page.tsx          # Landing inicial da Etapa 1
     admin/
       page.tsx        # Placeholder painel admin
+      pastas/page.tsx # CRUD de pastas do administrador
       login/page.tsx  # Placeholder login admin
     p/demo/page.tsx   # Placeholder acesso de terceiro
+  app/api/admin/folders/   # Rotas protegidas para CRUD de pastas
   components/         # UI base (Button, Input, Card, Modal, Toast)
     Button.tsx
     Card.tsx
@@ -60,6 +62,6 @@ FIREBASE_ADMIN_PRIVATE_KEY=changeme
 - `npm run format` — formata os arquivos com Prettier.
 
 ## Próximos passos
-- Integrar Firebase (client + admin) com variáveis de ambiente seguras.
-- Definir modelos/serviços para pastas, ordens de serviço e lançamentos.
+- Integrar Firebase (client + admin) com variáveis de ambiente seguras e rotacionar links com chave privada já hash-eada no Firestore.
+- Definir modelos/serviços para pastas, ordens de serviço e lançamentos; validar horários e sumarizar totais.
 - Implementar telas do administrador e do terceiro (rota `/p/[folderId]?k=...`) com validações de horário, assinatura digital e confirmações de salvamento.
