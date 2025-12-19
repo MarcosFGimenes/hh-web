@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Button } from '@/components/Button';
@@ -11,6 +11,20 @@ import { useAdminAuth } from '@/hooks/useAdminAuth';
 import type { ServiceOrder } from '@/types/os';
 
 type OrderWithEdit = ServiceOrder;
+type ParsedOrder = {
+  osCode: string;
+  tag: string;
+  machineName: string;
+  description: string;
+};
+
+type TesseractGlobal = {
+  recognize: (
+    image: File | string,
+    lang: string,
+    options?: { tessedit_pageseg_mode?: string }
+  ) => Promise<{ data: { text: string } }>;
+};
 
 export default function FolderServiceOrdersPage() {
   const params = useParams<{ folderId: string }>();
@@ -32,6 +46,15 @@ export default function FolderServiceOrdersPage() {
     machineName: '',
     description: '',
   });
+  const [importing, setImporting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [importSuccess, setImportSuccess] = useState<string | null>(null);
+  const [ocrText, setOcrText] = useState('');
+  const [parsedOrders, setParsedOrders] = useState<ParsedOrder[]>([]);
+  const [importingOcr, setImportingOcr] = useState(false);
+  const [ocrProgress, setOcrProgress] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const tesseractPromiseRef = useRef<Promise<TesseractGlobal> | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -67,15 +90,17 @@ export default function FolderServiceOrdersPage() {
   }, [idToken, folderId]);
 
   useEffect(() => {
-    if (error || success) {
+    if (error || success || importError || importSuccess) {
       const timer = setTimeout(() => {
         setError(null);
         setSuccess(null);
+        setImportError(null);
+        setImportSuccess(null);
       }, 2500);
       return () => clearTimeout(timer);
     }
     return undefined;
-  }, [error, success]);
+  }, [error, success, importError, importSuccess]);
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -98,6 +123,51 @@ export default function FolderServiceOrdersPage() {
   const validateOrderPayload = (payload: typeof creating) =>
     payload.osCode.trim() && payload.tag.trim() && payload.machineName.trim() && payload.description.trim();
 
+  const loadTesseract = async () => {
+    if (typeof window === 'undefined') throw new Error('Ambiente inválido para OCR.');
+    if (!tesseractPromiseRef.current) {
+      tesseractPromiseRef.current = new Promise<TesseractGlobal>((resolve, reject) => {
+        const existing = (window as unknown as { Tesseract?: TesseractGlobal }).Tesseract;
+        if (existing) {
+          resolve(existing);
+          return;
+        }
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+        script.async = true;
+        script.onload = () => {
+          const tesseract = (window as unknown as { Tesseract?: TesseractGlobal }).Tesseract;
+          if (tesseract) resolve(tesseract);
+          else reject(new Error('Biblioteca Tesseract não disponível.'));
+        };
+        script.onerror = () => reject(new Error('Falha ao carregar Tesseract.js.'));
+        document.body.appendChild(script);
+      });
+    }
+    return tesseractPromiseRef.current;
+  };
+
+  const parseLinesToOrders = (text: string): ParsedOrder[] => {
+    return text
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => {
+        const parts = line.split(/[\t;|]| {2,}/).map((part) => part.trim()).filter(Boolean);
+        if (parts.length >= 3) {
+          const [osCode, tag, machineName, ...rest] = parts;
+          const description = rest.length ? rest.join(' ') : '';
+          return {
+            osCode: osCode || '',
+            tag: tag || '',
+            machineName: machineName || '',
+            description: description || line,
+          };
+        }
+        return { osCode: '', tag: '', machineName: '', description: line };
+      });
+  };
+
   const handleCreate = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!validateOrderPayload(creating)) {
@@ -118,6 +188,68 @@ export default function FolderServiceOrdersPage() {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao criar O.S.';
       setError(message);
+    }
+  };
+
+  const handleImportFile = async (file: File) => {
+    setImportingOcr(true);
+    setImportError(null);
+    setOcrProgress('Processando imagem...');
+    setParsedOrders([]);
+    setOcrText('');
+    try {
+      const tesseract = await loadTesseract();
+      setOcrProgress('Lendo texto (OCR)...');
+      const result = await tesseract.recognize(file, 'por+eng');
+      const text = result?.data?.text || '';
+      setOcrText(text);
+      const parsed = parseLinesToOrders(text);
+      if (!parsed.length) {
+        setImportError('Nenhuma linha identificada na imagem. Verifique a nitidez ou refaça a foto.');
+      }
+      setParsedOrders(parsed);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro ao executar OCR. Tente novamente.';
+      setImportError(message);
+    } finally {
+      setImportingOcr(false);
+      setOcrProgress(null);
+    }
+  };
+
+  const handleBulkImport = async () => {
+    if (!parsedOrders.length) {
+      setImportError('Nada para importar. Realize o OCR primeiro.');
+      return;
+    }
+
+    const hasMissing = parsedOrders.some(
+      (order) => !order.osCode.trim() || !order.tag.trim() || !order.machineName.trim() || !order.description.trim()
+    );
+    if (hasMissing) {
+      setImportError('Preencha código, TAG, equipamento e descrição em todas as linhas antes de importar.');
+      return;
+    }
+
+    setImporting(true);
+    setImportError(null);
+    try {
+      const response = await adminFetch(`/api/admin/folders/${folderId}/os/bulk`, {
+        method: 'POST',
+        body: JSON.stringify({ orders: parsedOrders }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Erro ao importar O.S.');
+
+      setOrders(data.orders || []);
+      setParsedOrders([]);
+      setOcrText('');
+      setImportSuccess(`Importamos ${data.imported?.length || parsedOrders.length} O.S.`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro ao importar O.S.';
+      setImportError(message);
+    } finally {
+      setImporting(false);
     }
   };
 
@@ -228,6 +360,127 @@ export default function FolderServiceOrdersPage() {
             </Button>
           </form>
         </Card>
+
+        <Card
+          title="Importar por foto"
+          subtitle="Use OCR para pré-preencher as O.S. e revise antes de salvar."
+          action={
+            <Button type="button" onClick={() => fileInputRef.current?.click()} disabled={importingOcr}>
+              {importingOcr ? 'Lendo foto...' : 'Importar por foto'}
+            </Button>
+          }
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (file) {
+                handleImportFile(file);
+                event.target.value = '';
+              }
+            }}
+          />
+          <div className="stack">
+            <p className="footer-note">
+              Formato esperado por linha: Código · TAG · Equipamento · Descrição (separados por múltiplos espaços, tab, ; ou |).
+            </p>
+            {ocrProgress ? <p className="footer-note">Status: {ocrProgress}</p> : null}
+            {ocrText ? (
+              <details className="ui-card" style={{ background: '#f8fafc' }}>
+                <summary style={{ cursor: 'pointer' }}>Ver texto extraído (OCR)</summary>
+                <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.95rem', marginTop: '0.5rem' }}>{ocrText}</pre>
+              </details>
+            ) : null}
+            {importError ? <Toast type="error" message={importError} /> : null}
+            {importSuccess ? <Toast type="success" message={importSuccess} /> : null}
+          </div>
+        </Card>
+
+        {parsedOrders.length ? (
+          <Card
+            title="Revisar O.S. antes de importar"
+            subtitle="Edite os campos antes de salvar em lote."
+            action={
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <Button type="button" variant="ghost" onClick={() => setParsedOrders([])} disabled={importing}>
+                  Descartar
+                </Button>
+                <Button type="button" onClick={handleBulkImport} disabled={importing}>
+                  {importing ? 'Importando...' : 'Importar O.S.'}
+                </Button>
+              </div>
+            }
+          >
+            <div className="table-responsive">
+              <table className="ui-table">
+                <thead>
+                  <tr>
+                    <th>Código</th>
+                    <th>TAG</th>
+                    <th>Equipamento</th>
+                    <th>Descrição</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {parsedOrders.map((order, index) => (
+                    <tr key={index}>
+                      <td>
+                        <input
+                          className="ui-input"
+                          value={order.osCode}
+                          onChange={(event) =>
+                            setParsedOrders((prev) =>
+                              prev.map((item, i) => (i === index ? { ...item, osCode: event.target.value } : item))
+                            )
+                          }
+                        />
+                      </td>
+                      <td>
+                        <input
+                          className="ui-input"
+                          value={order.tag}
+                          onChange={(event) =>
+                            setParsedOrders((prev) =>
+                              prev.map((item, i) => (i === index ? { ...item, tag: event.target.value } : item))
+                            )
+                          }
+                        />
+                      </td>
+                      <td>
+                        <input
+                          className="ui-input"
+                          value={order.machineName}
+                          onChange={(event) =>
+                            setParsedOrders((prev) =>
+                              prev.map((item, i) =>
+                                i === index ? { ...item, machineName: event.target.value } : item
+                              )
+                            )
+                          }
+                        />
+                      </td>
+                      <td>
+                        <textarea
+                          className="ui-input"
+                          rows={2}
+                          value={order.description}
+                          onChange={(event) =>
+                            setParsedOrders((prev) =>
+                              prev.map((item, i) => (i === index ? { ...item, description: event.target.value } : item))
+                            )
+                          }
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        ) : null}
 
         <Card
           title="Lista de O.S."
