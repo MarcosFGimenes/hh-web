@@ -1,7 +1,8 @@
 import { cert, getApps, initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
-import { getAdminEnv } from '../env';
+import { getStorage } from 'firebase-admin/storage';
+import { getAdminEnv, getClientEnv } from '../env';
 
 const adminEnv = getAdminEnv();
 
@@ -19,4 +20,5 @@ const adminApp =
 
 export const adminAuth = getAuth(adminApp);
 export const adminDb = getFirestore(adminApp);
+export const adminBucket = getStorage(adminApp).bucket(getClientEnv().storageBucket);
 export { adminApp };
