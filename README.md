@@ -19,8 +19,11 @@ src/
       pastas/[folderId]/os/page.tsx # CRUD de O.S. por pasta
       login/page.tsx  # Placeholder login admin
     p/demo/page.tsx   # Placeholder acesso de terceiro
+    p/[folderId]/page.tsx # Acesso de terceiro via link privado k=...
   app/api/admin/folders/   # Rotas protegidas para CRUD de pastas
   app/api/admin/folders/[folderId]/os/   # Rotas protegidas para CRUD de O.S.
+  app/api/p/folders/[folderId]/summary/  # Resumo público com validação de link
+  app/api/p/folders/[folderId]/os/       # O.S. públicas com validação de link
   components/         # UI base (Button, Input, Card, Modal, Toast)
     Button.tsx
     Card.tsx
