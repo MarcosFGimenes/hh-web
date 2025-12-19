@@ -238,6 +238,11 @@ export default function AdminFoldersPage() {
                           Último link emitido: {folder.lastLink}
                         </div>
                       ) : null}
+                      <div className="footer-note">
+                        <Link href={`/admin/pastas/${folder.id}/os`} style={{ textDecoration: 'none' }}>
+                          Gerenciar O.S. da pasta
+                        </Link>
+                      </div>
                     </div>
                     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                       {editingId === folder.id ? (

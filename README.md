@@ -16,9 +16,11 @@ src/
     admin/
       page.tsx        # Placeholder painel admin
       pastas/page.tsx # CRUD de pastas do administrador
+      pastas/[folderId]/os/page.tsx # CRUD de O.S. por pasta
       login/page.tsx  # Placeholder login admin
     p/demo/page.tsx   # Placeholder acesso de terceiro
   app/api/admin/folders/   # Rotas protegidas para CRUD de pastas
+  app/api/admin/folders/[folderId]/os/   # Rotas protegidas para CRUD de O.S.
   components/         # UI base (Button, Input, Card, Modal, Toast)
     Button.tsx
     Card.tsx
