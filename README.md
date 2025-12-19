@@ -24,6 +24,8 @@ src/
   app/api/admin/folders/[folderId]/os/   # Rotas protegidas para CRUD de O.S.
   app/api/p/folders/[folderId]/summary/  # Resumo público com validação de link
   app/api/p/folders/[folderId]/os/       # O.S. públicas com validação de link
+  app/api/p/folders/[folderId]/days/[date]/employees/     # Funcionários do dia (GET/POST)
+  app/api/p/folders/[folderId]/days/[date]/employees/[employeeId]/ # Atualização de horários do funcionário (PATCH)
   components/         # UI base (Button, Input, Card, Modal, Toast)
     Button.tsx
     Card.tsx
