@@ -25,8 +25,22 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [idToken, setIdToken] = useState<string | null>(null);
 
+  const requireClientAuth = () => {
+    const auth = getClientAuth();
+    if (!auth) {
+      throw new Error('Login do admin indisponível: configure as variáveis NEXT_PUBLIC_FIREBASE_*.');
+    }
+    return auth;
+  };
+
   useEffect(() => {
-    const unsubscribe = onIdTokenChanged(getClientAuth(), async (firebaseUser) => {
+    const auth = getClientAuth();
+    if (!auth) {
+      setLoading(false);
+      return;
+    }
+
+    const unsubscribe = onIdTokenChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
       if (firebaseUser) {
         const token = await getIdToken(firebaseUser, true);
@@ -41,12 +55,18 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
+    const auth = requireClientAuth();
     setLoading(true);
     await signInWithEmailAndPassword(getClientAuth(), email, password);
     setLoading(false);
   };
 
   const signOut = async () => {
+    const auth = getClientAuth();
+    if (!auth) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     await firebaseSignOut(getClientAuth());
     setLoading(false);
