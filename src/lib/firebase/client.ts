@@ -1,13 +1,26 @@
 import { getApps, initializeApp, type FirebaseApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { getAuth, type Auth } from 'firebase/auth';
 import { getClientEnv } from '../env';
 
 let cachedApp: FirebaseApp | null = null;
 
-function getFirebaseApp(): FirebaseApp {
+function loadClientEnv() {
+  try {
+    return getClientEnv();
+  } catch (error) {
+    console.error(
+      'Firebase client não configurado. Defina as variáveis NEXT_PUBLIC_FIREBASE_* para habilitar login do admin.',
+      error
+    );
+    return null;
+  }
+}
+
+function getFirebaseApp(): FirebaseApp | null {
   if (cachedApp) return cachedApp;
 
-  const clientEnv = getClientEnv();
+  const clientEnv = loadClientEnv();
+  if (!clientEnv) return null;
 
   const app =
     getApps().length > 0
@@ -25,8 +38,9 @@ function getFirebaseApp(): FirebaseApp {
   return app;
 }
 
-export function getClientAuth() {
-  return getAuth(getFirebaseApp());
+export function getClientAuth(): Auth | null {
+  const app = getFirebaseApp();
+  return app ? getAuth(app) : null;
 }
 
 export { getFirebaseApp as firebaseApp };
