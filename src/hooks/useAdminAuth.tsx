@@ -52,7 +52,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error('Login do admin indisponível: configure as variáveis NEXT_PUBLIC_FIREBASE_*.');
     }
     setLoading(true);
-    await signInWithEmailAndPassword(auth, email, password);
+    await signInWithEmailAndPassword(getClientAuth(), email, password);
     setLoading(false);
   };
 
@@ -63,7 +63,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     setLoading(true);
-    await firebaseSignOut(auth);
+    await firebaseSignOut(getClientAuth());
     setLoading(false);
   };
 
