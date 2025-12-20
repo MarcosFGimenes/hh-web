@@ -5,6 +5,9 @@ import { Providers } from './providers';
 export const metadata: Metadata = {
   title: 'Horas-Homem | Painel de projeto',
   description: 'Acompanhamento de horas-homem para equipes terceiras com Next.js + Firebase.',
+  icons: {
+    icon: '/favicon.svg',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { verifyLinkKey } from '@/lib/linkAccess/verifyLinkKey';
-import { adminDb } from '@/lib/firebase/admin';
+import { getAdminDb } from '@/lib/firebase/admin';
 import type { Employee } from '@/types/employee';
 
 type Params = { params: { folderId: string; date: string } };
@@ -8,7 +8,7 @@ type Params = { params: { folderId: string; date: string } };
 const isValidDateParam = (date: string) => /^\d{4}-\d{2}-\d{2}$/.test(date);
 
 const collectionRef = (folderId: string, date: string) =>
-  adminDb.collection('folders').doc(folderId).collection('days').doc(date).collection('employees');
+  getAdminDb().collection('folders').doc(folderId).collection('days').doc(date).collection('employees');
 
 function mapEmployee(doc: FirebaseFirestore.QueryDocumentSnapshot): Employee {
   const data = doc.data() as Omit<Employee, 'id'>;

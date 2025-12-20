@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAdminFromRequest } from '@/lib/auth/getAdminToken';
 import type { ServiceOrder } from '@/types/os';
-import { mapOsDoc, osCollectionRef } from '../route';
+import { mapOsDoc, osCollectionRef } from '../helpers';
 
 type Params = { params: { folderId: string } };
 
