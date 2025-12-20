@@ -1,7 +1,7 @@
 import { FieldPath } from 'firebase-admin/firestore';
 import { NextResponse } from 'next/server';
 import { getAdminFromRequest } from '@/lib/auth/getAdminToken';
-import { adminDb } from '@/lib/firebase/admin';
+import { getAdminDb } from '@/lib/firebase/admin';
 import type { Service } from '@/types/service';
 import type { Employee } from '@/types/employee';
 import type { ServiceOrder } from '@/types/os';
@@ -20,8 +20,8 @@ type AggregateByOs = { osId: string; osCode: string; tag: string; machineName: s
 
 const isValidDateParam = (date: string) => /^\d{4}-\d{2}-\d{2}$/.test(date);
 
-const dayCollection = (folderId: string) => adminDb.collection('folders').doc(folderId).collection('days');
-const osCollection = (folderId: string) => adminDb.collection('folders').doc(folderId).collection('os');
+const dayCollection = (folderId: string) => getAdminDb().collection('folders').doc(folderId).collection('days');
+const osCollection = (folderId: string) => getAdminDb().collection('folders').doc(folderId).collection('os');
 
 const mapOs = (doc: FirebaseFirestore.QueryDocumentSnapshot): ServiceOrder => {
   const data = doc.data() as Omit<ServiceOrder, 'id'>;

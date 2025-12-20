@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { verifyLinkKey } from '@/lib/linkAccess/verifyLinkKey';
-import { adminDb } from '@/lib/firebase/admin';
+import { getAdminDb } from '@/lib/firebase/admin';
 import type { ServiceOrder } from '@/types/os';
 
 type Params = { params: { folderId: string } };
 
-const collectionRef = (folderId: string) => adminDb.collection('folders').doc(folderId).collection('os');
+const collectionRef = (folderId: string) =>
+  getAdminDb().collection('folders').doc(folderId).collection('os');
 
 function mapOrder(doc: FirebaseFirestore.QueryDocumentSnapshot): ServiceOrder {
   const data = doc.data() as Omit<ServiceOrder, 'id'>;

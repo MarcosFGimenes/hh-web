@@ -55,6 +55,7 @@ FIREBASE_ADMIN_PROJECT_ID=changeme
 FIREBASE_ADMIN_CLIENT_EMAIL=changeme
 FIREBASE_ADMIN_PRIVATE_KEY=changeme
 ```
+> Dica Vercel: ao colar a chave privada do Firebase Admin, mantenha as quebras de linha como `\n` em vez de linhas reais (ex.: `-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n`).
 
 ## Como testar localmente
 1. Garanta acesso ao registry npm (`https://registry.npmjs.org`) para baixar dependências.
@@ -69,6 +70,12 @@ FIREBASE_ADMIN_PRIVATE_KEY=changeme
 - `npm run start` — inicia o servidor em modo produção.
 - `npm run lint` — executa linting com as regras do Next.js.
 - `npm run format` — formata os arquivos com Prettier.
+
+## Deploy na Vercel
+1. Crie o projeto na Vercel apontando para este repositório.
+2. Em **Environment Variables**, cadastre todas as chaves do `.env.example` / `.env.local` (incluindo o `FIREBASE_ADMIN_PRIVATE_KEY` com `\n`).
+3. Mantenha o comando de build padrão (`next build`) e output `.next`.
+4. As funções serverless usam Firebase Admin de forma lazy (inicialização dentro de `getAdminApp()`), compatível com o ambiente da Vercel.
 
 ## Próximos passos
 - Integrar Firebase (client + admin) com variáveis de ambiente seguras e rotacionar links com chave privada já hash-eada no Firestore.

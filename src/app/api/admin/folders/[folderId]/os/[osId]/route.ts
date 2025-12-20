@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getAdminFromRequest } from '@/lib/auth/getAdminToken';
-import { adminDb } from '@/lib/firebase/admin';
+import { getAdminDb } from '@/lib/firebase/admin';
 import type { ServiceOrder } from '@/types/os';
 
 type Params = { params: { folderId: string; osId: string } };
 
 const docRef = (folderId: string, osId: string) =>
-  adminDb.collection('folders').doc(folderId).collection('os').doc(osId);
+  getAdminDb().collection('folders').doc(folderId).collection('os').doc(osId);
 
 export async function PATCH(request: Request, { params }: Params) {
   try {
