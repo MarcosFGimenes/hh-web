@@ -58,7 +58,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (email: string, password: string) => {
     const auth = requireClientAuth();
     setLoading(true);
-    await signInWithEmailAndPassword(getClientAuth(), email, password);
+    await signInWithEmailAndPassword(auth, email, password);
     setLoading(false);
   };
 
@@ -69,7 +69,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     setLoading(true);
-    await firebaseSignOut(getClientAuth());
+    await firebaseSignOut(auth);
     setLoading(false);
   };
 
