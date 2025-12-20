@@ -1,17 +1,19 @@
 import { randomUUID } from 'crypto';
 import { NextResponse } from 'next/server';
 import { verifyLinkKey } from '@/lib/linkAccess/verifyLinkKey';
-import { adminBucket, adminDb } from '@/lib/firebase/admin';
+import { getAdminBucket, getAdminDb } from '@/lib/firebase/admin';
 
 type Params = { params: { folderId: string; date: string } };
 
 const isValidDateParam = (date: string) => /^\d{4}-\d{2}-\d{2}$/.test(date);
 
 const dayDocRef = (folderId: string, date: string) =>
-  adminDb.collection('folders').doc(folderId).collection('days').doc(date);
+  getAdminDb().collection('folders').doc(folderId).collection('days').doc(date);
 
-const bucketDownloadUrl = (path: string, token: string) =>
-  `https://firebasestorage.googleapis.com/v0/b/${adminBucket.name}/o/${encodeURIComponent(path)}?alt=media&token=${token}`;
+const bucketDownloadUrl = (path: string, token: string) => {
+  const bucket = getAdminBucket();
+  return `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(path)}?alt=media&token=${token}`;
+};
 
 export async function POST(request: Request, { params }: Params) {
   try {
@@ -44,7 +46,8 @@ export async function POST(request: Request, { params }: Params) {
     const now = Date.now();
     const filePath = `signatures/${folder.id}/${date}/signature-${now}.${extension}`;
     const token = randomUUID();
-    const file = adminBucket.file(filePath);
+    const bucket = getAdminBucket();
+    const file = bucket.file(filePath);
 
     await file.save(buffer, {
       metadata: {
