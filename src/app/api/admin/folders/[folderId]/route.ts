@@ -1,16 +1,16 @@
 import crypto from 'crypto';
 import { NextResponse } from 'next/server';
 import { getAdminFromRequest } from '@/lib/auth/getAdminToken';
-import { adminDb } from '@/lib/firebase/admin';
+import { getAdminDb } from '@/lib/firebase/admin';
 import type { Folder } from '@/types/folder';
 
 const COLLECTION = 'folders';
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: { folderId: string } }
 ) {
-  const { id } = params;
+  const { folderId } = params;
 
   try {
     await getAdminFromRequest();
@@ -34,7 +34,8 @@ export async function PATCH(
 
     updates.updatedAt = Date.now();
 
-    const docRef = adminDb.collection(COLLECTION).doc(id);
+    const adminDb = getAdminDb();
+    const docRef = adminDb.collection(COLLECTION).doc(folderId);
     await docRef.update(updates);
 
     const snapshot = await docRef.get();
@@ -57,14 +58,15 @@ export async function PATCH(
 
 export async function DELETE(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: { folderId: string } }
 ) {
-  const { id } = params;
+  const { folderId } = params;
 
   try {
     await getAdminFromRequest();
 
-    const docRef = adminDb.collection(COLLECTION).doc(id);
+    const adminDb = getAdminDb();
+    const docRef = adminDb.collection(COLLECTION).doc(folderId);
     const snapshot = await docRef.get();
 
     if (!snapshot.exists) {

@@ -8,7 +8,7 @@ import {
   signOut as firebaseSignOut,
 } from 'firebase/auth';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { auth } from '@/lib/firebase/client';
+import { getClientAuth } from '@/lib/firebase/client';
 
 type AdminAuthContextValue = {
   user: User | null;
@@ -26,6 +26,12 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   const [idToken, setIdToken] = useState<string | null>(null);
 
   useEffect(() => {
+    const auth = getClientAuth();
+    if (!auth) {
+      setLoading(false);
+      return;
+    }
+
     const unsubscribe = onIdTokenChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
       if (firebaseUser) {
@@ -41,12 +47,21 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
+    const auth = getClientAuth();
+    if (!auth) {
+      throw new Error('Login do admin indisponível: configure as variáveis NEXT_PUBLIC_FIREBASE_*.');
+    }
     setLoading(true);
     await signInWithEmailAndPassword(auth, email, password);
     setLoading(false);
   };
 
   const signOut = async () => {
+    const auth = getClientAuth();
+    if (!auth) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     await firebaseSignOut(auth);
     setLoading(false);

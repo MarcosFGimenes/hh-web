@@ -29,11 +29,29 @@ type DaySignature = {
   signedAt: number | null;
 };
 
+type SpeechRecognitionAlternativeLike = { transcript?: string };
+type SpeechRecognitionResultLike = SpeechRecognitionAlternativeLike[];
+type SpeechRecognitionEventLike = { results: SpeechRecognitionResultLike[] };
+type SpeechRecognitionErrorEventLike = { error: string };
+
 type VoiceTarget = { type: 'new' | 'existing'; employeeId: string; serviceId?: string };
+
+type SpeechRecognition = {
+  lang: string;
+  interimResults: boolean;
+  continuous: boolean;
+  onstart: (() => void) | null;
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEventLike) => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+};
 type SpeechRecognitionConstructor = new () => SpeechRecognition;
 
 declare global {
   interface Window {
+    SpeechRecognition?: SpeechRecognitionConstructor;
     webkitSpeechRecognition?: SpeechRecognitionConstructor;
   }
 }
@@ -328,19 +346,17 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
   };
 
   const updateServiceForm = (employeeId: string, field: keyof (typeof serviceForms)[string], value: string) => {
-    setServiceForms((prev) => ({
-      ...prev,
-      [employeeId]: {
-        osId: '',
-        description: '',
-        t1In: '',
-        t1Out: '',
-        t2In: '',
-        t2Out: '',
-        ...prev[employeeId],
-        [field]: value,
-      },
-    }));
+    setServiceForms((prev) => {
+      const existing = prev[employeeId] || defaultServiceForm;
+      return {
+        ...prev,
+        [employeeId]: {
+          ...defaultServiceForm,
+          ...existing,
+          [field]: value,
+        },
+      };
+    });
   };
 
   const formatMinutes = (minutes: number) => {
