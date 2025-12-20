@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
 import { verifyLinkKey } from '@/lib/linkAccess/verifyLinkKey';
-import { adminDb } from '@/lib/firebase/admin';
+import { getAdminDb } from '@/lib/firebase/admin';
 
 type Params = { params: { folderId: string; date: string } };
 
 const isValidDateParam = (date: string) => /^\d{4}-\d{2}-\d{2}$/.test(date);
 
 const dayDocRef = (folderId: string, date: string) =>
-  adminDb.collection('folders').doc(folderId).collection('days').doc(date);
+  getAdminDb().collection('folders').doc(folderId).collection('days').doc(date);
 
 export async function GET(request: Request, { params }: Params) {
   try {

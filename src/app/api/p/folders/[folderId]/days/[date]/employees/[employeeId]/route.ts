@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { verifyLinkKey } from '@/lib/linkAccess/verifyLinkKey';
-import { adminDb } from '@/lib/firebase/admin';
+import { getAdminDb } from '@/lib/firebase/admin';
 import type { Employee } from '@/types/employee';
 
 type Params = { params: { folderId: string; date: string; employeeId: string } };
@@ -8,7 +8,13 @@ type Params = { params: { folderId: string; date: string; employeeId: string } }
 const isValidDateParam = (date: string) => /^\d{4}-\d{2}-\d{2}$/.test(date);
 
 const docRef = (folderId: string, date: string, employeeId: string) =>
-  adminDb.collection('folders').doc(folderId).collection('days').doc(date).collection('employees').doc(employeeId);
+  getAdminDb()
+    .collection('folders')
+    .doc(folderId)
+    .collection('days')
+    .doc(date)
+    .collection('employees')
+    .doc(employeeId);
 
 export async function PATCH(request: Request, { params }: Params) {
   try {

@@ -1,27 +1,17 @@
 import { NextResponse } from 'next/server';
 import { getAdminFromRequest } from '@/lib/auth/getAdminToken';
-import { adminDb } from '@/lib/firebase/admin';
 import type { ServiceOrder } from '@/types/os';
+import { mapOsDoc, osCollectionRef } from './helpers';
 
 type Params = { params: { folderId: string } };
-
-const collectionRef = (folderId: string) => adminDb.collection('folders').doc(folderId).collection('os');
-
-function mapOs(doc: FirebaseFirestore.QueryDocumentSnapshot): ServiceOrder {
-  const data = doc.data() as Omit<ServiceOrder, 'id'>;
-  return { id: doc.id, ...data };
-}
-
-export const osCollectionRef = collectionRef;
-export const mapOsDoc = mapOs;
 
 export async function GET(_request: Request, { params }: Params) {
   try {
     await getAdminFromRequest();
     const { folderId } = params;
 
-    const snapshot = await collectionRef(folderId).orderBy('createdAt', 'desc').get();
-    const orders = snapshot.docs.map(mapOs);
+    const snapshot = await osCollectionRef(folderId).orderBy('createdAt', 'desc').get();
+    const orders = snapshot.docs.map(mapOsDoc);
 
     return NextResponse.json({ orders });
   } catch (error) {
@@ -47,7 +37,7 @@ export async function POST(request: Request, { params }: Params) {
     }
 
     const now = Date.now();
-    const docRef = await collectionRef(folderId).add({
+    const docRef = await osCollectionRef(folderId).add({
       osCode,
       tag,
       machineName,
@@ -56,15 +46,7 @@ export async function POST(request: Request, { params }: Params) {
       updatedAt: now,
     });
 
-    const order: ServiceOrder = {
-      id: docRef.id,
-      osCode,
-      tag,
-      machineName,
-      description,
-      createdAt: now,
-      updatedAt: now,
-    };
+    const order: ServiceOrder = { id: docRef.id, osCode, tag, machineName, description, createdAt: now, updatedAt: now };
 
     return NextResponse.json({ order }, { status: 201 });
   } catch (error) {

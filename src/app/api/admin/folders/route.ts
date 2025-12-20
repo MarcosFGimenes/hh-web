@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import { NextResponse } from 'next/server';
 import { getAdminFromRequest } from '@/lib/auth/getAdminToken';
-import { adminDb } from '@/lib/firebase/admin';
+import { getAdminDb } from '@/lib/firebase/admin';
 import type { Folder } from '@/types/folder';
 
 const COLLECTION = 'folders';
@@ -19,6 +19,7 @@ export async function GET() {
   try {
     await getAdminFromRequest();
 
+    const adminDb = getAdminDb();
     const snapshot = await adminDb.collection(COLLECTION).orderBy('createdAt', 'desc').get();
     const folders = snapshot.docs.map(mapFolder);
 
@@ -45,6 +46,7 @@ export async function POST(request: Request) {
     const linkKeyHash = crypto.createHash('sha256').update(linkKey).digest('hex');
     const now = Date.now();
 
+    const adminDb = getAdminDb();
     const docRef = await adminDb.collection(COLLECTION).add({
       name,
       linkKeyHash,
