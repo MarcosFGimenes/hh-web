@@ -157,23 +157,46 @@ export default function AdminFoldersPage() {
     }
   };
 
+  const generateLink = async (folderId: string) => {
+    const folder = folders.find((item) => item.id === folderId);
+
+    if (folder?.lastLink) {
+      return folder.lastLink;
+    }
+
+    const response = await adminFetch(`/api/admin/folders/${folderId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ rotateLinkKey: true }),
+    });
+    const data = await response.json();
+
+    if (!response.ok || !data.linkKey) {
+      throw new Error(data.error || 'Não foi possível gerar o link privado.');
+    }
+
+    const link = buildPrivateLink(folderId, data.linkKey);
+
+    setFolders((prev) =>
+      prev.map((item) =>
+        item.id === folderId
+          ? {
+              ...item,
+              lastLink: link,
+              updatedAt: data.folder?.updatedAt ?? item.updatedAt,
+            }
+          : item
+      )
+    );
+    setLastCreatedLink(link);
+
+    return link;
+  };
+
   const handleCopyLink = async (folderId: string) => {
     try {
-      const response = await adminFetch(`/api/admin/folders/${folderId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ rotateLinkKey: true }),
-      });
-      const data = await response.json();
-
-      if (!response.ok || !data.linkKey) {
-        throw new Error(data.error || 'Não foi possível gerar o link privado.');
-      }
-
-      const link = buildPrivateLink(folderId, data.linkKey);
+      const link = await generateLink(folderId);
       await copyLink(link);
-      setFolders((prev) => prev.map((folder) => (folder.id === folderId ? { ...folder, lastLink: link } : folder)));
       setSuccess('Link privado copiado para a área de transferência.');
-      setLastCreatedLink(link);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao copiar link.';
       setError(message);
@@ -191,10 +214,20 @@ export default function AdminFoldersPage() {
     setEditingName(folder.name);
   };
 
-  const handleOpenLink = (link?: string) => {
-    if (!link) return;
+  const openLink = (link: string) => {
     const url = link.startsWith('http') ? link : `${window.location.origin}${link}`;
     window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleOpenFolderLink = async (folderId: string) => {
+    try {
+      const link = await generateLink(folderId);
+      openLink(link);
+      setSuccess('Link aberto em nova aba.');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro ao abrir link.';
+      setError(message);
+    }
   };
 
   const cancelEditing = () => {
@@ -224,7 +257,7 @@ export default function AdminFoldersPage() {
               </Button>
               {lastCreatedLink ? (
                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  <Button type="button" variant="primary" onClick={() => handleOpenLink(lastCreatedLink)}>
+                  <Button type="button" variant="primary" onClick={() => openLink(lastCreatedLink)}>
                     Abrir link gerado
                   </Button>
                   <Button type="button" variant="secondary" onClick={() => copyLink(lastCreatedLink)}>
@@ -289,8 +322,7 @@ export default function AdminFoldersPage() {
                             <Button
                               type="button"
                               variant="secondary"
-                              onClick={() => handleOpenLink(folder.lastLink)}
-                              disabled={!folder.lastLink}
+                              onClick={() => handleOpenFolderLink(folder.id)}
                             >
                               Abrir link
                             </Button>
