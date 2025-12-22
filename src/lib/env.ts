@@ -66,12 +66,12 @@ export const getClientEnv = (): ClientEnv | null => {
   }
 
   return {
-    apiKey,
-    authDomain,
-    projectId,
-    storageBucket,
-    messagingSenderId,
-    appId,
+    apiKey: apiKey!,
+    authDomain: authDomain!,
+    projectId: projectId!,
+    storageBucket: storageBucket!,
+    messagingSenderId: messagingSenderId!,
+    appId: appId!,
   };
 };
 
