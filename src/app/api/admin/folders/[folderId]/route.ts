@@ -23,6 +23,10 @@ export async function PATCH(
       updates.name = body.name.trim();
     }
 
+    if (typeof body?.company === 'string' && body.company.trim()) {
+      updates.company = body.company.trim();
+    }
+
     if (body?.rotateLinkKey) {
       linkKey = crypto.randomBytes(24).toString('hex');
       updates.linkKeyHash = crypto.createHash('sha256').update(linkKey).digest('hex');
