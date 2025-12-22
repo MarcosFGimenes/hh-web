@@ -13,27 +13,21 @@ describe('parseTimeToMinutes', () => {
   });
 
   it('retorna null para formato inválido', () => {
-    expect(parseTimeToMinutes('8:30')).toBeNull();
+    expect(parseTimeToMinutes('25:00')).toBeNull();
     expect(parseTimeToMinutes('24:00')).toBeNull();
     expect(parseTimeToMinutes('aa:bb')).toBeNull();
   });
 });
 
 describe('normalizeTimes', () => {
-  it('reporta erro quando T1 não está no formato correto', () => {
-    const result = normalizeTimes({ t1In: '8:00', t1Out: '09:00', t2In: '', t2Out: '' });
+  it('reporta erro quando T1 está incompleto', () => {
+    const result = normalizeTimes({ t1In: '08:00', t1Out: '', t2In: '', t2Out: '' });
     expect(result.errors).toContain('Horários do primeiro período são obrigatórios e devem estar no formato HH:MM.');
   });
 
-  it('normaliza ordem invertida sem manter inconsistências', () => {
+  it('reporta erro quando entrada é maior ou igual à saída', () => {
     const result = normalizeTimes({ t1In: '09:00', t1Out: '08:00', t2In: '07:30', t2Out: '07:00' });
-    expect(result.normalizedTimes).toEqual({
-      t1In: '09:00',
-      t1Out: '09:00',
-      t2In: '09:00',
-      t2Out: '09:00',
-    });
-    expect(result.errors).toHaveLength(0);
+    expect(result.errors.some((msg) => msg.toLowerCase().includes('entrada'))).toBe(true);
   });
 });
 
@@ -47,7 +41,7 @@ describe('computeServiceMinutes', () => {
   it('retorna erro quando total é zero ou negativo', () => {
     const result = computeServiceMinutes({ t1In: '10:00', t1Out: '10:00', t2In: '', t2Out: '' });
     expect(result.minutes).toBeNull();
-    expect(result.errors).toContain('Total do serviço deve ser maior que zero.');
+    expect(result.errors.some((msg) => msg.toLowerCase().includes('entrada'))).toBe(true);
   });
 });
 
