@@ -22,6 +22,13 @@ type ComputeResult = {
   normalizedTimes: TimeSequence;
 };
 
+type DayTotalResult = {
+  minutes: number | null;
+  errors: string[];
+};
+
+type ServicesSumValidation = { ok: boolean; error?: string };
+
 const formatMinutesToTime = (minutes: number) => {
   const h = String(Math.floor(minutes / 60)).padStart(2, '0');
   const m = String(minutes % 60).padStart(2, '0');
@@ -105,4 +112,60 @@ export const computeServiceMinutes = (times: TimeSequence): ComputeResult => {
   }
 
   return { minutes: total, errors: [], normalizedTimes };
+};
+
+export const computeDayTotalMinutes = (dayStart: string, dayEnd: string, breakMinutes = 0): DayTotalResult => {
+  const errors: string[] = [];
+
+  const startMin = parseTimeToMinutes(dayStart);
+  const endMin = parseTimeToMinutes(dayEnd);
+
+  if (!dayStart || !dayEnd) {
+    errors.push('Horário inicial e final são obrigatórios no formato HH:MM.');
+  }
+
+  if (startMin === null) {
+    errors.push('Horário inicial inválido. Use o formato HH:MM.');
+  }
+
+  if (endMin === null) {
+    errors.push('Horário final inválido. Use o formato HH:MM.');
+  }
+
+  if (!Number.isFinite(breakMinutes) || breakMinutes < 0) {
+    errors.push('Intervalo deve ser um número maior ou igual a zero.');
+  }
+
+  if (errors.length > 0 || startMin === null || endMin === null) {
+    return { minutes: null, errors };
+  }
+
+  if (endMin <= startMin) {
+    return { minutes: null, errors: ['Horário final deve ser após o inicial.'] };
+  }
+
+  const total = endMin - startMin - (breakMinutes || 0);
+
+  if (total <= 0) {
+    return { minutes: null, errors: ['Total do dia deve ser maior que zero.'] };
+  }
+
+  return { minutes: total, errors: [] };
+};
+
+export const validateEmployeeServicesSum = (
+  servicesMinutes: number[],
+  dayTotalMinutes: number
+): ServicesSumValidation => {
+  if (!Number.isFinite(dayTotalMinutes) || dayTotalMinutes <= 0) {
+    return { ok: false, error: 'Defina o horário total do funcionário antes de lançar serviços.' };
+  }
+
+  const totalServices = servicesMinutes.reduce((acc, current) => acc + (Number.isFinite(current) ? current : 0), 0);
+
+  if (totalServices > dayTotalMinutes) {
+    return { ok: false, error: 'Soma dos serviços excede o horário total do funcionário.' };
+  }
+
+  return { ok: true };
 };
