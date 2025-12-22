@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
@@ -8,7 +8,9 @@ import { Input } from '@/components/Input';
 import { Toast } from '@/components/Toast';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 
-export default function AdminLoginPage() {
+export const dynamic = 'force-dynamic';
+
+function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { signIn, user } = useAdminAuth();
@@ -105,5 +107,21 @@ export default function AdminLoginPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function AdminLoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="auth-main">
+          <div className="container">
+            <p className="footer-note">Carregando login...</p>
+          </div>
+        </main>
+      }
+    >
+      <LoginContent />
+    </Suspense>
   );
 }
