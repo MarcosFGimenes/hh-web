@@ -1,13 +1,111 @@
 "use client";
 
 import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { AdminGuard } from '@/components/AdminGuard';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import type { Folder } from '@/types/folder';
 
 export default function AdminDashboardPlaceholder() {
   const { user, signOut } = useAdminAuth();
+  const [folders, setFolders] = useState<Folder[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [lanes, setLanes] = useState<Record<'backlog' | 'progress' | 'done', Folder[]>>({
+    backlog: [],
+    progress: [],
+    done: [],
+  });
+
+  const totalCount = useMemo(
+    () => lanes.backlog.length + lanes.progress.length + lanes.done.length,
+    [lanes.backlog.length, lanes.progress.length, lanes.done.length]
+  );
+
+  const adminFetch = async (input: string, init?: RequestInit) => {
+    const token = await user?.getIdToken?.();
+    if (!token) throw new Error('Token do administrador indisponível.');
+
+    const headers = new Headers(init?.headers);
+    headers.set('Authorization', `Bearer ${token}`);
+    headers.set('Content-Type', 'application/json');
+
+    return fetch(input, { ...init, headers });
+  };
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await adminFetch('/api/admin/folders');
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Erro ao carregar pastas.');
+        const fetched: Folder[] = data.folders ?? [];
+        setFolders(fetched);
+        setLanes({
+          backlog: fetched,
+          progress: [],
+          done: [],
+        });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Erro ao listar pastas.';
+        setError(message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
+  }, [user]);
+
+  const onDragStart = (folderId: string) => setDraggingId(folderId);
+
+  const onDragEnd = () => setDraggingId(null);
+
+  const moveFolder = (folderId: string, targetLane: keyof typeof lanes) => {
+    setLanes((current) => {
+      const next: Record<'backlog' | 'progress' | 'done', Folder[]> = {
+        backlog: [],
+        progress: [],
+        done: [],
+      };
+
+      let moving: Folder | null = null;
+      (Object.keys(current) as Array<keyof typeof current>).forEach((key) => {
+        current[key].forEach((folder) => {
+          if (folder.id === folderId) {
+            moving = folder;
+            return;
+          }
+          next[key].push(folder);
+        });
+      });
+
+      if (moving) {
+        next[targetLane] = [...next[targetLane], moving];
+      }
+
+      return next;
+    });
+    onDragEnd();
+  };
+
+  const renderCard = (folder: Folder) => (
+    <div
+      key={folder.id}
+      className={`kanban-card${draggingId === folder.id ? ' kanban-card-dragging' : ''}`}
+      draggable
+      onDragStart={() => onDragStart(folder.id)}
+      onDragEnd={onDragEnd}
+    >
+      <p className="kanban-card-title">{folder.name}</p>
+      <p className="kanban-card-meta">ID: {folder.id}</p>
+    </div>
+  );
 
   return (
     <AdminGuard>
@@ -36,67 +134,47 @@ export default function AdminDashboardPlaceholder() {
           </header>
 
           <div className="kanban-board">
-            <section className="kanban-column">
-              <header className="kanban-column-header">
-                <div>
-                  <p className="kanban-column-label">Entrada</p>
-                  <h3>Novas demandas</h3>
-                </div>
-                <span className="kanban-pill">2</span>
-              </header>
-              <div className="kanban-card">
-                <p className="kanban-card-title">Solicitação de pasta</p>
-                <p className="kanban-card-meta">Linha 1 — criar link privado</p>
-              </div>
-              <div className="kanban-card">
-                <p className="kanban-card-title">Novo fornecedor</p>
-                <p className="kanban-card-meta">Convidar terceirizado com acesso restrito</p>
-              </div>
-              <Link href="/admin/pastas" className="kanban-card kanban-card-ghost">
-                <p className="kanban-card-title">Criar pasta</p>
-                <p className="kanban-card-meta">Cadastrar e gerar link em segundos</p>
-              </Link>
-            </section>
-
-            <section className="kanban-column">
-              <header className="kanban-column-header">
-                <div>
-                  <p className="kanban-column-label">Execução</p>
-                  <h3>Em andamento</h3>
-                </div>
-                <span className="kanban-pill">3</span>
-              </header>
-              <div className="kanban-card">
-                <p className="kanban-card-title">Cadastro O.S</p>
-                <p className="kanban-card-meta">OS 3021 — preencher descrição e horas previstas</p>
-              </div>
-              <div className="kanban-card">
-                <p className="kanban-card-title">Revisar horas</p>
-                <p className="kanban-card-meta">Validar lançamentos do terceiro</p>
-              </div>
-              <div className="kanban-card">
-                <p className="kanban-card-title">Notificar equipe</p>
-                <p className="kanban-card-meta">Compartilhar novo link privado</p>
-              </div>
-            </section>
-
-            <section className="kanban-column">
-              <header className="kanban-column-header">
-                <div>
-                  <p className="kanban-column-label">Finalização</p>
-                  <h3>Concluído</h3>
-                </div>
-                <span className="kanban-pill">1</span>
-              </header>
-              <div className="kanban-card">
-                <p className="kanban-card-title">Link privado gerado</p>
-                <p className="kanban-card-meta">/p/linha-1?k=••• copiado para a área de transferência</p>
-              </div>
-              <div className="kanban-card kanban-card-muted">
-                <p className="kanban-card-title">Acompanhe os lançamentos</p>
-                <p className="kanban-card-meta">Visual para monitorar horas em tempo real</p>
-              </div>
-            </section>
+            {(['backlog', 'progress', 'done'] as const).map((laneKey) => (
+              <section
+                key={laneKey}
+                className="kanban-column"
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  if (draggingId) moveFolder(draggingId, laneKey);
+                }}
+              >
+                <header className="kanban-column-header">
+                  <div>
+                    <p className="kanban-column-label">
+                      {laneKey === 'backlog' ? 'Entrada' : laneKey === 'progress' ? 'Execução' : 'Finalização'}
+                    </p>
+                    <h3>
+                      {laneKey === 'backlog'
+                        ? 'Novas demandas'
+                        : laneKey === 'progress'
+                        ? 'Em andamento'
+                        : 'Concluído'}
+                    </h3>
+                  </div>
+                  <span className="kanban-pill">{lanes[laneKey].length}</span>
+                </header>
+                {loading ? (
+                  <p className="kanban-card-meta">Carregando pastas...</p>
+                ) : lanes[laneKey].length > 0 ? (
+                  lanes[laneKey].map(renderCard)
+                ) : (
+                  <div className="kanban-card kanban-card-muted">
+                    <p className="kanban-card-title">Sem pastas</p>
+                    <p className="kanban-card-meta">
+                      {laneKey === 'backlog'
+                        ? 'Crie pastas na área de pastas.'
+                        : 'Arraste pastas para esta coluna.'}
+                    </p>
+                  </div>
+                )}
+              </section>
+            ))}
           </div>
 
           {user ? (
@@ -106,6 +184,22 @@ export default function AdminDashboardPlaceholder() {
                 <p className="user-name">{user.email}</p>
                 <p className="user-meta">Administrador autenticado</p>
               </div>
+            </div>
+          ) : null}
+
+          {error ? (
+            <div className="kanban-card kanban-card-muted" style={{ borderStyle: 'dashed', color: '#b91c1c' }}>
+              <p className="kanban-card-title">Erro ao carregar pastas</p>
+              <p className="kanban-card-meta">{error}</p>
+            </div>
+          ) : null}
+
+          {!loading && totalCount === 0 ? (
+            <div className="kanban-card kanban-card-muted">
+              <p className="kanban-card-title">Nenhuma pasta cadastrada</p>
+              <p className="kanban-card-meta">
+                Crie pastas em &quot;Gerenciar pastas&quot; e arraste-as entre colunas para organizar o fluxo.
+              </p>
             </div>
           ) : null}
         </div>

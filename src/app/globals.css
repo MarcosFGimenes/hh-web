@@ -121,6 +121,11 @@ main {
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
 }
 
+.kanban-card-dragging {
+  opacity: 0.5;
+  border-style: dashed;
+}
+
 .kanban-card-ghost {
   text-decoration: none;
   color: inherit;
