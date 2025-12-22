@@ -21,6 +21,7 @@ export default function AdminFoldersPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [creatingName, setCreatingName] = useState('');
+  const [creatingCompany, setCreatingCompany] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
   const [lastCreatedLink, setLastCreatedLink] = useState<string | null>(null);
@@ -70,7 +71,7 @@ export default function AdminFoldersPage() {
     const fallbackOrigin = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
     const origin =
       typeof window !== 'undefined' && window.location?.origin ? window.location.origin : fallbackOrigin;
-    return `${origin.replace(/\/+$/, '')}/p/${folderId}?k=${linkKey}`;
+    return `${origin.replace(/\/+$/, '')}/p/${folderId}/link?k=${linkKey}`;
   };
 
   useEffect(() => {
@@ -91,7 +92,7 @@ export default function AdminFoldersPage() {
     try {
       const response = await adminFetch('/api/admin/folders', {
         method: 'POST',
-        body: JSON.stringify({ name: creatingName }),
+        body: JSON.stringify({ name: creatingName, company: creatingCompany }),
       });
       const data = await response.json();
 
@@ -103,6 +104,7 @@ export default function AdminFoldersPage() {
       setFolders((prev) => [{ ...data.folder, lastLink: link }, ...prev]);
       setSuccess('Pasta criada e link privado gerado.');
       setCreatingName('');
+      setCreatingCompany('');
       setLastCreatedLink(link);
       await copyLink(link);
     } catch (err) {
@@ -252,7 +254,14 @@ export default function AdminFoldersPage() {
                 onChange={(event) => setCreatingName(event.target.value)}
                 required
               />
-              <Button type="submit" disabled={!creatingName.trim()}>
+              <Input
+                label="Empresa responsável"
+                placeholder="Ex.: ACME Serviços Industriais"
+                value={creatingCompany}
+                onChange={(event) => setCreatingCompany(event.target.value)}
+                required
+              />
+              <Button type="submit" disabled={!creatingName.trim() || !creatingCompany.trim()}>
                 Criar pasta e gerar link
               </Button>
               {lastCreatedLink ? (
@@ -287,9 +296,8 @@ export default function AdminFoldersPage() {
                         ) : (
                           <strong>{folder.name}</strong>
                         )}
-                        <div className="footer-note">
-                          ID: {folder.id} · Atualizado em {new Date(folder.updatedAt).toLocaleString('pt-BR')}
-                        </div>
+                        <div className="footer-note">Responsável: {folder.company || '—'}</div>
+                        <div className="footer-note">Atualizado em {new Date(folder.updatedAt).toLocaleString('pt-BR')}</div>
                         {folder.lastLink ? (
                           <div className="footer-note" style={{ wordBreak: 'break-all' }}>
                             Último link emitido: {folder.lastLink}

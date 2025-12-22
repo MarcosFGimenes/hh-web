@@ -103,7 +103,7 @@ export default function AdminDashboardPlaceholder() {
       onDragEnd={onDragEnd}
     >
       <p className="kanban-card-title">{folder.name}</p>
-      <p className="kanban-card-meta">ID: {folder.id}</p>
+      <p className="kanban-card-meta">Responsável: {folder.company || '—'}</p>
     </div>
   );
 
@@ -113,8 +113,8 @@ export default function AdminDashboardPlaceholder() {
         <div className="dashboard-shell">
           <header className="dashboard-header">
             <div>
-              <p className="chip">Painel visual</p>
-              <h1>Quadro do administrador</h1>
+              <p className="chip">Lar Cooperativa Agroindustrial</p>
+              <h1>Dashboard do PCM</h1>
               <p className="dashboard-subtitle">
                 Consolide pastas de serviço e acompanhe o fluxo em um painel visual.
               </p>
@@ -122,12 +122,17 @@ export default function AdminDashboardPlaceholder() {
             <div className="dashboard-actions">
               <div className="dashboard-actions-row">
                 <Link href="/admin/pastas">
-                  <Button variant="secondary" type="button">
+                  <Button variant="primary" type="button">
                     Gerenciar pastas
                   </Button>
                 </Link>
                 {user ? (
-                  <Button variant="ghost" type="button" onClick={signOut}>
+                  <Button
+                    variant="secondary"
+                    type="button"
+                    onClick={signOut}
+                    style={{ backgroundColor: '#e2e8f0', color: '#0f172a' }}
+                  >
                     Sair
                   </Button>
                 ) : null}

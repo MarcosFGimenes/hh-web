@@ -37,9 +37,10 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     const name = typeof body?.name === 'string' ? body.name.trim() : '';
+    const company = typeof body?.company === 'string' ? body.company.trim() : '';
 
-    if (!name) {
-      return NextResponse.json({ error: 'Nome da pasta é obrigatório.' }, { status: 400 });
+    if (!name || !company) {
+      return NextResponse.json({ error: 'Nome da pasta e empresa responsável são obrigatórios.' }, { status: 400 });
     }
 
     const linkKey = crypto.randomBytes(24).toString('hex');
@@ -49,6 +50,7 @@ export async function POST(request: Request) {
     const adminDb = getAdminDb();
     const docRef = await adminDb.collection(COLLECTION).add({
       name,
+      company,
       linkKeyHash,
       createdAt: now,
       updatedAt: now,
@@ -57,6 +59,7 @@ export async function POST(request: Request) {
     const folder: Folder = {
       id: docRef.id,
       name,
+      company,
       linkKeyHash,
       createdAt: now,
       updatedAt: now,
