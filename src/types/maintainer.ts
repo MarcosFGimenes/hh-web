@@ -3,7 +3,7 @@ export type Maintainer = {
   name: string;
   startTime?: string | null;
   endTime?: string | null;
-  extraMinutes?: number;
+  extraMinutes?: number | null;
   createdAt: number;
   updatedAt: number;
 };

@@ -83,7 +83,6 @@ export default function PublicFolderPage({ params }: PageProps) {
                 name,
                 startTime: null,
                 endTime: null,
-                extraMinutes: null,
                 createdAt: now,
                 updatedAt: now,
               },
