@@ -36,7 +36,11 @@ export function getAdminDb() {
 }
 
 export function getAdminBucket() {
-  return getStorage(getAdminApp()).bucket(getClientEnv().storageBucket);
+  const clientEnv = getClientEnv();
+  if (!clientEnv) {
+    throw new Error('Env NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET é obrigatório para acessar o bucket do Firebase Storage.');
+  }
+  return getStorage(getAdminApp()).bucket(clientEnv.storageBucket);
 }
 
 export { getAdminApp };

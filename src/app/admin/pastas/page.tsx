@@ -6,6 +6,7 @@ import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { Input } from '@/components/Input';
 import { Toast } from '@/components/Toast';
+import { AdminGuard } from '@/components/AdminGuard';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import type { Folder } from '@/types/folder';
 
@@ -186,100 +187,102 @@ export default function AdminFoldersPage() {
   };
 
   return (
-    <main>
-      <div className="container">
-        <Card
-          title="Pastas de serviço"
-          subtitle="Cadastre e gerencie pastas. Cada pasta possui um link privado para lançamentos do terceiro."
-          action={<Link href="/admin">Voltar</Link>}
-        >
-          <form className="stack" onSubmit={handleCreate}>
-            <Input
-              label="Nome da pasta"
-              placeholder="Ex.: Manutenção Linha 1"
-              value={creatingName}
-              onChange={(event) => setCreatingName(event.target.value)}
-              required
-            />
-            <Button type="submit" disabled={!creatingName.trim()}>
-              Criar pasta e gerar link
-            </Button>
-            <p className="footer-note">
-              Ao criar, um linkKey aleatório é gerado (hash sha256 armazenado no Firestore). O link completo é copiado
-              automaticamente.
-            </p>
-          </form>
-        </Card>
+    <AdminGuard>
+      <main>
+        <div className="container">
+          <Card
+            title="Pastas de serviço"
+            subtitle="Cadastre e gerencie pastas. Cada pasta possui um link privado para lançamentos do terceiro."
+            action={<Link href="/admin">Voltar</Link>}
+          >
+            <form className="stack" onSubmit={handleCreate}>
+              <Input
+                label="Nome da pasta"
+                placeholder="Ex.: Manutenção Linha 1"
+                value={creatingName}
+                onChange={(event) => setCreatingName(event.target.value)}
+                required
+              />
+              <Button type="submit" disabled={!creatingName.trim()}>
+                Criar pasta e gerar link
+              </Button>
+              <p className="footer-note">
+                Ao criar, um linkKey aleatório é gerado (hash sha256 armazenado no Firestore). O link completo é copiado
+                automaticamente.
+              </p>
+            </form>
+          </Card>
 
-        <Card
-          title="Pastas existentes"
-          subtitle={loading ? 'Carregando...' : hasFolders ? 'Links podem ser rotacionados a qualquer momento.' : 'Nenhuma pasta criada ainda.'}
-        >
-          {hasFolders ? (
-            <div className="list">
-              {folders.map((folder) => (
-                <div key={folder.id} className="list-item">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-                    <div>
-                      {editingId === folder.id ? (
-                        <Input
-                          value={editingName}
-                          onChange={(event) => setEditingName(event.target.value)}
-                          aria-label="Novo nome da pasta"
-                        />
-                      ) : (
-                        <strong>{folder.name}</strong>
-                      )}
-                      <div className="footer-note">
-                        ID: {folder.id} · Atualizado em {new Date(folder.updatedAt).toLocaleString('pt-BR')}
-                      </div>
-                      {folder.lastLink ? (
-                        <div className="footer-note" style={{ wordBreak: 'break-all' }}>
-                          Último link emitido: {folder.lastLink}
+          <Card
+            title="Pastas existentes"
+            subtitle={loading ? 'Carregando...' : hasFolders ? 'Links podem ser rotacionados a qualquer momento.' : 'Nenhuma pasta criada ainda.'}
+          >
+            {hasFolders ? (
+              <div className="list">
+                {folders.map((folder) => (
+                  <div key={folder.id} className="list-item">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                      <div>
+                        {editingId === folder.id ? (
+                          <Input
+                            value={editingName}
+                            onChange={(event) => setEditingName(event.target.value)}
+                            aria-label="Novo nome da pasta"
+                          />
+                        ) : (
+                          <strong>{folder.name}</strong>
+                        )}
+                        <div className="footer-note">
+                          ID: {folder.id} · Atualizado em {new Date(folder.updatedAt).toLocaleString('pt-BR')}
                         </div>
-                      ) : null}
-                      <div className="footer-note">
-                        <Link href={`/admin/pastas/${folder.id}/os`} style={{ textDecoration: 'none' }}>
-                          Gerenciar O.S. da pasta
-                        </Link>
+                        {folder.lastLink ? (
+                          <div className="footer-note" style={{ wordBreak: 'break-all' }}>
+                            Último link emitido: {folder.lastLink}
+                          </div>
+                        ) : null}
+                        <div className="footer-note">
+                          <Link href={`/admin/pastas/${folder.id}/os`} style={{ textDecoration: 'none' }}>
+                            Gerenciar O.S. da pasta
+                          </Link>
+                        </div>
                       </div>
-                    </div>
-                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                      {editingId === folder.id ? (
-                        <>
-                          <Button type="button" variant="primary" onClick={() => handleRename(folder.id)}>
-                            Salvar
-                          </Button>
-                          <Button type="button" variant="ghost" onClick={cancelEditing}>
-                            Cancelar
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          <Button type="button" variant="secondary" onClick={() => startEditing(folder)}>
-                            Renomear
-                          </Button>
-                          <Button type="button" variant="primary" onClick={() => handleCopyLink(folder.id)}>
-                            Copiar link privado
-                          </Button>
-                          <Button type="button" variant="ghost" onClick={() => handleDelete(folder.id)}>
-                            Excluir
-                          </Button>
-                        </>
-                      )}
+                      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        {editingId === folder.id ? (
+                          <>
+                            <Button type="button" variant="primary" onClick={() => handleRename(folder.id)}>
+                              Salvar
+                            </Button>
+                            <Button type="button" variant="ghost" onClick={cancelEditing}>
+                              Cancelar
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <Button type="button" variant="secondary" onClick={() => startEditing(folder)}>
+                              Renomear
+                            </Button>
+                            <Button type="button" variant="primary" onClick={() => handleCopyLink(folder.id)}>
+                              Copiar link privado
+                            </Button>
+                            <Button type="button" variant="ghost" onClick={() => handleDelete(folder.id)}>
+                              Excluir
+                            </Button>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="footer-note">Nenhuma pasta cadastrada. Crie a primeira para gerar um link privado.</p>
-          )}
-        </Card>
+                ))}
+              </div>
+            ) : (
+              <p className="footer-note">Nenhuma pasta cadastrada. Crie a primeira para gerar um link privado.</p>
+            )}
+          </Card>
 
-        {error ? <Toast type="error" message={error} /> : null}
-        {success ? <Toast type="success" message={success} /> : null}
-      </div>
-    </main>
+          {error ? <Toast type="error" message={error} /> : null}
+          {success ? <Toast type="success" message={success} /> : null}
+        </div>
+      </main>
+    </AdminGuard>
   );
 }
