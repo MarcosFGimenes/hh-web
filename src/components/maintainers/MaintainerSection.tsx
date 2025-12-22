@@ -1,16 +1,19 @@
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import type { Maintainer } from '@/types/maintainer';
+import type { MaintainerOs } from '@/types/maintainerOs';
 import { ExtraTimeChips } from './ExtraTimeChips';
 
 type MaintainerSectionProps = {
-  maintainers: Maintainer[];
+  maintainers: (Maintainer & { os?: MaintainerOs[] })[];
   canAdd: boolean;
   onAdd: () => void;
   onAddExtra: (maintainerId: string) => void;
+  onAddOs: (maintainerId: string) => void;
+  onUpdateOsTime: (maintainerId: string, osId: string, field: 'startTime' | 'endTime', value: string) => void;
 };
 
-export function MaintainerSection({ maintainers, canAdd, onAdd, onAddExtra }: MaintainerSectionProps) {
+export function MaintainerSection({ maintainers, canAdd, onAdd, onAddExtra, onAddOs, onUpdateOsTime }: MaintainerSectionProps) {
   if (!maintainers.length) {
     return (
       <Card title="Mantenedores">
@@ -46,6 +49,44 @@ export function MaintainerSection({ maintainers, canAdd, onAdd, onAddExtra }: Ma
               endTime={maintainer.endTime ?? null}
               onAddExtra={() => onAddExtra(maintainer.id)}
             />
+            <div className="public-chip-row">
+              <strong>O.S.</strong>
+              <Button type="button" variant="secondary" onClick={() => onAddOs(maintainer.id)} disabled={!canAdd}>
+                + Adicionar O.S.
+              </Button>
+            </div>
+            {(maintainer.os || []).length ? (
+              <div className="stack">
+                {(maintainer.os || []).map((os) => (
+                  <div key={os.id} className="public-chip-card">
+                    <div className="public-chip-row">
+                      <span className="pill pill-strong">#{os.osNumber}</span>
+                      <span className="pill pill-soft">{os.description}</span>
+                    </div>
+                    <div className="public-chip-row">
+                      <label className="ui-field">
+                        <span className="ui-field-label">Início</span>
+                        <input
+                          type="time"
+                          value={os.startTime || ''}
+                          onChange={(event) => onUpdateOsTime(maintainer.id, os.id, 'startTime', event.target.value)}
+                        />
+                      </label>
+                      <label className="ui-field">
+                        <span className="ui-field-label">Fim</span>
+                        <input
+                          type="time"
+                          value={os.endTime || ''}
+                          onChange={(event) => onUpdateOsTime(maintainer.id, os.id, 'endTime', event.target.value)}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="footer-note">Nenhuma O.S. adicionada para este mantenedor.</p>
+            )}
           </div>
         ))}
       </div>

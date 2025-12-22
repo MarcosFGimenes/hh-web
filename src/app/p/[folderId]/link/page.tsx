@@ -9,11 +9,12 @@ import { MaintainerSection } from '@/components/maintainers/MaintainerSection';
 import { AddTimeModal } from '@/components/maintainers/AddTimeModal';
 import { OsCardView } from '@/components/maintainers/OsCardView';
 import type { Maintainer } from '@/types/maintainer';
+import type { MaintainerOs } from '@/types/maintainerOs';
 import { normalizeTime, validateShiftPair } from '@/lib/time/base';
 
 type FolderResponse = {
   folder: { id: string; name: string; updatedAt: number };
-  maintainers: Maintainer[];
+  maintainers: (Maintainer & { os?: MaintainerOs[] })[];
   userRole: 'ADMIN' | 'THIRD';
 };
 
@@ -33,10 +34,9 @@ export default function PublicFolderPage({ params }: PageProps) {
   const canAddMaintainer = data?.userRole === 'ADMIN';
 
   const fetchJSON = async () => {
-    const response = await fetch(
-      `/api/p/folders/${folderId}/maintainers?k=${encodeURIComponent(linkKey)}`,
-      { cache: 'no-store' }
-    );
+    const response = await fetch(`/api/p/folders/${folderId}/maintainers?k=${encodeURIComponent(linkKey)}`, {
+      cache: 'no-store',
+    });
     const json = await response.json();
     if (!response.ok) {
       throw new Error(json?.error || 'Erro ao carregar dados.');
@@ -68,32 +68,38 @@ export default function PublicFolderPage({ params }: PageProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [folderId, linkKey]);
 
-  const handleAddMaintainer = () => {
+  const refetch = async () => {
+    try {
+      const response = await fetchJSON();
+      setData(response);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro ao atualizar dados.';
+      setError(message);
+    }
+  };
+
+  const handleAddMaintainer = async () => {
     if (!data || !canAddMaintainer) return;
     const name = typeof window !== 'undefined' ? window.prompt('Nome do mantenedor')?.trim() : '';
     if (!name) return;
-    const now = Date.now();
-    setData((prev) =>
-      prev
-        ? {
-            ...prev,
-            maintainers: [
-              {
-                id: `local-${now}`,
-                name,
-                startTime: null,
-                endTime: null,
-                createdAt: now,
-                updatedAt: now,
-              },
-              ...prev.maintainers,
-            ],
-          }
-        : prev
-    );
+    try {
+      const response = await fetch(`/api/p/folders/${folderId}/maintainers?k=${encodeURIComponent(linkKey)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+      const json = await response.json();
+      if (!response.ok) {
+        throw new Error(json?.error || 'Erro ao adicionar mantenedor.');
+      }
+      setData((prev) => (prev ? { ...prev, maintainers: [json.maintainer, ...prev.maintainers] } : prev));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro ao adicionar mantenedor.';
+      setError(message);
+    }
   };
 
-  const handleSaveMaintainerTime = (maintainerId: string, start: string, end: string) => {
+  const handleSaveMaintainerTime = async (maintainerId: string, start: string, end: string) => {
     if (!data) return;
     const normalizedStart = normalizeTime(start);
     const normalizedEnd = normalizeTime(end);
@@ -115,21 +121,85 @@ export default function PublicFolderPage({ params }: PageProps) {
       return;
     }
 
-    const now = Date.now();
-    setData((prev) =>
-      prev
-        ? {
-            ...prev,
-            maintainers: prev.maintainers.map((item) =>
-              item.id === maintainerId
-                ? { ...item, startTime: normalizedStart, endTime: normalizedEnd, updatedAt: now }
-                : item
-            ),
-          }
-        : prev
-    );
-    setShowAddTimeFor(null);
-    setError(null);
+    try {
+      const response = await fetch(
+        `/api/p/folders/${folderId}/maintainers/${maintainerId}/time?k=${encodeURIComponent(linkKey)}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ startTime: normalizedStart, endTime: normalizedEnd }),
+        }
+      );
+      const json = await response.json();
+      if (!response.ok) {
+        throw new Error(json?.error || 'Erro ao salvar horário.');
+      }
+      setData((prev) =>
+        prev
+          ? {
+              ...prev,
+              maintainers: prev.maintainers.map((item) => (item.id === maintainerId ? json.maintainer : item)),
+            }
+          : prev
+      );
+      setShowAddTimeFor(null);
+      setError(null);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro ao salvar horário.';
+      setError(message);
+    }
+  };
+
+  const handleAddOs = async (maintainerId: string) => {
+    if (!data || !canAddMaintainer) return;
+    const osNumber = typeof window !== 'undefined' ? window.prompt('Número da O.S.')?.trim() : '';
+    const description = typeof window !== 'undefined' ? window.prompt('Descrição da O.S.')?.trim() : '';
+    if (!osNumber || !description) return;
+
+    try {
+      const response = await fetch(
+        `/api/p/folders/${folderId}/maintainers/${maintainerId}/os?k=${encodeURIComponent(linkKey)}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ osNumber, description }),
+        }
+      );
+      const json = await response.json();
+      if (!response.ok) {
+        throw new Error(json?.error || 'Erro ao adicionar O.S.');
+      }
+      await refetch();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro ao adicionar O.S.';
+      setError(message);
+    }
+  };
+
+  const handleUpdateOsTime = async (
+    maintainerId: string,
+    osId: string,
+    field: 'startTime' | 'endTime',
+    value: string
+  ) => {
+    try {
+      const response = await fetch(
+        `/api/p/folders/${folderId}/maintainers/${maintainerId}/os/${osId}?k=${encodeURIComponent(linkKey)}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ field, value }),
+        }
+      );
+      const json = await response.json();
+      if (!response.ok) {
+        throw new Error(json?.error || 'Erro ao salvar horário da O.S.');
+      }
+      await refetch();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro ao salvar horário da O.S.';
+      setError(message);
+    }
   };
 
   const loadingSkeleton = (
@@ -176,6 +246,8 @@ export default function PublicFolderPage({ params }: PageProps) {
               canAdd={canAddMaintainer}
               onAdd={handleAddMaintainer}
               onAddExtra={(id) => setShowAddTimeFor(id)}
+              onAddOs={handleAddOs}
+              onUpdateOsTime={handleUpdateOsTime}
             />
           </div>
         ) : null}
