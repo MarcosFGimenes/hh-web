@@ -12,7 +12,12 @@ import { Toast } from '@/components/Toast';
 import type { Employee } from '@/types/employee';
 import type { ServiceOrder } from '@/types/os';
 import type { Service } from '@/types/service';
-import { computeServiceMinutes as computeServiceMinutesLib, type TimeSequence } from '@/lib/time/service';
+import {
+  computeDayTotalMinutes,
+  computeServiceMinutes as computeServiceMinutesLib,
+  validateEmployeeServicesSum,
+  type TimeSequence,
+} from '@/lib/time/service';
 
 type FolderSummary = {
   id: string;
@@ -368,6 +373,34 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
     return `${h}h ${m}m`;
   };
 
+  const minutesToTimeWithinDay = (totalMinutes: number) => {
+    if (!Number.isFinite(totalMinutes) || totalMinutes <= 0 || totalMinutes >= 24 * 60) return null;
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+  };
+
+  const resolveEmployeeDayTotal = (employee: Employee | undefined) => {
+    if (!employee || employee.totalMinutes === null) {
+      return { minutes: null, errors: ['Defina o horário total do funcionário antes de lançar serviços.'] };
+    }
+
+    if (employee.totalMinutes <= 0) {
+      return { minutes: null, errors: ['Defina o horário total do funcionário antes de lançar serviços.'] };
+    }
+
+    const endTime = minutesToTimeWithinDay(employee.totalMinutes);
+    if (endTime) {
+      const result = computeDayTotalMinutes('00:00', endTime);
+      if (!result.errors.length && result.minutes !== null) {
+        return { minutes: result.minutes, errors: [] };
+      }
+      return { minutes: employee.totalMinutes, errors: result.errors };
+    }
+
+    return { minutes: employee.totalMinutes, errors: [] };
+  };
+
   const voiceKey = (target: VoiceTarget) =>
     target.type === 'new' ? `new-${target.employeeId}` : `existing-${target.serviceId || ''}`;
 
@@ -533,8 +566,15 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
     }
 
     const employee = employees.find((emp) => emp.id === employeeId);
-    if (!employee || !employee.totalMinutes || employee.totalMinutes <= 0) {
+    const { minutes: employeeDayTotal, errors: employeeDayTotalErrors } = resolveEmployeeDayTotal(employee);
+
+    if (!employeeDayTotal || employeeDayTotal <= 0) {
       setError('Defina o horário total do funcionário antes de lançar serviços.');
+      return;
+    }
+
+    if (employeeDayTotalErrors.length) {
+      setError(employeeDayTotalErrors.join(' '));
       return;
     }
 
@@ -544,8 +584,12 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
       return;
     }
 
-    if (currentServiceTotal(employeeId) + total > employee.totalMinutes) {
-      setError('Soma dos serviços excede o horário total do funcionário.');
+    const validation = validateEmployeeServicesSum(
+      [...(services[employeeId] || []).map((item) => item.totalMinutes || 0), total],
+      employeeDayTotal
+    );
+    if (!validation.ok) {
+      setError(validation.error || 'Soma dos serviços excede o horário total do funcionário.');
       return;
     }
 
@@ -564,7 +608,10 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
         ...prev,
         [employeeId]: [data.service, ...(prev[employeeId] || [])],
       }));
-      setServiceForms((prev) => ({ ...prev, [employeeId]: { osId: '', description: '', t1In: '', t1Out: '', t2In: '', t2Out: '' } }));
+      setServiceForms((prev) => ({
+        ...prev,
+        [employeeId]: { osId: '', description: '', t1In: '', t1Out: '', t2In: '', t2Out: '' },
+      }));
       setSuccess('Salvo com sucesso.');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao criar serviço.';
@@ -574,8 +621,15 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
 
   const handleUpdateService = async (employeeId: string, service: Service) => {
     const employee = employees.find((emp) => emp.id === employeeId);
-    if (!employee || !employee.totalMinutes || employee.totalMinutes <= 0) {
+    const { minutes: employeeDayTotal, errors: employeeDayTotalErrors } = resolveEmployeeDayTotal(employee);
+
+    if (!employeeDayTotal || employeeDayTotal <= 0) {
       setError('Defina o horário total do funcionário antes de atualizar serviços.');
+      return;
+    }
+
+    if (employeeDayTotalErrors.length) {
+      setError(employeeDayTotalErrors.join(' '));
       return;
     }
 
@@ -590,9 +644,13 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
       return;
     }
 
-    const otherSum = (services[employeeId] || []).reduce((acc, item) => (item.id === service.id ? acc : acc + item.totalMinutes), 0);
-    if (otherSum + total > employee.totalMinutes) {
-      setError('Soma dos serviços excede o horário total do funcionário.');
+    const totalsWithUpdate = (services[employeeId] || []).map((item) =>
+      item.id === service.id ? total : item.totalMinutes || 0
+    );
+
+    const validation = validateEmployeeServicesSum(totalsWithUpdate, employeeDayTotal);
+    if (!validation.ok) {
+      setError(validation.error || 'Soma dos serviços excede o horário total do funcionário.');
       return;
     }
 

@@ -23,6 +23,7 @@ export default function AdminFoldersPage() {
   const [creatingName, setCreatingName] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
+  const [lastCreatedLink, setLastCreatedLink] = useState<string | null>(null);
 
   const hasFolders = useMemo(() => folders.length > 0, [folders]);
 
@@ -65,6 +66,13 @@ export default function AdminFoldersPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idToken]);
 
+  const buildPrivateLink = (folderId: string, linkKey: string) => {
+    const fallbackOrigin = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    const origin =
+      typeof window !== 'undefined' && window.location?.origin ? window.location.origin : fallbackOrigin;
+    return `${origin.replace(/\/+$/, '')}/p/${folderId}?k=${linkKey}`;
+  };
+
   useEffect(() => {
     if (error || success) {
       const timer = setTimeout(() => {
@@ -91,10 +99,11 @@ export default function AdminFoldersPage() {
         throw new Error(data.error || 'Não foi possível criar a pasta.');
       }
 
-      const link = `/p/${data.folder.id}?k=${data.linkKey}`;
+      const link = buildPrivateLink(data.folder.id, data.linkKey);
       setFolders((prev) => [{ ...data.folder, lastLink: link }, ...prev]);
       setSuccess('Pasta criada e link privado gerado.');
       setCreatingName('');
+      setLastCreatedLink(link);
       await copyLink(link);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao criar a pasta.';
@@ -160,10 +169,11 @@ export default function AdminFoldersPage() {
         throw new Error(data.error || 'Não foi possível gerar o link privado.');
       }
 
-      const link = `/p/${folderId}?k=${data.linkKey}`;
+      const link = buildPrivateLink(folderId, data.linkKey);
       await copyLink(link);
       setFolders((prev) => prev.map((folder) => (folder.id === folderId ? { ...folder, lastLink: link } : folder)));
       setSuccess('Link privado copiado para a área de transferência.');
+      setLastCreatedLink(link);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao copiar link.';
       setError(message);
@@ -179,6 +189,12 @@ export default function AdminFoldersPage() {
   const startEditing = (folder: Folder) => {
     setEditingId(folder.id);
     setEditingName(folder.name);
+  };
+
+  const handleOpenLink = (link?: string) => {
+    if (!link) return;
+    const url = link.startsWith('http') ? link : `${window.location.origin}${link}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   const cancelEditing = () => {
@@ -206,10 +222,16 @@ export default function AdminFoldersPage() {
               <Button type="submit" disabled={!creatingName.trim()}>
                 Criar pasta e gerar link
               </Button>
-              <p className="footer-note">
-                Ao criar, um linkKey aleatório é gerado (hash sha256 armazenado no Firestore). O link completo é copiado
-                automaticamente.
-              </p>
+              {lastCreatedLink ? (
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <Button type="button" variant="primary" onClick={() => handleOpenLink(lastCreatedLink)}>
+                    Abrir link gerado
+                  </Button>
+                  <Button type="button" variant="secondary" onClick={() => copyLink(lastCreatedLink)}>
+                    Copiar link
+                  </Button>
+                </div>
+              ) : null}
             </form>
           </Card>
 
@@ -263,6 +285,14 @@ export default function AdminFoldersPage() {
                             </Button>
                             <Button type="button" variant="primary" onClick={() => handleCopyLink(folder.id)}>
                               Copiar link privado
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              onClick={() => handleOpenLink(folder.lastLink)}
+                              disabled={!folder.lastLink}
+                            >
+                              Abrir link
                             </Button>
                             <Button type="button" variant="ghost" onClick={() => handleDelete(folder.id)}>
                               Excluir
