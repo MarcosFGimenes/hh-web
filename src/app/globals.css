@@ -317,27 +317,27 @@ main {
 }
 
 .auth-hero {
-  background: #0f172a;
-  color: #e2e8f0;
+  background: #f8fafc;
+  color: #0f172a;
   border-radius: 18px;
   padding: 2rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.35);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+  border: 1px solid #e2e8f0;
 }
 
 .auth-hero h1 {
   margin: 0;
   font-size: clamp(1.6rem, 1.2rem + 1vw, 2rem);
-  color: #f8fafc;
+  color: #0f172a;
 }
 
 .auth-hero p {
   margin: 0;
   line-height: 1.7;
-  color: #cbd5e1;
+  color: #475569;
 }
 
 .auth-showcase {

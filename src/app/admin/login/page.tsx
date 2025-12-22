@@ -48,29 +48,9 @@ function LoginContent() {
           <span className="chip">Acesso seguro</span>
           <h1>Portal do administrador</h1>
           <p>
-            Centralize pastas de serviço, links privados e O.S em um ambiente enxuto e direto, sem distrações.
+            Administre pastas, gere links privados e acompanhe lançamentos do terceiro em um painel único. Controle
+            acesso, cadastre O.S. e mantenha o histórico consolidado com facilidade.
           </p>
-
-          <div className="auth-showcase">
-            <Card title="Snapshot do quadro" subtitle="Visual claro para organizar entregas.">
-              <div className="kanban-preview">
-                <div className="kanban-preview-column">
-                  <div className="kanban-preview-title">Novas solicitações</div>
-                  <div className="kanban-preview-card">Criar pasta "Linha 1"</div>
-                  <div className="kanban-preview-card">Convidar fornecedor</div>
-                </div>
-                <div className="kanban-preview-column">
-                  <div className="kanban-preview-title">Em andamento</div>
-                  <div className="kanban-preview-card">Cadastrar O.S 3021</div>
-                  <div className="kanban-preview-card">Revisar horas</div>
-                </div>
-                <div className="kanban-preview-column">
-                  <div className="kanban-preview-title">Concluído</div>
-                  <div className="kanban-preview-card">Novo link privado</div>
-                </div>
-              </div>
-            </Card>
-          </div>
         </div>
 
         <div className="auth-panel">
