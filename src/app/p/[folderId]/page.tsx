@@ -36,6 +36,8 @@ type SpeechRecognitionErrorEventLike = { error: string };
 
 type VoiceTarget = { type: 'new' | 'existing'; employeeId: string; serviceId?: string };
 
+export const dynamic = 'force-dynamic';
+
 type SpeechRecognition = {
   lang: string;
   interimResults: boolean;
@@ -172,7 +174,7 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
       setError(null);
       try {
         if (!linkKey) {
-          throw new Error('Link inválido ou expirado.');
+          throw new Error('Link inválido ou expirado. Verifique se o parâmetro ?k= está presente no URL.');
         }
 
         const summary = await fetchJSON(`/api/p/folders/${folderId}/summary?k=${encodeURIComponent(linkKey)}`);
