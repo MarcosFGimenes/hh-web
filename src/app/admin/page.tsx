@@ -116,7 +116,7 @@ export default function AdminDashboardPlaceholder() {
               <p className="chip">Painel visual</p>
               <h1>Quadro do administrador</h1>
               <p className="dashboard-subtitle">
-                Consolide pastas de serviço e acompanhe o fluxo como um quadro estilo Trello.
+                Consolide pastas de serviço e acompanhe o fluxo em um painel visual.
               </p>
             </div>
             <div className="dashboard-actions">
