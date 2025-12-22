@@ -11,9 +11,7 @@
 
 body {
   margin: 0;
-  background: radial-gradient(circle at 20% 20%, #e4edff 0, transparent 30%),
-    radial-gradient(circle at 80% 0%, #ffe8d5 0, transparent 25%),
-    #f4f6fb;
+  background: #f4f6fb;
   min-height: 100vh;
 }
 
