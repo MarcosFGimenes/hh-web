@@ -116,19 +116,30 @@ export default function AdminDashboardPlaceholder() {
               <p className="chip">Painel visual</p>
               <h1>Quadro do administrador</h1>
               <p className="dashboard-subtitle">
-                Consolide pastas de serviço e acompanhe o fluxo como um quadro estilo Trello.
+                Consolide pastas de serviço e acompanhe o fluxo em um painel visual.
               </p>
             </div>
             <div className="dashboard-actions">
-              <Link href="/admin/pastas">
-                <Button variant="secondary" type="button">
-                  Gerenciar pastas
-                </Button>
-              </Link>
+              <div className="dashboard-actions-row">
+                <Link href="/admin/pastas">
+                  <Button variant="secondary" type="button">
+                    Gerenciar pastas
+                  </Button>
+                </Link>
+                {user ? (
+                  <Button variant="ghost" type="button" onClick={signOut}>
+                    Sair
+                  </Button>
+                ) : null}
+              </div>
               {user ? (
-                <Button variant="ghost" type="button" onClick={signOut}>
-                  Sair
-                </Button>
+                <div className="user-badge">
+                  <div className="user-avatar">{user.email?.slice(0, 1).toUpperCase()}</div>
+                  <div>
+                    <p className="user-name">{user.email}</p>
+                    <p className="user-meta">Administrador autenticado</p>
+                  </div>
+                </div>
               ) : null}
             </div>
           </header>
@@ -176,16 +187,6 @@ export default function AdminDashboardPlaceholder() {
               </section>
             ))}
           </div>
-
-          {user ? (
-            <div className="user-badge">
-              <div className="user-avatar">{user.email?.slice(0, 1).toUpperCase()}</div>
-              <div>
-                <p className="user-name">{user.email}</p>
-                <p className="user-meta">Administrador autenticado</p>
-              </div>
-            </div>
-          ) : null}
 
           {error ? (
             <div className="kanban-card kanban-card-muted" style={{ borderStyle: 'dashed', color: '#b91c1c' }}>

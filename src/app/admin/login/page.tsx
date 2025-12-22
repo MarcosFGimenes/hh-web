@@ -48,34 +48,13 @@ function LoginContent() {
           <span className="chip">Acesso seguro</span>
           <h1>Portal do administrador</h1>
           <p>
-            Centralize o controle de pastas de serviço, links privados e O.S em uma experiência enxuta. Entrar permite
-            gerenciar o quadro de lançamentos e convidar terceiros com segurança.
+            Administre pastas, gere links privados e acompanhe lançamentos do terceiro em um painel único. Controle
+            acesso, cadastre O.S. e mantenha o histórico consolidado com facilidade.
           </p>
-
-          <div className="auth-showcase">
-            <Card title="Snapshot do quadro" subtitle="Visual Trello-like para organizar suas entregas.">
-              <div className="kanban-preview">
-                <div className="kanban-preview-column">
-                  <div className="kanban-preview-title">Novas solicitações</div>
-                  <div className="kanban-preview-card">Criar pasta "Linha 1"</div>
-                  <div className="kanban-preview-card">Convidar fornecedor</div>
-                </div>
-                <div className="kanban-preview-column">
-                  <div className="kanban-preview-title">Em andamento</div>
-                  <div className="kanban-preview-card">Cadastrar O.S 3021</div>
-                  <div className="kanban-preview-card">Revisar horas</div>
-                </div>
-                <div className="kanban-preview-column">
-                  <div className="kanban-preview-title">Concluído</div>
-                  <div className="kanban-preview-card">Novo link privado</div>
-                </div>
-              </div>
-            </Card>
-          </div>
         </div>
 
         <div className="auth-panel">
-          <Card title="Login do administrador" subtitle="Use suas credenciais Firebase (futuro)">
+          <Card title="Login do administrador" subtitle="Acesse com suas credenciais corporativas.">
             <form className="stack" onSubmit={handleSubmit}>
               <Input
                 label="E-mail"
@@ -98,10 +77,6 @@ function LoginContent() {
               <Button type="submit" fullWidth disabled={submitting || Boolean(configError)}>
                 {submitting ? 'Entrando...' : 'Entrar'}
               </Button>
-              <p className="footer-note">
-                Nesta etapa o login já usa Firebase Authentication (email/senha). Defina as variáveis de ambiente do
-                Firebase para habilitar o fluxo real.
-              </p>
               {configError ? (
                 <p className="footer-note" style={{ color: '#b91c1c', fontWeight: 600 }}>
                   {configError}
