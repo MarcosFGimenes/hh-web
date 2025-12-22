@@ -103,7 +103,7 @@ export default function AdminDashboardPlaceholder() {
       onDragEnd={onDragEnd}
     >
       <p className="kanban-card-title">{folder.name}</p>
-      <p className="kanban-card-meta">ID: {folder.id}</p>
+      <p className="kanban-card-meta">Responsável: {folder.company || '—'}</p>
     </div>
   );
 
