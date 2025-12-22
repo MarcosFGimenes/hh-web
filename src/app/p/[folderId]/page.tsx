@@ -36,6 +36,9 @@ type SpeechRecognitionErrorEventLike = { error: string };
 
 type VoiceTarget = { type: 'new' | 'existing'; employeeId: string; serviceId?: string };
 
+// For private links we always want a fresh render (avoid static HTML without querystring)
+export const dynamic = 'force-dynamic';
+
 type SpeechRecognition = {
   lang: string;
   interimResults: boolean;
@@ -57,6 +60,10 @@ declare global {
 }
 
 export default function PublicFolderAccessPage({ params }: PageProps) {
+  // For private links we always want a fresh render (avoid static HTML without querystring)
+  // eslint-disable-next-line @next/next/no-assign-module-variable
+  export const dynamic = 'force-dynamic';
+
   const searchParams = useSearchParams();
   const folderId = params.folderId;
   const [folder, setFolder] = useState<FolderSummary | null>(null);
@@ -172,7 +179,7 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
       setError(null);
       try {
         if (!linkKey) {
-          throw new Error('Link inválido ou expirado.');
+          throw new Error('Link inválido ou expirado. Verifique se o parâmetro ?k= está presente no URL.');
         }
 
         const summary = await fetchJSON(`/api/p/folders/${folderId}/summary?k=${encodeURIComponent(linkKey)}`);
