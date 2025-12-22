@@ -4,22 +4,10 @@ import { getClientEnv } from '../env';
 
 let cachedApp: FirebaseApp | null = null;
 
-function loadClientEnv() {
-  try {
-    return getClientEnv();
-  } catch (error) {
-    console.error(
-      'Firebase client não configurado. Defina as variáveis NEXT_PUBLIC_FIREBASE_* para habilitar login do admin.',
-      error
-    );
-    return null;
-  }
-}
-
 function getFirebaseApp(): FirebaseApp | null {
   if (cachedApp) return cachedApp;
 
-  const clientEnv = loadClientEnv();
+  const clientEnv = getClientEnv();
   if (!clientEnv) return null;
 
   const app =

@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic';
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { signIn, user } = useAdminAuth();
+  const { signIn, user, configError } = useAdminAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -84,6 +84,7 @@ function LoginContent() {
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 required
+                disabled={Boolean(configError)}
               />
               <Input
                 label="Senha"
@@ -92,14 +93,20 @@ function LoginContent() {
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 required
+                disabled={Boolean(configError)}
               />
-              <Button type="submit" fullWidth disabled={submitting}>
+              <Button type="submit" fullWidth disabled={submitting || Boolean(configError)}>
                 {submitting ? 'Entrando...' : 'Entrar'}
               </Button>
               <p className="footer-note">
                 Nesta etapa o login já usa Firebase Authentication (email/senha). Defina as variáveis de ambiente do
                 Firebase para habilitar o fluxo real.
               </p>
+              {configError ? (
+                <p className="footer-note" style={{ color: '#b91c1c', fontWeight: 600 }}>
+                  {configError}
+                </p>
+              ) : null}
             </form>
           </Card>
 
