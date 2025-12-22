@@ -70,7 +70,7 @@ export default function AdminFoldersPage() {
     const fallbackOrigin = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
     const origin =
       typeof window !== 'undefined' && window.location?.origin ? window.location.origin : fallbackOrigin;
-    return `${origin.replace(/\/+$/, '')}/p/${folderId}?k=${linkKey}`;
+    return `${origin.replace(/\/+$/, '')}/p/${folderId}/link?k=${linkKey}`;
   };
 
   useEffect(() => {
