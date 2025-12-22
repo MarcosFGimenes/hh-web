@@ -39,12 +39,11 @@ export function MaintainerSection({ maintainers, canAdd, onAdd, onAddExtra }: Ma
               <span className="pill pill-soft">ID: {maintainer.id}</span>
             </div>
             <div className="public-chip-row">
-              <span className="pill pill-soft">
-                Início: {maintainer.startTime || '—'} · Fim: {maintainer.endTime || '—'}
-              </span>
+              <span className="pill pill-soft">Início: {maintainer.startTime || '—'} · Fim: {maintainer.endTime || '—'}</span>
             </div>
             <ExtraTimeChips
-              extraMinutes={maintainer.extraMinutes ?? null}
+              startTime={maintainer.startTime ?? null}
+              endTime={maintainer.endTime ?? null}
               onAddExtra={() => onAddExtra(maintainer.id)}
             />
           </div>

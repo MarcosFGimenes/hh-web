@@ -9,6 +9,7 @@ import { MaintainerSection } from '@/components/maintainers/MaintainerSection';
 import { AddTimeModal } from '@/components/maintainers/AddTimeModal';
 import { OsCardView } from '@/components/maintainers/OsCardView';
 import type { Maintainer } from '@/types/maintainer';
+import { normalizeTime, validateShiftPair } from '@/lib/time/base';
 
 type FolderResponse = {
   folder: { id: string; name: string; updatedAt: number };
@@ -67,23 +68,6 @@ export default function PublicFolderPage({ params }: PageProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [folderId, linkKey]);
 
-  const handleAddExtraTime = (minutes: number) => {
-    if (!data || !showAddTimeFor) return;
-    setData((prev) => {
-      if (!prev) return prev;
-      if (showAddTimeFor === 'new') {
-        return prev;
-      }
-      return {
-        ...prev,
-        maintainers: prev.maintainers.map((item) =>
-          item.id === showAddTimeFor ? { ...item, extraMinutes: minutes } : item
-        ),
-      };
-    });
-    setShowAddTimeFor(null);
-  };
-
   const handleAddMaintainer = () => {
     if (!data || !canAddMaintainer) return;
     const name = typeof window !== 'undefined' ? window.prompt('Nome do mantenedor')?.trim() : '';
@@ -108,6 +92,45 @@ export default function PublicFolderPage({ params }: PageProps) {
           }
         : prev
     );
+  };
+
+  const handleSaveMaintainerTime = (maintainerId: string, start: string, end: string) => {
+    if (!data) return;
+    const normalizedStart = normalizeTime(start);
+    const normalizedEnd = normalizeTime(end);
+
+    if (!normalizedStart && !normalizedEnd) {
+      setError('Informe entrada e saída do turno.');
+      return;
+    }
+
+    const validation = validateShiftPair(normalizedStart, normalizedEnd);
+    if (!validation.ok) {
+      setError(validation.message || 'Horário inválido.');
+      return;
+    }
+
+    const maintainer = data.maintainers.find((item) => item.id === maintainerId);
+    if (maintainer && maintainer.startTime === normalizedStart && maintainer.endTime === normalizedEnd) {
+      setError('Esse horário já está definido para este mantenedor.');
+      return;
+    }
+
+    const now = Date.now();
+    setData((prev) =>
+      prev
+        ? {
+            ...prev,
+            maintainers: prev.maintainers.map((item) =>
+              item.id === maintainerId
+                ? { ...item, startTime: normalizedStart, endTime: normalizedEnd, updatedAt: now }
+                : item
+            ),
+          }
+        : prev
+    );
+    setShowAddTimeFor(null);
+    setError(null);
   };
 
   const loadingSkeleton = (
@@ -162,7 +185,9 @@ export default function PublicFolderPage({ params }: PageProps) {
           <AddTimeModal
             open={Boolean(showAddTimeFor)}
             onClose={() => setShowAddTimeFor(null)}
-            onSave={handleAddExtraTime}
+            onSave={(start, end) => handleSaveMaintainerTime(showAddTimeFor, start, end)}
+            initialStart={data?.maintainers.find((item) => item.id === showAddTimeFor)?.startTime || ''}
+            initialEnd={data?.maintainers.find((item) => item.id === showAddTimeFor)?.endTime || ''}
           />
         ) : null}
 

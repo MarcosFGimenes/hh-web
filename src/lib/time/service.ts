@@ -1,3 +1,13 @@
+import {
+  compareTimes,
+  isValidTimeHHMM,
+  normalizeTime,
+  parseTimeToMinutes,
+  validateShiftPair,
+} from './base';
+
+export { parseTimeToMinutes } from './base';
+
 export type TimeSequence = {
   t1In: string;
   t1Out: string;
@@ -35,63 +45,55 @@ const formatMinutesToTime = (minutes: number) => {
   return `${h}:${m}`;
 };
 
-export const parseTimeToMinutes = (value: string): number | null => {
-  if (!/^\d{2}:\d{2}$/.test(value)) return null;
-  const [h, m] = value.split(':').map(Number);
-  if (h < 0 || h > 23 || m < 0 || m > 59) return null;
-  return h * 60 + m;
-};
-
 export const normalizeTimes = (times: TimeSequence): NormalizeResult => {
   const errors: string[] = [];
 
-  const t1InMin = parseTimeToMinutes(times.t1In);
-  const t1OutMin = parseTimeToMinutes(times.t1Out);
-  const t2InMin = times.t2In ? parseTimeToMinutes(times.t2In) : null;
-  const t2OutMin = times.t2Out ? parseTimeToMinutes(times.t2Out) : null;
+  const normalized: TimeSequence = {
+    t1In: normalizeTime(times.t1In),
+    t1Out: normalizeTime(times.t1Out),
+    t2In: normalizeTime(times.t2In),
+    t2Out: normalizeTime(times.t2Out),
+  };
 
-  if (t1InMin === null || t1OutMin === null) {
+  if (!normalized.t1In || !normalized.t1Out) {
     errors.push('Horários do primeiro período são obrigatórios e devem estar no formato HH:MM.');
   }
 
-  if (times.t2Out && t2InMin === null) {
-    errors.push('Defina T2 Entrada antes de T2 Saída.');
+  if (normalized.t1In && !isValidTimeHHMM(normalized.t1In)) {
+    errors.push('T1 Entrada inválida (use HH:MM).');
   }
 
-  if (errors.length > 0) {
-    return {
-      normalizedTimes: times,
-      errors,
-      minutesValues: { t1In: t1InMin, t1Out: t1OutMin, t2In: t2InMin, t2Out: t2OutMin },
-    };
+  if (normalized.t1Out && !isValidTimeHHMM(normalized.t1Out)) {
+    errors.push('T1 Saída inválida (use HH:MM).');
   }
 
-  let n1 = t1InMin ?? 0;
-  let n2 = t1OutMin ?? 0;
-  let n3 = t2InMin;
-  let n4 = t2OutMin;
+  const firstValidation = validateShiftPair(normalized.t1In, normalized.t1Out);
+  if (!firstValidation.ok && firstValidation.message) {
+    errors.push(firstValidation.message);
+  }
 
-  // Ajusta ordem: t1In <= t1Out <= t2In <= t2Out
-  if (n2 < n1) n2 = n1;
-  if (n3 !== null && n3 < n2) n3 = n2;
-  if (n4 !== null && n3 !== null && n4 < n3) n4 = n3;
+  if (normalized.t2In || normalized.t2Out) {
+    const secondValidation = validateShiftPair(normalized.t2In, normalized.t2Out);
+    if (!secondValidation.ok && secondValidation.message) {
+      errors.push(secondValidation.message.replace('turno', 'turno 2'));
+    }
+  }
 
-  // Validação final
-  if (n2 < n1) errors.push('T1 Saída deve ser após T1 Entrada.');
-  if (n3 !== null && n3 < n2) errors.push('T2 Entrada deve ser após T1 Saída.');
-  if (n4 !== null && n3 !== null && n4 < n3) errors.push('T2 Saída deve ser após T2 Entrada.');
+  if (!errors.length && normalized.t1In && normalized.t1Out && compareTimes(normalized.t1In, normalized.t1Out) >= 0) {
+    errors.push('T1 Entrada deve ser menor que T1 Saída.');
+  }
 
-  const normalizedTimes: TimeSequence = {
-    t1In: formatMinutesToTime(n1),
-    t1Out: formatMinutesToTime(n2),
-    t2In: n3 !== null ? formatMinutesToTime(n3) : '',
-    t2Out: n4 !== null ? formatMinutesToTime(n4) : '',
-  };
+  const t1InMin = parseTimeToMinutes(normalized.t1In);
+  const t1OutMin = parseTimeToMinutes(normalized.t1Out);
+  const t2InMin = normalized.t2In ? parseTimeToMinutes(normalized.t2In) : null;
+  const t2OutMin = normalized.t2Out ? parseTimeToMinutes(normalized.t2Out) : null;
+
+  const minutesValues = { t1In: t1InMin, t1Out: t1OutMin, t2In: t2InMin, t2Out: t2OutMin };
 
   return {
-    normalizedTimes,
+    normalizedTimes: normalized,
     errors,
-    minutesValues: { t1In: n1, t1Out: n2, t2In: n3, t2Out: n4 },
+    minutesValues,
   };
 };
 
