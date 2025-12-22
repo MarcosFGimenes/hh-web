@@ -36,6 +36,9 @@ type SpeechRecognitionErrorEventLike = { error: string };
 
 type VoiceTarget = { type: 'new' | 'existing'; employeeId: string; serviceId?: string };
 
+// For private links we always want a fresh render (avoid static HTML without querystring)
+export const dynamic = 'force-dynamic';
+
 type SpeechRecognition = {
   lang: string;
   interimResults: boolean;
@@ -57,6 +60,10 @@ declare global {
 }
 
 export default function PublicFolderAccessPage({ params }: PageProps) {
+  // For private links we always want a fresh render (avoid static HTML without querystring)
+  // eslint-disable-next-line @next/next/no-assign-module-variable
+  export const dynamic = 'force-dynamic';
+
   const searchParams = useSearchParams();
   const folderId = params.folderId;
   const [folder, setFolder] = useState<FolderSummary | null>(null);
@@ -64,6 +71,7 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [showServicesFor, setShowServicesFor] = useState<string | null>(null);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [addEmployeeOpen, setAddEmployeeOpen] = useState(false);
   const [newEmployeeName, setNewEmployeeName] = useState('');
@@ -171,7 +179,7 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
       setError(null);
       try {
         if (!linkKey) {
-          throw new Error('Link inválido ou expirado.');
+          throw new Error('Link inválido ou expirado. Verifique se o parâmetro ?k= está presente no URL.');
         }
 
         const summary = await fetchJSON(`/api/p/folders/${folderId}/summary?k=${encodeURIComponent(linkKey)}`);
@@ -678,8 +686,8 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
   };
 
   return (
-    <main>
-      <div className="container">
+    <main className="public-main">
+      <div className="container public-container">
         {error ? (
           <Card title="Link inválido ou expirado">
             <p className="footer-note">{error}</p>
@@ -688,50 +696,46 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
 
         {!error ? (
           <>
-            <Card
-              title={folder ? `Pasta: ${folder.name}` : 'Validando link...'}
-              subtitle="Acesso do terceiro via link privado"
-              action={
-                <Link href="/">
-                  <Button variant="ghost" type="button">
-                    Voltar
-                  </Button>
-                </Link>
-              }
-            >
-              {loading ? (
-                <p className="footer-note">Validando link e carregando dados...</p>
-              ) : (
-                <div className="stack">
-                  <p className="footer-note">
-                    Link válido. Informe a data para lançar os funcionários e horários do dia.
-                  </p>
-                  <Input
-                    label="Data (DD/MM/AAAA)"
+            <div className="public-hero">
+              <div>
+                <p className="chip">Link privado</p>
+                <h1 className="public-title">{folder ? folder.name : 'Validando link...'}</h1>
+                <p className="footer-note">
+                  Preencha os lançamentos do dia. Use &quot;Adicionar Funcionário&quot; e registre as O.S. dentro de cada card.
+                </p>
+              </div>
+              <div className="public-actions">
+                <label className="ui-field" style={{ minWidth: '220px' }}>
+                  <span className="ui-field-label">Data</span>
+                  <input
+                    className="ui-input"
                     type="date"
                     value={date}
                     onChange={(event) => handleChangeDate(event.target.value)}
                     required
                   />
-                  <div className="footer-note">Formato salvo: {date}</div>
-                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    <Button type="button" onClick={() => setAddEmployeeOpen(true)}>
-                      Adicionar Funcionário
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </Card>
+                </label>
+                <Button type="button" onClick={() => setAddEmployeeOpen(true)}>
+                  Adicionar Funcionário
+                </Button>
+                <Link href="/">
+                  <Button variant="ghost" type="button">
+                    Voltar
+                  </Button>
+                </Link>
+              </div>
+            </div>
 
             <Card title="Ordens de Serviço disponíveis" subtitle={loading ? 'Carregando...' : `Total: ${orders.length}`}>
               {hasOrders ? (
-                <div className="list">
+                <div className="public-chip-list">
                   {orders.map((order) => (
-                    <div key={order.id} className="list-item">
-                      <strong>{order.osCode}</strong>
-                      <div className="footer-note">
-                        TAG: {order.tag} · Equipamento: {order.machineName}
+                    <div key={order.id} className="public-chip-card">
+                      <div className="public-chip-row">
+                        <span className="pill pill-strong">{order.osCode}</span>
+                        <span className="pill pill-soft">{order.tag}</span>
                       </div>
+                      <div className="footer-note">{order.machineName}</div>
                       <div className="footer-note" style={{ lineHeight: 1.5 }}>
                         {order.description}
                       </div>
@@ -747,24 +751,31 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
 
             <Card title="Funcionários do dia" subtitle={`Data: ${date.split('-').reverse().join('/')}`}>
               {hasEmployees ? (
-                <div className="list">
+                <div className="public-employee-grid">
                   {employees.map((employee) => {
                     const newVoiceKey = voiceKey({ type: 'new', employeeId: employee.id });
                     const isRecordingNew = recordingTarget === newVoiceKey;
                     const isBusyRecording = Boolean(recordingTarget && !isRecordingNew);
 
                     return (
-                      <div key={employee.id} className="list-item" style={{ display: 'grid', gap: '0.75rem' }}>
-                        <div>
-                          <strong>{employee.name}</strong>
-                          <div className="footer-note">
-                            Atualizado em {new Date(employee.updatedAt).toLocaleString('pt-BR')}
-                          </div>
-                          <div className="footer-note">
-                            Horário geral: {employee.totalMinutes ? formatMinutes(employee.totalMinutes) : 'Defina o total do dia'}
-                          </div>
-                          <div className="footer-note">
-                            Soma dos serviços: {formatMinutes(currentServiceTotal(employee.id))}
+                      <div key={employee.id} className="public-employee-card">
+                        <div className="public-employee-head">
+                          <div className="pill pill-strong">{employee.name}</div>
+                          <div className="public-chip-row">
+                            <span className="pill pill-soft">
+                              Total:{' '}
+                              {employee.totalMinutes ? formatMinutes(employee.totalMinutes) : 'definir'}
+                            </span>
+                            <span className="pill pill-soft">
+                              Serviços: {formatMinutes(currentServiceTotal(employee.id))}
+                            </span>
+                            <button
+                              type="button"
+                              className="pill pill-action"
+                              onClick={() => setShowServicesFor((prev) => (prev === employee.id ? null : employee.id))}
+                            >
+                              + Serviço
+                            </button>
                           </div>
                         </div>
                         <Input
@@ -782,7 +793,7 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
                             )
                           }
                         />
-                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <div className="public-chip-row">
                           <Button
                             type="button"
                             onClick={() => handleUpdateMinutes(employee.id, employee.totalMinutes || 0)}
@@ -792,9 +803,9 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
                           </Button>
                         </div>
 
-                        <div className="stack">
-                          <div className="card" style={{ border: '1px dashed #cbd5e1', padding: '0.75rem', borderRadius: '10px' }}>
-                            <h4 style={{ margin: '0 0 0.5rem' }}>Novo serviço</h4>
+                        <div className={`stack ${showServicesFor && showServicesFor !== employee.id ? 'public-hidden' : ''}`}>
+                          <div className="card public-service-card">
+                            <h4 className="public-card-title">Novo serviço</h4>
                             <div className="grid">
                               <label className="ui-field">
                                 <span className="ui-field-label">O.S</span>
@@ -884,7 +895,7 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
                               const isBusyExisting = Boolean(recordingTarget && !isRecordingExisting);
 
                               return (
-                                <div key={service.id} className="card" style={{ border: '1px solid #e2e8f0', padding: '0.75rem', borderRadius: '10px' }}>
+                                <div key={service.id} className="card public-service-card">
                                   {(() => {
                                     const { minutes } = computeServiceMinutesLib({
                                       t1In: service.t1In,
@@ -893,9 +904,13 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
                                       t2Out: service.t2Out,
                                     });
                                     return (
-                                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                        <strong>Serviço</strong>
-                                        <div className="footer-note">Total: {formatMinutes(minutes ?? service.totalMinutes)}</div>
+                                      <div className="public-service-head">
+                                        <div className="public-chip-row">
+                                          <span className="pill pill-strong">Serviço</span>
+                                          <span className="pill pill-soft">
+                                            Total: {formatMinutes(minutes ?? service.totalMinutes)}
+                                          </span>
+                                        </div>
                                       </div>
                                     );
                                   })()}
