@@ -15,6 +15,7 @@ type AdminAuthContextValue = {
   user: User | null;
   loading: boolean;
   idToken: string | null;
+  configError: string | null;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
 };
@@ -25,18 +26,14 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [idToken, setIdToken] = useState<string | null>(null);
-
-  const requireClientAuth = (): Auth => {
-    const auth = getClientAuth();
-    if (!auth) {
-      throw new Error('Login do admin indisponível: configure as variáveis NEXT_PUBLIC_FIREBASE_*.');
-    }
-    return auth;
-  };
+  const [configError, setConfigError] = useState<string | null>(null);
 
   useEffect(() => {
     const auth = getClientAuth();
     if (!auth) {
+      setConfigError(
+        'Login do admin indisponível: verifique as variáveis NEXT_PUBLIC_FIREBASE_* (API key, Auth domain, Project ID, Storage bucket, Messaging sender ID e App ID).'
+      );
       setLoading(false);
       return;
     }
@@ -56,7 +53,13 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const auth = requireClientAuth();
+    const auth = getClientAuth();
+    if (!auth) {
+      const message =
+        'Login do admin indisponível: verifique as variáveis NEXT_PUBLIC_FIREBASE_* (API key, Auth domain, Project ID, Storage bucket, Messaging sender ID e App ID).';
+      setConfigError(message);
+      throw new Error(message);
+    }
     setLoading(true);
     await signInWithEmailAndPassword(auth, email, password);
     setLoading(false);
@@ -78,10 +81,11 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
       user,
       loading,
       idToken,
+      configError,
       signIn,
       signOut,
     }),
-    [user, loading, idToken]
+    [user, loading, idToken, configError]
   );
 
   return <AdminAuthContext.Provider value={value}>{children}</AdminAuthContext.Provider>;
