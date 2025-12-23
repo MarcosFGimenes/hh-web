@@ -24,7 +24,6 @@ export default function AdminFoldersPage() {
   const [creatingCompany, setCreatingCompany] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
-  const [lastCreatedLink, setLastCreatedLink] = useState<string | null>(null);
 
   const hasFolders = useMemo(() => folders.length > 0, [folders]);
 
@@ -105,7 +104,6 @@ export default function AdminFoldersPage() {
       setSuccess('Pasta criada e link privado gerado.');
       setCreatingName('');
       setCreatingCompany('');
-      setLastCreatedLink(link);
       await copyLink(link);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao criar a pasta.';
@@ -189,8 +187,6 @@ export default function AdminFoldersPage() {
           : item
       )
     );
-    setLastCreatedLink(link);
-
     return link;
   };
 
@@ -273,27 +269,12 @@ export default function AdminFoldersPage() {
                 label="Empresa responsável"
                 value={creatingCompany}
                 onChange={(event) => setCreatingCompany(event.target.value)}
-                required
               />
               <div className="admin-folders-actions">
-                <Button
-                  type="submit"
-                  disabled={!creatingName.trim() || !creatingCompany.trim()}
-                  className="ui-button-compact"
-                >
+                <Button type="submit" disabled={!creatingName.trim()} className="ui-button-compact">
                   Criar pasta e gerar link
                 </Button>
               </div>
-              {lastCreatedLink ? (
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  <Button type="button" variant="primary" onClick={() => openLink(lastCreatedLink)}>
-                    Abrir link gerado
-                  </Button>
-                  <Button type="button" variant="secondary" onClick={() => copyLink(lastCreatedLink)}>
-                    Copiar link
-                  </Button>
-                </div>
-              ) : null}
             </form>
           </Card>
 
@@ -319,11 +300,6 @@ export default function AdminFoldersPage() {
                       )}
                       <div className="footer-note">Responsável: {folder.company || '—'}</div>
                       <div className="footer-note">Atualizado em {new Date(folder.updatedAt).toLocaleString('pt-BR')}</div>
-                      {folder.lastLink ? (
-                        <div className="footer-note" style={{ wordBreak: 'break-all' }}>
-                          Último link emitido: {folder.lastLink}
-                        </div>
-                      ) : null}
                     </div>
                     <div className="admin-folder-controls">
                       {editingId === folder.id ? (

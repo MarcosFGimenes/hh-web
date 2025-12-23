@@ -286,19 +286,24 @@ export default function AdminDashboardPlaceholder() {
                 Consolide pastas de serviço e acompanhe o fluxo em um painel visual.
               </p>
             </div>
-            <div className="dashboard-actions">
-              <div className="dashboard-actions-row">
-                <Link href="/admin/pastas">
-                  <Button variant="primary" type="button">
-                    Gerenciar pastas
-                  </Button>
-                </Link>
-                <Link href="/admin/lancamentos">
-                  <Button variant="secondary" type="button">
-                    Gerenciar Lançamentos
-                  </Button>
-                </Link>
-                {user ? (
+              <div className="dashboard-actions">
+                <div className="dashboard-actions-row">
+                  <Link href="/admin/pastas">
+                    <Button variant="primary" type="button">
+                      Gerenciar pastas
+                    </Button>
+                  </Link>
+                  <Link href="/admin/os">
+                    <Button variant="secondary" type="button">
+                      Gerenciar O.S.
+                    </Button>
+                  </Link>
+                  <Link href="/admin/lancamentos">
+                    <Button variant="secondary" type="button">
+                      Gerenciar Lançamentos
+                    </Button>
+                  </Link>
+                  {user ? (
                   <Button variant="danger" type="button" onClick={signOut}>
                     Sair
                   </Button>
