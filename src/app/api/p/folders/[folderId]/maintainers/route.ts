@@ -15,7 +15,11 @@ const osCollectionRef = (folderId: string, maintainerId: string) =>
 
 function mapMaintainer(doc: FirebaseFirestore.QueryDocumentSnapshot): Maintainer {
   const data = doc.data() as Omit<Maintainer, 'id'>;
-  const base: Maintainer = { id: doc.id, ...data };
+  const createdAt = (data as { createdAt?: number }).createdAt || Date.now();
+  const date =
+    (data as { date?: string }).date ||
+    new Date(createdAt).toISOString().slice(0, 10);
+  const base: Maintainer = { id: doc.id, ...data, date, createdAt };
 
   if (!base.shifts || base.shifts.length === 0) {
     const hasLegacyShift = base.startTime && base.endTime;
@@ -35,6 +39,7 @@ export async function GET(request: Request, { params }: Params) {
     const url = new URL(request.url);
     const linkKey = url.searchParams.get('k') || '';
     const { folderId } = params;
+    const date = url.searchParams.get('date') || new Date().toISOString().slice(0, 10);
 
     const folder = await verifyLinkKey(folderId, linkKey);
     if (!folder) {
@@ -51,12 +56,14 @@ export async function GET(request: Request, { params }: Params) {
 
     const snapshot = await collectionRef(folder.id).orderBy('createdAt', 'desc').get();
     const maintainers = await Promise.all(
-      snapshot.docs.map(async (maintainerDoc) => {
-        const base = mapMaintainer(maintainerDoc);
-        const osSnapshot = await osCollectionRef(folder.id, base.id).orderBy('createdAt', 'desc').get();
-        const os = osSnapshot.docs.map(mapOs);
-        return { ...base, os };
-      })
+      snapshot.docs
+        .map(mapMaintainer)
+        .filter((item) => item.date === date)
+        .map(async (base) => {
+          const osSnapshot = await osCollectionRef(folder.id, base.id).orderBy('createdAt', 'desc').get();
+          const os = osSnapshot.docs.map(mapOs);
+          return { ...base, os };
+        })
     );
 
     return NextResponse.json({
@@ -87,13 +94,18 @@ export async function POST(request: Request, { params }: Params) {
 
     const body = await request.json();
     const name = typeof body?.name === 'string' ? body.name.trim() : '';
+    const date = typeof body?.date === 'string' ? body.date : '';
     if (!name) {
       return NextResponse.json({ error: 'Nome do mantenedor é obrigatório.' }, { status: 400 });
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return NextResponse.json({ error: 'Data do apontamento é obrigatória.' }, { status: 400 });
     }
 
     const now = Date.now();
     const docRef = await collectionRef(folder.id).add({
       name,
+      date,
       startTime: null,
       endTime: null,
       extraMinutes: null,
@@ -104,6 +116,7 @@ export async function POST(request: Request, { params }: Params) {
     const maintainer: Maintainer = {
       id: docRef.id,
       name,
+      date,
       startTime: null,
       endTime: null,
       extraMinutes: null,
