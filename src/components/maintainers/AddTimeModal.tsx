@@ -50,9 +50,8 @@ export function AddTimeModal({ open, onClose, onSave, initialStart = '', initial
       <form className="stack" onSubmit={handleSubmit}>
         <Input
           ref={firstFieldRef}
-          type="text"
+          type="tel"
           inputMode="numeric"
-          pattern="\\d{2}:\\d{2}"
           placeholder="08:00"
           value={start}
           onChange={(event) => setStart(event.target.value)}
@@ -61,9 +60,8 @@ export function AddTimeModal({ open, onClose, onSave, initialStart = '', initial
           required
         />
         <Input
-          type="text"
+          type="tel"
           inputMode="numeric"
-          pattern="\\d{2}:\\d{2}"
           placeholder="17:30"
           value={end}
           onChange={(event) => setEnd(event.target.value)}

@@ -101,26 +101,24 @@ export function MaintainerSection({ maintainers, canAdd, onAdd, onAddExtra, onAd
                     </div>
                     <div className="public-chip-row">
                       <label className="ui-field">
-                        <span className="ui-field-label">Início</span>
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          pattern="\\d{2}:\\d{2}"
-                          placeholder="08:00"
-                          value={os.startTime || ''}
-                          onChange={(event) => onUpdateOsTime(maintainer.id, os.id, 'startTime', event.target.value)}
-                        />
-                      </label>
-                      <label className="ui-field">
-                        <span className="ui-field-label">Fim</span>
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          pattern="\\d{2}:\\d{2}"
-                          placeholder="17:30"
-                          value={os.endTime || ''}
-                          onChange={(event) => onUpdateOsTime(maintainer.id, os.id, 'endTime', event.target.value)}
-                        />
+                      <span className="ui-field-label">Início</span>
+                      <input
+                        type="tel"
+                        inputMode="numeric"
+                        placeholder="08:00"
+                        value={os.startTime || ''}
+                        onChange={(event) => onUpdateOsTime(maintainer.id, os.id, 'startTime', event.target.value)}
+                      />
+                    </label>
+                    <label className="ui-field">
+                      <span className="ui-field-label">Fim</span>
+                      <input
+                        type="tel"
+                        inputMode="numeric"
+                        placeholder="17:30"
+                        value={os.endTime || ''}
+                        onChange={(event) => onUpdateOsTime(maintainer.id, os.id, 'endTime', event.target.value)}
+                      />
                       </label>
                     </div>
                   </div>
