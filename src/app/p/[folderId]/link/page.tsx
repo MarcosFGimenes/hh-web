@@ -31,7 +31,7 @@ export default function PublicFolderPage({ params }: PageProps) {
   const [showAddTimeFor, setShowAddTimeFor] = useState<string | null>(null);
 
   const linkKey = useMemo(() => searchParams.get('k') || '', [searchParams]);
-  const canAddMaintainer = data?.userRole === 'ADMIN';
+  const canAddMaintainer = data?.userRole === 'ADMIN' || data?.userRole === 'THIRD';
 
   const fetchJSON = async () => {
     const response = await fetch(`/api/p/folders/${folderId}/maintainers?k=${encodeURIComponent(linkKey)}`, {
@@ -78,15 +78,15 @@ export default function PublicFolderPage({ params }: PageProps) {
     }
   };
 
-  const handleAddMaintainer = async () => {
+  const handleAddMaintainer = async (name: string) => {
     if (!data || !canAddMaintainer) return;
-    const name = typeof window !== 'undefined' ? window.prompt('Nome do mantenedor')?.trim() : '';
-    if (!name) return;
+    const trimmedName = name.trim();
+    if (!trimmedName) return;
     try {
       const response = await fetch(`/api/p/folders/${folderId}/maintainers?k=${encodeURIComponent(linkKey)}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ name: trimmedName }),
       });
       const json = await response.json();
       if (!response.ok) {
@@ -229,14 +229,6 @@ export default function PublicFolderPage({ params }: PageProps) {
                 <h1 className="public-title">{data.folder.name}</h1>
                 <p className="dashboard-subtitle">Acesso público com token seguro</p>
               </div>
-              <Button
-                type="button"
-                onClick={() => setShowAddTimeFor('new')}
-                disabled={!canAddMaintainer}
-                aria-label="Adicionar mantenedor"
-              >
-                + Adicionar Mantenedor
-              </Button>
             </div>
 
             <OsCardView folderName={data.folder.name} updatedAt={data.folder.updatedAt} />
