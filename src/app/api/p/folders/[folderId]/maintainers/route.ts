@@ -78,12 +78,6 @@ export async function POST(request: Request, { params }: Params) {
       return NextResponse.json({ error: 'Link inválido ou expirado.' }, { status: 401 });
     }
 
-    try {
-      await getAdminFromRequest();
-    } catch {
-      return NextResponse.json({ error: 'Apenas administradores podem adicionar mantenedores.' }, { status: 401 });
-    }
-
     const body = await request.json();
     const name = typeof body?.name === 'string' ? body.name.trim() : '';
     if (!name) {
