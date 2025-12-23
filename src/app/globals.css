@@ -961,6 +961,17 @@ main {
   gap: 1rem;
 }
 
+.os-page-shell {
+  background: #f8fafc;
+  min-height: 100vh;
+  padding: 2.5rem 1.5rem 3rem;
+}
+
+.os-page-container {
+  width: min(1152px, 100%);
+  margin: 0 auto;
+}
+
 .os-page {
   gap: 1.5rem;
 }
@@ -968,9 +979,25 @@ main {
 .os-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: 1rem;
+  align-items: center;
+  gap: 1.5rem;
   flex-wrap: wrap;
+}
+
+.os-header-content {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.os-header-action {
+  display: inline-flex;
+  align-items: center;
+}
+
+.os-card {
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
 }
 
 .os-form-card .ui-card-body {
@@ -978,7 +1005,7 @@ main {
 }
 
 .os-form-grid {
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
 }
 
 .os-form-actions {
@@ -986,8 +1013,12 @@ main {
   justify-content: flex-end;
 }
 
+.os-textarea-field {
+  grid-column: 1 / -1;
+}
+
 .os-textarea-field .ui-textarea {
-  min-height: 140px;
+  min-height: 180px;
 }
 
 .os-list {
@@ -1045,8 +1076,47 @@ main {
   justify-content: flex-end;
 }
 
-.os-search {
+.os-list-card-shell .ui-card-header {
+  align-items: center;
+}
+
+.os-list-search {
   width: min(320px, 100%);
+}
+
+.os-search {
+  width: 100%;
+}
+
+.os-empty-state {
+  display: grid;
+  gap: 0.35rem;
+  justify-items: center;
+  text-align: center;
+  padding: 1.5rem 1rem;
+  color: #64748b;
+}
+
+.os-empty-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  background: #e2e8f0;
+  display: grid;
+  place-items: center;
+  font-size: 1.5rem;
+}
+
+.os-empty-title {
+  margin: 0.25rem 0 0;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.os-empty-subtitle {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #64748b;
 }
 
 @media (max-width: 640px) {
@@ -1055,9 +1125,34 @@ main {
     align-items: flex-start;
   }
 
+  .os-page-shell {
+    padding: 2rem 1rem 2.5rem;
+  }
+
   .os-actions {
     width: 100%;
     justify-content: flex-start;
+  }
+
+  .os-form-actions {
+    width: 100%;
+  }
+
+  .os-form-actions .ui-button {
+    width: 100%;
+  }
+
+  .os-list-card-shell .ui-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .os-list-card-shell .ui-card-action {
+    width: 100%;
+  }
+
+  .os-list-search {
+    width: 100%;
   }
 }
 
@@ -1115,6 +1210,10 @@ main {
 
 @media (max-width: 900px) {
   .maintainer-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .os-form-grid {
     grid-template-columns: 1fr;
   }
 }
