@@ -74,7 +74,7 @@ export function AddTimeModal({ open, onClose, onSave, initialStart = '', initial
           required
         />
         <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-          <Button type="button" variant="ghost" onClick={onClose} aria-label="Cancelar adição de horário">
+          <Button type="button" variant="outline" onClick={onClose} aria-label="Cancelar adição de horário">
             Cancelar
           </Button>
           <Button type="submit" aria-label="Salvar horário do mantenedor">

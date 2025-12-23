@@ -19,7 +19,7 @@ export default function FolderClosingPlaceholderPage({ params }: PageProps) {
           subtitle="Em breve: consolidação de serviços por período."
           action={
             <Link href={`/admin/pastas/${folderId}/os`}>
-              <Button variant="secondary" type="button">
+              <Button variant="outline" type="button">
                 Voltar
               </Button>
             </Link>

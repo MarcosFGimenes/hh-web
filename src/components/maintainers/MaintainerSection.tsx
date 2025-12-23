@@ -76,7 +76,7 @@ export function MaintainerSection({
               </Button>
               <Button
                 type="button"
-                variant="ghost"
+                variant="outline"
                 onClick={() => {
                   setShowAddForm(false);
                   setNewMaintainerName('');
@@ -127,7 +127,7 @@ export function MaintainerSection({
                       <div className="maintainer-manage-actions">
                         <Button
                           type="button"
-                          variant="ghost"
+                          variant="secondary"
                           className="ui-button-compact"
                           aria-label={`Editar ${maintainer.name}`}
                           onClick={() => onEdit?.(maintainer.id, maintainer.name)}
@@ -136,8 +136,8 @@ export function MaintainerSection({
                         </Button>
                         <Button
                           type="button"
-                          variant="ghost"
-                          className="ui-button-compact ui-button-danger"
+                          variant="danger"
+                          className="ui-button-compact"
                           aria-label={`Excluir ${maintainer.name}`}
                           onClick={() => onDelete?.(maintainer.id, maintainer.name)}
                         >

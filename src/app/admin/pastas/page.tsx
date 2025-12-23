@@ -254,7 +254,7 @@ export default function AdminFoldersPage() {
             subtitle="Cadastre e gerencie pastas. Cada pasta possui um link privado para lançamentos do terceiro."
             action={
               <Link href="/admin">
-                <Button variant="primary" type="button" className="ui-button-dark-blue">
+                <Button variant="outline" type="button">
                   Voltar
                 </Button>
               </Link>
@@ -331,7 +331,7 @@ export default function AdminFoldersPage() {
                           <Button type="button" variant="primary" onClick={() => handleRename(folder.id)}>
                             Salvar
                           </Button>
-                          <Button type="button" variant="ghost" onClick={cancelEditing}>
+                          <Button type="button" variant="outline" onClick={cancelEditing}>
                             Cancelar
                           </Button>
                         </>
@@ -341,17 +341,15 @@ export default function AdminFoldersPage() {
                             Renomear
                           </Button>
                           <Link href={`/admin/pastas/${folder.id}/os`}>
-                            <Button type="button" variant="secondary" className="ui-button-dark">
-                              Gerenciar O.S.
-                            </Button>
-                          </Link>
+                          <Button type="button" variant="secondary">Gerenciar O.S.</Button>
+                        </Link>
                           <Button type="button" variant="primary" onClick={() => handleCopyLink(folder.id)}>
                             Copiar link
                           </Button>
                           <Button type="button" variant="secondary" onClick={() => handleOpenFolderLink(folder.id)}>
                             Abrir link
                           </Button>
-                          <Button type="button" variant="ghost" className="ui-button-danger" onClick={() => handleDelete(folder.id)}>
+                          <Button type="button" variant="danger" onClick={() => handleDelete(folder.id)}>
                             Excluir
                           </Button>
                         </>
