@@ -240,11 +240,13 @@ export default function AdminFoldersPage() {
   return (
     <AdminGuard>
       <main>
-        <div className="container">
+        <div className="container admin-folders-page">
           <Card
             title="Pastas de serviço"
             subtitle="Cadastre e gerencie pastas. Cada pasta possui um link privado para lançamentos do terceiro."
             action={<Link href="/admin">Voltar</Link>}
+            className="admin-folders-card"
+            bodyClassName="stack"
           >
             <form className="stack" onSubmit={handleCreate}>
               <Input
@@ -261,9 +263,15 @@ export default function AdminFoldersPage() {
                 onChange={(event) => setCreatingCompany(event.target.value)}
                 required
               />
-              <Button type="submit" disabled={!creatingName.trim() || !creatingCompany.trim()}>
-                Criar pasta e gerar link
-              </Button>
+              <div className="admin-folders-actions">
+                <Button
+                  type="submit"
+                  disabled={!creatingName.trim() || !creatingCompany.trim()}
+                  className="ui-button-compact"
+                >
+                  Criar pasta e gerar link
+                </Button>
+              </div>
               {lastCreatedLink ? (
                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                   <Button type="button" variant="primary" onClick={() => openLink(lastCreatedLink)}>
@@ -280,13 +288,15 @@ export default function AdminFoldersPage() {
           <Card
             title="Pastas existentes"
             subtitle={loading ? 'Carregando...' : hasFolders ? 'Links podem ser rotacionados a qualquer momento.' : 'Nenhuma pasta criada ainda.'}
+            className="admin-folders-card"
+            bodyClassName="stack"
           >
             {hasFolders ? (
               <div className="list">
                 {folders.map((folder) => (
                   <div key={folder.id} className="list-item">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-                      <div>
+                    <div className="admin-folder-row">
+                      <div className="admin-folder-details">
                         {editingId === folder.id ? (
                           <Input
                             value={editingName}
@@ -303,13 +313,15 @@ export default function AdminFoldersPage() {
                             Último link emitido: {folder.lastLink}
                           </div>
                         ) : null}
-                        <div className="footer-note">
-                          <Link href={`/admin/pastas/${folder.id}/os`} style={{ textDecoration: 'none' }}>
-                            Gerenciar O.S. da pasta
+                        <div className="admin-folder-actions">
+                          <Link href={`/admin/pastas/${folder.id}/os`}>
+                            <Button type="button" variant="secondary" className="ui-button-dark">
+                              Gerenciar O.S.
+                            </Button>
                           </Link>
                         </div>
                       </div>
-                      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <div className="admin-folder-controls">
                         {editingId === folder.id ? (
                           <>
                             <Button type="button" variant="primary" onClick={() => handleRename(folder.id)}>
