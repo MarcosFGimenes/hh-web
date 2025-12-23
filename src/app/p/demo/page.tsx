@@ -31,10 +31,10 @@ export default function DemoThirdPartyPage() {
         >
           <form className="stack" onSubmit={handleLaunch}>
             <Input label="Data" type="date" required />
-            <Input label="Funcionário" placeholder="Nome completo" required />
-            <Input label="Horário total do dia" placeholder="08:00" required />
-            <Input label="O.S selecionada" placeholder="TAG / Máquina / Descrição" required />
-            <Button type="submit">Salvar lançamento (placeholder)</Button>
+            <Input label="Funcionário" required />
+            <Input label="Horário total do dia" required />
+            <Input label="O.S selecionada" required />
+            <Button type="submit">Salvar lançamento</Button>
             <p className="footer-note">
               Este é um placeholder para o fluxo do terceiro. Validações de horário, assinatura digital e upload/voz
               serão adicionados nas próximas etapas.
@@ -45,11 +45,7 @@ export default function DemoThirdPartyPage() {
         {showToast ? <Toast type="success" message="Lançamento salvo (mock)." /> : null}
 
         <Modal title="O.S disponíveis" open={showModal} onClose={() => setShowModal(false)}>
-          <div className="list">
-            <div className="list-item">TAG 1001 — Bomba de água — Revisão</div>
-            <div className="list-item">TAG 2002 — Compressor — Troca de filtro</div>
-            <div className="list-item">TAG 3003 — Esteira — Lubrificação</div>
-          </div>
+          <p className="footer-note">Nenhuma O.S. cadastrada para demonstração.</p>
         </Modal>
       </div>
     </main>

@@ -59,7 +59,6 @@ function LoginContent() {
               <Input
                 label="E-mail"
                 type="email"
-                placeholder="admin@empresa.com"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 required
@@ -68,7 +67,6 @@ function LoginContent() {
               <Input
                 label="Senha"
                 type="password"
-                placeholder="••••••••"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 required
