@@ -577,13 +577,10 @@ main {
 }
 
 .os-modal-form {
-  display: grid;
-  gap: 1rem;
-}
-
-.os-modal-actions {
-  justify-content: space-between;
-  flex-wrap: wrap;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 0;
 }
 
 .os-intervals-head {
@@ -603,6 +600,49 @@ main {
 .os-remove-button {
   min-width: 0;
   padding: 0.45rem 0.75rem;
+}
+
+.ui-modal.os-modal {
+  max-height: 85vh;
+  overflow: hidden;
+}
+
+.ui-modal-body.os-modal-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.os-modal-scroll {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-height: 0;
+  padding-right: 0.2rem;
+}
+
+.os-modal-footer {
+  position: sticky;
+  bottom: 0;
+  background: #ffffff;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+@media (max-width: 640px) {
+  .os-modal-footer {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .os-modal-footer .ui-button {
+    width: 100%;
+  }
 }
 
 .form-error {
