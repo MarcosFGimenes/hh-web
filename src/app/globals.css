@@ -175,6 +175,10 @@ main {
   flex-wrap: wrap;
 }
 
+.public-chip-card {
+  width: 100%;
+}
+
 .public-chip-list {
   display: grid;
   gap: 0.75rem;
@@ -444,6 +448,32 @@ main {
   .container {
     padding: 1.5rem 1.25rem;
     border-radius: 14px;
+  }
+
+  .public-main {
+    padding: 1rem 0.75rem 1.5rem;
+  }
+
+  .public-hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .public-actions {
+    width: 100%;
+    align-items: flex-start;
+  }
+
+  .public-actions .ui-field {
+    width: 100%;
+  }
+
+  .public-chip-card {
+    padding: 0.75rem;
+  }
+
+  .maintainer-add-footer {
+    justify-content: center;
   }
 }
 

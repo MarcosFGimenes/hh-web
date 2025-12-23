@@ -1,4 +1,3 @@
-import { FieldPath } from 'firebase-admin/firestore';
 import { NextResponse } from 'next/server';
 import { getAdminFromRequest } from '@/lib/auth/getAdminToken';
 import { getAdminDb } from '@/lib/firebase/admin';
@@ -31,24 +30,29 @@ export async function GET(_request: Request, { params }: Params) {
     const osMap = new Map<string, ServiceOrder>();
     osSnapshot.docs.forEach((doc) => osMap.set(doc.id, mapOs(doc)));
 
-    const daysSnapshot = await folderRef(folderId)
-      .collection('days')
-      .orderBy(FieldPath.documentId(), 'desc')
-      .get();
+    const daysSnapshot = await folderRef(folderId).collection('days').get();
+    const dayDocs = [...daysSnapshot.docs].sort((a, b) => b.id.localeCompare(a.id));
 
     const entries = await Promise.all(
-      daysSnapshot.docs.map(async (dayDoc) => {
+      dayDocs.map(async (dayDoc) => {
         const date = dayDoc.id;
         const dayData = dayDoc.data() || {};
 
-        const employeesSnapshot = await dayDoc.ref.collection('employees').orderBy('createdAt', 'desc').get();
+        const employeesSnapshot = await dayDoc.ref.collection('employees').get();
+        const employeeDocs = [...employeesSnapshot.docs].sort(
+          (a, b) => ((b.data()?.createdAt as number) || 0) - ((a.data()?.createdAt as number) || 0)
+        );
 
         const employees = await Promise.all(
-          employeesSnapshot.docs.map(async (employeeDoc) => {
+          employeeDocs.map(async (employeeDoc) => {
             const employeeData = employeeDoc.data() as Omit<Employee, 'id'>;
 
-            const servicesSnapshot = await employeeDoc.ref.collection('services').orderBy('createdAt', 'desc').get();
-            const services = servicesSnapshot.docs.map((serviceDoc) => {
+            const servicesSnapshot = await employeeDoc.ref.collection('services').get();
+            const services = [...servicesSnapshot.docs]
+              .sort(
+                (a, b) => ((b.data()?.createdAt as number) || 0) - ((a.data()?.createdAt as number) || 0)
+              )
+              .map((serviceDoc) => {
               const serviceData = serviceDoc.data() as Omit<Service, 'id'> & { osId: string };
               const os = osMap.get(serviceData.osId);
               return {

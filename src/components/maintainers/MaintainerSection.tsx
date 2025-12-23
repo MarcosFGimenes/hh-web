@@ -103,7 +103,10 @@ export function MaintainerSection({ maintainers, canAdd, onAdd, onAddExtra, onAd
                       <label className="ui-field">
                         <span className="ui-field-label">Início</span>
                         <input
-                          type="time"
+                          type="text"
+                          inputMode="numeric"
+                          pattern="\\d{2}:\\d{2}"
+                          placeholder="08:00"
                           value={os.startTime || ''}
                           onChange={(event) => onUpdateOsTime(maintainer.id, os.id, 'startTime', event.target.value)}
                         />
@@ -111,7 +114,10 @@ export function MaintainerSection({ maintainers, canAdd, onAdd, onAddExtra, onAd
                       <label className="ui-field">
                         <span className="ui-field-label">Fim</span>
                         <input
-                          type="time"
+                          type="text"
+                          inputMode="numeric"
+                          pattern="\\d{2}:\\d{2}"
+                          placeholder="17:30"
                           value={os.endTime || ''}
                           onChange={(event) => onUpdateOsTime(maintainer.id, os.id, 'endTime', event.target.value)}
                         />
