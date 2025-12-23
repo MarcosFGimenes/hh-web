@@ -50,10 +50,10 @@ export function MaintainerSection({
   return (
     <Card
       title="Mantenedores"
-      subtitle={`Total: ${maintainers.length}`}
       action={
-        canManage ? (
-          showAddForm ? null : (
+        <div className="maintainer-head-actions">
+          <span className="maintainer-count">Total: {maintainers.length}</span>
+          {canManage && !showAddForm ? (
             <Button
               type="button"
               onClick={() => setShowAddForm(true)}
@@ -62,8 +62,8 @@ export function MaintainerSection({
             >
               + Adicionar Mantenedor
             </Button>
-          )
-        ) : null
+          ) : null}
+        </div>
       }
       className="maintainer-card-shell"
     >
@@ -101,12 +101,16 @@ export function MaintainerSection({
             {maintainers.map((maintainer) => (
               <div key={maintainer.id} className="maintainer-card">
                 <div className="maintainer-card-header">
-                  <div className="maintainer-avatar" aria-hidden="true">
-                    {maintainer.name.slice(0, 1).toUpperCase()}
-                  </div>
-                  <div className="maintainer-meta">
-                    <p className="maintainer-name">{maintainer.name}</p>
-                    <p className="footer-note">Atualizado em {new Date(maintainer.updatedAt || Date.now()).toLocaleString('pt-BR')}</p>
+                  <div className="maintainer-person">
+                    <div className="maintainer-avatar" aria-hidden="true">
+                      {maintainer.name.slice(0, 1).toUpperCase()}
+                    </div>
+                    <div className="maintainer-meta">
+                      <p className="maintainer-name">{maintainer.name}</p>
+                      <p className="maintainer-updated">
+                        Atualizado em {new Date(maintainer.updatedAt || Date.now()).toLocaleString('pt-BR')}
+                      </p>
+                    </div>
                   </div>
                   <div className="maintainer-actions">
                     <Button
@@ -196,7 +200,7 @@ export function MaintainerSection({
                     })}
                   </div>
                 ) : (
-                  <p className="footer-note">Nenhuma O.S. adicionada para este mantenedor.</p>
+                  <p className="maintainer-empty">Nenhuma O.S. adicionada.</p>
                 )}
               </div>
             ))}

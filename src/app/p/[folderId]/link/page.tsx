@@ -7,7 +7,6 @@ import { Card } from '@/components/Card';
 import { Toast } from '@/components/Toast';
 import { MaintainerSection } from '@/components/maintainers/MaintainerSection';
 import { AddTimeModal } from '@/components/maintainers/AddTimeModal';
-import { OsCardView } from '@/components/maintainers/OsCardView';
 import { AddOsModal } from '@/components/maintainers/AddOsModal';
 import { Input } from '@/components/Input';
 import { Modal } from '@/components/Modal';
@@ -362,31 +361,41 @@ export default function PublicFolderPage({ params }: PageProps) {
         {!loading && !error && data ? (
           <div className="stack public-grid">
             <Card className="public-header-card" bodyClassName="public-header-body">
-              <div>
+              <div className="public-header-text">
                 <p className="chip chip-soft">Link do serviço</p>
-                <h1 className="public-title">{data.folder.name}</h1>
-                <p className="dashboard-subtitle">Acesso público protegido · mantenedores e apontamentos.</p>
+                <div className="public-header-title">
+                  <h1 className="public-title">{data.folder.name}</h1>
+                  <p className="dashboard-subtitle">
+                    Acesso público protegido • mantenedores e apontamentos.
+                  </p>
+                </div>
               </div>
               <div className="public-header-meta">
-                <p className="footer-note">Atualizado em {new Date(data.folder.updatedAt).toLocaleString('pt-BR')}</p>
+                <p className="public-header-updated">
+                  Atualizado em {new Date(data.folder.updatedAt).toLocaleString('pt-BR')}
+                </p>
                 <span className="pill pill-soft">{canManageMaintainers ? 'PCM (admin)' : 'Terceiro'}</span>
               </div>
             </Card>
 
-            <Card className="public-date-card" bodyClassName="public-date-body">
-              <Input
-                type="date"
-                label="Data do apontamento"
-                required
-                value={selectedDate}
-                onChange={(event) => {
-                  if (!event.target.value) return;
-                  setSelectedDate(event.target.value);
-                }}
-              />
+            <Card className="public-date-card" bodyClassName="public-date-toolbar">
+              <div className="public-date-copy">
+                <p className="public-date-title">Data do apontamento</p>
+                <p className="public-date-hint">Selecione a data do lançamento.</p>
+              </div>
+              <div className="public-date-input">
+                <Input
+                  type="date"
+                  required
+                  value={selectedDate}
+                  className="ui-input-compact"
+                  onChange={(event) => {
+                    if (!event.target.value) return;
+                    setSelectedDate(event.target.value);
+                  }}
+                />
+              </div>
             </Card>
-
-            <OsCardView folderName={data.folder.name} updatedAt={data.folder.updatedAt} />
 
             <MaintainerSection
               maintainers={data.maintainers}
