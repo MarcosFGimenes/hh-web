@@ -219,27 +219,31 @@ main {
 
 .public-date-card .ui-card-body {
   padding: 0.75rem 1rem;
+  gap: 0.35rem;
 }
 
 .public-date-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.75rem;
   flex-wrap: wrap;
 }
 
 .public-date-copy {
   display: grid;
   gap: 0.15rem;
+  min-width: 180px;
+  flex: 1 1 auto;
 }
 
 .public-date-actions {
   display: flex;
-  align-items: center;
-  gap: 0.65rem;
+  align-items: stretch;
+  gap: 0.5rem;
+  flex: 1 1 320px;
   flex-wrap: wrap;
-  justify-content: flex-end;
+  justify-content: flex-start;
 }
 
 .public-date-title {
@@ -257,7 +261,25 @@ main {
 .public-date-input {
   min-width: 220px;
   width: 100%;
-  max-width: 320px;
+  max-width: 260px;
+  flex: 0 1 260px;
+}
+
+.public-date-add-button {
+  white-space: nowrap;
+  min-height: 2.65rem;
+  padding: 0.6rem 1rem;
+}
+
+@media (min-width: 900px) {
+  .public-date-toolbar {
+    flex-wrap: nowrap;
+  }
+
+  .public-date-actions {
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+  }
 }
 
 .public-chip-card {
@@ -444,6 +466,28 @@ main {
   gap: 0.5rem;
 }
 
+.modal-edit-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.modal-edit-options {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.modal-edit-label {
+  margin: 0;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.modal-edit-grid {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
 .pill {
   display: inline-flex;
   align-items: center;
@@ -532,6 +576,16 @@ main {
   justify-content: flex-start;
 }
 
+.os-modal-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.os-modal-actions {
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
 .os-intervals-head {
   display: flex;
   align-items: center;
@@ -542,8 +596,13 @@ main {
 .os-interval-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) auto;
-  gap: 0.5rem;
+  gap: 0.6rem;
   align-items: end;
+}
+
+.os-remove-button {
+  min-width: 0;
+  padding: 0.45rem 0.75rem;
 }
 
 .form-error {
@@ -902,6 +961,17 @@ main {
   gap: 1rem;
 }
 
+.os-page-shell {
+  background: #f8fafc;
+  min-height: 100vh;
+  padding: 2.5rem 1.5rem 3rem;
+}
+
+.os-page-container {
+  width: min(1152px, 100%);
+  margin: 0 auto;
+}
+
 .os-page {
   gap: 1.5rem;
 }
@@ -909,9 +979,25 @@ main {
 .os-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: 1rem;
+  align-items: center;
+  gap: 1.5rem;
   flex-wrap: wrap;
+}
+
+.os-header-content {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.os-header-action {
+  display: inline-flex;
+  align-items: center;
+}
+
+.os-card {
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
 }
 
 .os-form-card .ui-card-body {
@@ -919,7 +1005,7 @@ main {
 }
 
 .os-form-grid {
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
 }
 
 .os-form-actions {
@@ -927,8 +1013,12 @@ main {
   justify-content: flex-end;
 }
 
+.os-textarea-field {
+  grid-column: 1 / -1;
+}
+
 .os-textarea-field .ui-textarea {
-  min-height: 140px;
+  min-height: 180px;
 }
 
 .os-list {
@@ -986,8 +1076,47 @@ main {
   justify-content: flex-end;
 }
 
-.os-search {
+.os-list-card-shell .ui-card-header {
+  align-items: center;
+}
+
+.os-list-search {
   width: min(320px, 100%);
+}
+
+.os-search {
+  width: 100%;
+}
+
+.os-empty-state {
+  display: grid;
+  gap: 0.35rem;
+  justify-items: center;
+  text-align: center;
+  padding: 1.5rem 1rem;
+  color: #64748b;
+}
+
+.os-empty-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  background: #e2e8f0;
+  display: grid;
+  place-items: center;
+  font-size: 1.5rem;
+}
+
+.os-empty-title {
+  margin: 0.25rem 0 0;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.os-empty-subtitle {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #64748b;
 }
 
 @media (max-width: 640px) {
@@ -996,9 +1125,34 @@ main {
     align-items: flex-start;
   }
 
+  .os-page-shell {
+    padding: 2rem 1rem 2.5rem;
+  }
+
   .os-actions {
     width: 100%;
     justify-content: flex-start;
+  }
+
+  .os-form-actions {
+    width: 100%;
+  }
+
+  .os-form-actions .ui-button {
+    width: 100%;
+  }
+
+  .os-list-card-shell .ui-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .os-list-card-shell .ui-card-action {
+    width: 100%;
+  }
+
+  .os-list-search {
+    width: 100%;
   }
 }
 
@@ -1056,6 +1210,10 @@ main {
 
 @media (max-width: 900px) {
   .maintainer-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .os-form-grid {
     grid-template-columns: 1fr;
   }
 }

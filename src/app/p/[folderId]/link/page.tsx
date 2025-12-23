@@ -30,6 +30,8 @@ type ManageMaintainerModalProps = {
   confirmVariant?: 'primary' | 'danger';
   onClose: () => void;
   onSubmit: (name: string) => Promise<void> | void;
+  onOpenTime?: () => void;
+  onOpenOs?: () => void;
 };
 
 function ManageMaintainerModal({
@@ -40,6 +42,8 @@ function ManageMaintainerModal({
   confirmVariant = 'primary',
   onClose,
   onSubmit,
+  onOpenTime,
+  onOpenOs,
 }: ManageMaintainerModalProps) {
   const [name, setName] = useState(initialName);
 
@@ -50,7 +54,7 @@ function ManageMaintainerModal({
   return (
     <Modal title={title} open={open} onClose={onClose}>
       <form
-        className="stack"
+        className="stack modal-edit-form"
         onSubmit={async (event) => {
           event.preventDefault();
           await onSubmit(name);
@@ -63,6 +67,35 @@ function ManageMaintainerModal({
           required
           disabled={confirmVariant === 'danger'}
         />
+
+        <div className="modal-edit-options">
+          <p className="modal-edit-label">Outras opções</p>
+          <div className="modal-edit-grid">
+            <Button
+              type="button"
+              variant="secondary"
+              className="ui-button-compact"
+              onClick={() => {
+                onOpenTime?.();
+                onClose();
+              }}
+            >
+              Editar horários
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              className="ui-button-compact"
+              onClick={() => {
+                onOpenOs?.();
+                onClose();
+              }}
+            >
+              Editar O.S.
+            </Button>
+          </div>
+        </div>
+
         <div className="modal-actions">
           <Button type="button" variant="outline" onClick={onClose} aria-label="Cancelar">
             Cancelar
@@ -397,7 +430,7 @@ export default function PublicFolderPage({ params }: PageProps) {
                 </div>
                 <Button
                   type="button"
-                  className="ui-button-compact"
+                  className="ui-button-compact public-date-add-button"
                   onClick={() => setAddMaintainerTrigger((value) => value + 1)}
                 >
                   + Adicionar mantenedor
@@ -478,6 +511,20 @@ export default function PublicFolderPage({ params }: PageProps) {
           title="Editar mantenedor"
           open={Boolean(editMaintainer)}
           initialName={editMaintainer?.name || ''}
+          onOpenTime={
+            editMaintainer
+              ? () => {
+                  setShowAddTimeFor(editMaintainer.id);
+                }
+              : undefined
+          }
+          onOpenOs={
+            editMaintainer
+              ? () => {
+                  setShowAddOsFor(editMaintainer.id);
+                }
+              : undefined
+          }
           onClose={() => setEditMaintainer(null)}
           onSubmit={async (name) => {
             if (!editMaintainer) return;
