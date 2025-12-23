@@ -63,14 +63,14 @@ function ManageMaintainerModal({
           disabled={confirmVariant === 'danger'}
         />
         <div className="modal-actions">
-          <Button type="button" variant="ghost" onClick={onClose} aria-label="Cancelar">
+          <Button type="button" variant="outline" onClick={onClose} aria-label="Cancelar">
             Cancelar
           </Button>
           <Button
             type="submit"
             aria-label={confirmLabel}
-            className={`ui-button-compact${confirmVariant === 'danger' ? ' ui-button-danger' : ''}`}
-            variant={confirmVariant === 'danger' ? 'ghost' : 'primary'}
+            className="ui-button-compact"
+            variant={confirmVariant === 'danger' ? 'danger' : 'primary'}
           >
             {confirmLabel}
           </Button>

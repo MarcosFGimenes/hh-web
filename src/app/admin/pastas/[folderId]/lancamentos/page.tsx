@@ -105,7 +105,7 @@ export default function FolderEntriesPage() {
               {loading ? 'Atualizando...' : 'Atualizar'}
             </Button>
             <Link href="/admin">
-              <Button variant="ghost" type="button">
+              <Button variant="outline" type="button">
                 Voltar ao dashboard
               </Button>
             </Link>

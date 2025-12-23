@@ -778,7 +778,7 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
                   Adicionar Funcionário
                 </Button>
                 <Link href="/">
-                  <Button variant="ghost" type="button">
+                  <Button variant="outline" type="button">
                     Voltar
                   </Button>
                 </Link>
@@ -1057,7 +1057,7 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
                                     <Button type="button" onClick={() => handleUpdateService(employee.id, service)}>
                                       Atualizar
                                     </Button>
-                                    <Button type="button" variant="ghost" onClick={() => handleDeleteService(employee.id, service.id)}>
+                                    <Button type="button" variant="danger" onClick={() => handleDeleteService(employee.id, service.id)}>
                                       Excluir
                                     </Button>
                                   </div>
@@ -1114,13 +1114,13 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
                     />
                   </div>
                   <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    <Button type="button" variant="ghost" onClick={clearSignatureCanvas} disabled={savingSignature}>
+                    <Button type="button" variant="outline" onClick={clearSignatureCanvas} disabled={savingSignature}>
                       Limpar
                     </Button>
                     {replaceSignature && signature.url ? (
                       <Button
                         type="button"
-                        variant="ghost"
+                        variant="outline"
                         onClick={() => {
                           setReplaceSignature(false);
                           setHasSignatureDrawing(false);
@@ -1166,7 +1166,7 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
             armazenamento, mas o dia passará a exibir somente a nova assinatura.
           </p>
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-            <Button type="button" variant="ghost" onClick={() => setConfirmReplaceOpen(false)}>
+            <Button type="button" variant="outline" onClick={() => setConfirmReplaceOpen(false)}>
               Cancelar
             </Button>
             <Button
