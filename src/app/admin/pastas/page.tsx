@@ -244,7 +244,13 @@ export default function AdminFoldersPage() {
           <Card
             title="Pastas de serviço"
             subtitle="Cadastre e gerencie pastas. Cada pasta possui um link privado para lançamentos do terceiro."
-            action={<Link href="/admin">Voltar</Link>}
+            action={
+              <Link href="/admin">
+                <Button variant="primary" type="button" className="ui-button-dark-blue">
+                  Voltar
+                </Button>
+              </Link>
+            }
             className="admin-folders-card"
             bodyClassName="stack"
           >
@@ -294,64 +300,56 @@ export default function AdminFoldersPage() {
             {hasFolders ? (
               <div className="list">
                 {folders.map((folder) => (
-                  <div key={folder.id} className="list-item">
-                    <div className="admin-folder-row">
-                      <div className="admin-folder-details">
-                        {editingId === folder.id ? (
-                          <Input
-                            value={editingName}
-                            onChange={(event) => setEditingName(event.target.value)}
-                            aria-label="Novo nome da pasta"
-                          />
-                        ) : (
-                          <strong>{folder.name}</strong>
-                        )}
-                        <div className="footer-note">Responsável: {folder.company || '—'}</div>
-                        <div className="footer-note">Atualizado em {new Date(folder.updatedAt).toLocaleString('pt-BR')}</div>
-                        {folder.lastLink ? (
-                          <div className="footer-note" style={{ wordBreak: 'break-all' }}>
-                            Último link emitido: {folder.lastLink}
-                          </div>
-                        ) : null}
-                        <div className="admin-folder-actions">
+                  <div key={folder.id} className="list-item admin-folder-item">
+                    <div className="admin-folder-details">
+                      {editingId === folder.id ? (
+                        <Input
+                          value={editingName}
+                          onChange={(event) => setEditingName(event.target.value)}
+                          aria-label="Novo nome da pasta"
+                        />
+                      ) : (
+                        <strong>{folder.name}</strong>
+                      )}
+                      <div className="footer-note">Responsável: {folder.company || '—'}</div>
+                      <div className="footer-note">Atualizado em {new Date(folder.updatedAt).toLocaleString('pt-BR')}</div>
+                      {folder.lastLink ? (
+                        <div className="footer-note" style={{ wordBreak: 'break-all' }}>
+                          Último link emitido: {folder.lastLink}
+                        </div>
+                      ) : null}
+                    </div>
+                    <div className="admin-folder-controls">
+                      {editingId === folder.id ? (
+                        <>
+                          <Button type="button" variant="primary" onClick={() => handleRename(folder.id)}>
+                            Salvar
+                          </Button>
+                          <Button type="button" variant="ghost" onClick={cancelEditing}>
+                            Cancelar
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button type="button" variant="secondary" onClick={() => startEditing(folder)}>
+                            Renomear
+                          </Button>
                           <Link href={`/admin/pastas/${folder.id}/os`}>
                             <Button type="button" variant="secondary" className="ui-button-dark">
                               Gerenciar O.S.
                             </Button>
                           </Link>
-                        </div>
-                      </div>
-                      <div className="admin-folder-controls">
-                        {editingId === folder.id ? (
-                          <>
-                            <Button type="button" variant="primary" onClick={() => handleRename(folder.id)}>
-                              Salvar
-                            </Button>
-                            <Button type="button" variant="ghost" onClick={cancelEditing}>
-                              Cancelar
-                            </Button>
-                          </>
-                        ) : (
-                          <>
-                            <Button type="button" variant="secondary" onClick={() => startEditing(folder)}>
-                              Renomear
-                            </Button>
-                            <Button type="button" variant="primary" onClick={() => handleCopyLink(folder.id)}>
-                              Copiar link privado
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              onClick={() => handleOpenFolderLink(folder.id)}
-                            >
-                              Abrir link
-                            </Button>
-                            <Button type="button" variant="ghost" onClick={() => handleDelete(folder.id)}>
-                              Excluir
-                            </Button>
-                          </>
-                        )}
-                      </div>
+                          <Button type="button" variant="primary" onClick={() => handleCopyLink(folder.id)}>
+                            Copiar link privado
+                          </Button>
+                          <Button type="button" variant="secondary" onClick={() => handleOpenFolderLink(folder.id)}>
+                            Abrir link
+                          </Button>
+                          <Button type="button" variant="ghost" className="ui-button-danger" onClick={() => handleDelete(folder.id)}>
+                            Excluir
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </div>
                 ))}
