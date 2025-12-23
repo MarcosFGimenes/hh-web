@@ -206,8 +206,16 @@ export default function AdminFoldersPage() {
   };
 
   const copyLink = async (link: string) => {
-    if (navigator?.clipboard?.writeText) {
-      await navigator.clipboard.writeText(link);
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(link);
+        setSuccess('Link copiado para a área de transferência.');
+      } else {
+        throw new Error('Clipboard API indisponível.');
+      }
+    } catch (err) {
+      setError('Não foi possível copiar o link.');
+      console.warn('Falha ao copiar link:', err);
     }
   };
 

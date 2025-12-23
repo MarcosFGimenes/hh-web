@@ -7,12 +7,14 @@ import { Card } from '@/components/Card';
 import { AdminGuard } from '@/components/AdminGuard';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import type { Folder } from '@/types/folder';
+import { Toast } from '@/components/Toast';
 
 export default function AdminDashboardPlaceholder() {
   const { user, signOut } = useAdminAuth();
   const [folders, setFolders] = useState<Folder[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [lastLinks, setLastLinks] = useState<Record<string, string>>({});
@@ -130,6 +132,15 @@ export default function AdminDashboardPlaceholder() {
     persistLayout(lanes);
   }, [lanes, layoutHydrated]);
 
+  useEffect(() => {
+    if (!error && !success) return;
+    const timer = setTimeout(() => {
+      setError(null);
+      setSuccess(null);
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, [error, success]);
+
   const onDragStart = (folderId: string) => setDraggingId(folderId);
 
   const onDragEnd = () => setDraggingId(null);
@@ -220,10 +231,12 @@ export default function AdminDashboardPlaceholder() {
       if (navigator?.clipboard?.writeText && document?.hasFocus?.()) {
         await navigator.clipboard.writeText(link);
       }
+      setSuccess('Link copiado para a área de transferência.');
     } catch (err) {
       // Evita quebrar o carregamento quando o navegador bloqueia acesso à área de transferência.
       // O usuário ainda pode clicar em \"Gerenciar pastas\" para copiar o link manualmente.
       console.warn('Não foi possível copiar para a área de transferência:', err);
+      setError('Não foi possível copiar o link.');
     }
   };
 
@@ -243,6 +256,11 @@ export default function AdminDashboardPlaceholder() {
           <Button type="button" variant="secondary" onClick={() => handleRename(folder.id, folder.name)}>
             Renomear
           </Button>
+          <Link href={`/admin/pastas/${folder.id}/lancamentos`}>
+            <Button type="button" variant="secondary">
+              LANÇAMENTOS
+            </Button>
+          </Link>
           <Link href={`/admin/pastas/${folder.id}/os`}>
             <Button type="button" variant="secondary">
               Gerenciar O.S.
@@ -359,6 +377,8 @@ export default function AdminDashboardPlaceholder() {
           ) : null}
         </div>
       </main>
+      {error ? <Toast type="error" message={error} /> : null}
+      {success ? <Toast type="success" message={success} /> : null}
     </AdminGuard>
   );
 }

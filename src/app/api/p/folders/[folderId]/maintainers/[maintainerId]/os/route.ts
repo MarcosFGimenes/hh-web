@@ -16,7 +16,12 @@ export async function POST(request: Request, { params }: Params) {
   try {
     const url = new URL(request.url);
     const linkKey = url.searchParams.get('k') || '';
+    const date = url.searchParams.get('date') || '';
     const { folderId, maintainerId } = params;
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return NextResponse.json({ error: 'Data do apontamento é obrigatória.' }, { status: 400 });
+    }
 
     const folder = await verifyLinkKey(folderId, linkKey);
     if (!folder) {
@@ -41,6 +46,11 @@ export async function POST(request: Request, { params }: Params) {
     const snapshot = await ref.get();
     if (!snapshot.exists) {
       return NextResponse.json({ error: 'Mantenedor não encontrado.' }, { status: 404 });
+    }
+
+    const maintainerDate = (snapshot.data()?.date as string | undefined) || '';
+    if (date && maintainerDate && maintainerDate !== date) {
+      return NextResponse.json({ error: 'Apontamento não pertence a esta data.' }, { status: 403 });
     }
 
     const now = Date.now();

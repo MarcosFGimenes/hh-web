@@ -18,7 +18,12 @@ export async function PATCH(request: Request, { params }: Params) {
   try {
     const url = new URL(request.url);
     const linkKey = url.searchParams.get('k') || '';
+    const date = url.searchParams.get('date') || '';
     const { folderId, maintainerId, osId } = params;
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return NextResponse.json({ error: 'Data do apontamento é obrigatória.' }, { status: 400 });
+    }
 
     const folder = await verifyLinkKey(folderId, linkKey);
     if (!folder) {
@@ -42,6 +47,17 @@ export async function PATCH(request: Request, { params }: Params) {
     const snapshot = await docRef.get();
     if (!snapshot.exists) {
       return NextResponse.json({ error: 'O.S. não encontrada.' }, { status: 404 });
+    }
+
+    const maintainerDoc = await getAdminDb()
+      .collection('folders')
+      .doc(folder.id)
+      .collection('maintainers')
+      .doc(maintainerId)
+      .get();
+    const maintainerDate = (maintainerDoc.data()?.date as string | undefined) || '';
+    if (date && maintainerDate && maintainerDate !== date) {
+      return NextResponse.json({ error: 'Apontamento não pertence a esta data.' }, { status: 403 });
     }
 
     const data = snapshot.data() || {};
