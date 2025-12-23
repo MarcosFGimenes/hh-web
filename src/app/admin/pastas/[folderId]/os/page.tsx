@@ -191,7 +191,7 @@ export default function FolderServiceOrdersPage() {
         <span className="ui-field-label">Descrição</span>
         <textarea
           className="ui-textarea"
-          rows={4}
+          rows={6}
           value={state.description}
           onChange={(event) => onChange('description', event.target.value)}
           required
@@ -201,101 +201,112 @@ export default function FolderServiceOrdersPage() {
   );
 
   return (
-    <main className="container stack os-page">
-      <div className="os-header">
-        <div>
-          <p className="chip">Gerenciar O.S.</p>
-          <h1>Ordens de Serviço</h1>
-          <p className="dashboard-subtitle">Cadastre, edite e acompanhe as O.S. desta pasta.</p>
-        </div>
-        <Link href="/admin/pastas">
-          <Button variant="outline" type="button" aria-label="Voltar para pastas">
-            Voltar
-          </Button>
-        </Link>
-      </div>
-
-      <Card
-        title="Cadastrar O.S."
-        subtitle="Preencha os dados para adicionar uma nova ordem de serviço."
-        bodyClassName="stack"
-        className="os-form-card"
-      >
-        <form className="stack" onSubmit={handleCreate}>
-          <div className="grid os-form-grid">{renderFormFields(creating, updateCreating)}</div>
-          <div className="os-form-actions">
-            <Button type="submit" disabled={!validateOrderPayload(creating)} aria-label="Cadastrar O.S.">
-              Cadastrar O.S.
+    <main className="os-page-shell">
+      <div className="os-page-container stack os-page">
+        <div className="os-header">
+          <div className="os-header-content">
+            <p className="chip">Gerenciar O.S.</p>
+            <h1>Ordens de Serviço</h1>
+            <p className="dashboard-subtitle">Cadastre, edite e acompanhe as O.S. desta pasta.</p>
+          </div>
+          <Link href="/admin/pastas" className="os-header-action">
+            <Button variant="outline" type="button" aria-label="Voltar para pastas">
+              Voltar
             </Button>
-          </div>
-        </form>
-      </Card>
+          </Link>
+        </div>
 
-      <Card
-        title="Lista de O.S."
-        subtitle={loading ? 'Carregando...' : `Total: ${orders.length}`}
-        action={
-          <Input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="O.S ou TAG"
-            aria-label="Buscar O.S. por código ou TAG"
-            className="os-search"
-          />
-        }
-        bodyClassName="stack"
-      >
-        {filtered.length ? (
-          <div className="os-list">
-            {filtered.map((order) => (
-              <div key={order.id} className="os-list-card">
-                {editingId === order.id ? (
-                  <div className="grid os-form-grid">{renderFormFields(editing, updateEditing)}</div>
-                ) : (
-                  <div className="os-list-content">
-                    <div>
-                      <p className="os-code">#{order.osCode}</p>
-                      <p className="os-machine">
-                        <span className="pill pill-strong">{order.tag}</span>
-                        <span className="pill pill-soft">{order.machineName}</span>
-                      </p>
-                    </div>
-                    <p className="os-description">{order.description}</p>
-                    <p className="os-updated">Atualizado em {new Date(order.updatedAt).toLocaleString('pt-BR')}</p>
-                  </div>
-                )}
+        <Card
+          title="Cadastrar O.S."
+          subtitle="Preencha os dados para adicionar uma nova ordem de serviço."
+          bodyClassName="stack os-form-body"
+          className="os-card os-form-card"
+        >
+          <form className="stack os-form" onSubmit={handleCreate}>
+            <div className="grid os-form-grid">{renderFormFields(creating, updateCreating)}</div>
+            <div className="os-form-actions">
+              <Button type="submit" disabled={!validateOrderPayload(creating)} aria-label="Cadastrar O.S.">
+                Cadastrar O.S.
+              </Button>
+            </div>
+          </form>
+        </Card>
 
-                <div className="os-actions">
+        <Card
+          title="Lista de O.S."
+          subtitle={loading ? 'Carregando...' : `Total: ${orders.length}`}
+          action={
+            <div className="os-list-search">
+              <Input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="O.S ou TAG"
+                aria-label="Buscar O.S. por código ou TAG"
+                className="os-search"
+              />
+            </div>
+          }
+          bodyClassName="stack"
+          className="os-card os-list-card-shell"
+        >
+          {filtered.length ? (
+            <div className="os-list">
+              {filtered.map((order) => (
+                <div key={order.id} className="os-list-card">
                   {editingId === order.id ? (
-                    <>
-                      <Button type="button" variant="primary" onClick={() => handleSaveEdit(order.id)}>
-                        Salvar
-                      </Button>
-                      <Button type="button" variant="outline" onClick={cancelEditing}>
-                        Cancelar
-                      </Button>
-                    </>
+                    <div className="grid os-form-grid">{renderFormFields(editing, updateEditing)}</div>
                   ) : (
-                    <>
-                      <Button type="button" variant="secondary" onClick={() => startEditing(order)}>
-                        Editar
-                      </Button>
-                      <Button type="button" variant="danger" onClick={() => handleDelete(order.id)}>
-                        Excluir
-                      </Button>
-                    </>
+                    <div className="os-list-content">
+                      <div>
+                        <p className="os-code">#{order.osCode}</p>
+                        <p className="os-machine">
+                          <span className="pill pill-strong">{order.tag}</span>
+                          <span className="pill pill-soft">{order.machineName}</span>
+                        </p>
+                      </div>
+                      <p className="os-description">{order.description}</p>
+                      <p className="os-updated">Atualizado em {new Date(order.updatedAt).toLocaleString('pt-BR')}</p>
+                    </div>
                   )}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="footer-note">{loading ? 'Carregando O.S...' : 'Nenhuma O.S. cadastrada.'}</p>
-        )}
-      </Card>
 
-      {error ? <Toast type="error" message={error} /> : null}
-      {success ? <Toast type="success" message={success} /> : null}
+                  <div className="os-actions">
+                    {editingId === order.id ? (
+                      <>
+                        <Button type="button" variant="primary" onClick={() => handleSaveEdit(order.id)}>
+                          Salvar
+                        </Button>
+                        <Button type="button" variant="outline" onClick={cancelEditing}>
+                          Cancelar
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button type="button" variant="secondary" onClick={() => startEditing(order)}>
+                          Editar
+                        </Button>
+                        <Button type="button" variant="danger" onClick={() => handleDelete(order.id)}>
+                          Excluir
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="os-empty-state">
+              <div className="os-empty-icon" aria-hidden="true">
+                📄
+              </div>
+              <p className="os-empty-title">{loading ? 'Carregando O.S...' : 'Nenhuma O.S. cadastrada.'}</p>
+              <p className="os-empty-subtitle">Cadastre uma nova ordem de serviço para começar.</p>
+            </div>
+          )}
+        </Card>
+
+        {error ? <Toast type="error" message={error} /> : null}
+        {success ? <Toast type="success" message={success} /> : null}
+      </div>
     </main>
   );
 }
