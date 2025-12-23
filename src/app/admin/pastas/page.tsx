@@ -348,7 +348,7 @@ export default function AdminFoldersPage() {
                             </Button>
                           </Link>
                           <Button type="button" variant="primary" onClick={() => handleCopyLink(folder.id)}>
-                            Copiar link privado
+                            Copiar link
                           </Button>
                           <Button type="button" variant="secondary" onClick={() => handleOpenFolderLink(folder.id)}>
                             Abrir link

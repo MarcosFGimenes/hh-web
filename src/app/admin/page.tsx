@@ -258,7 +258,7 @@ export default function AdminDashboardPlaceholder() {
           </Button>
           <Link href={`/admin/pastas/${folder.id}/lancamentos`}>
             <Button type="button" variant="secondary">
-              LANÇAMENTOS
+              Lançamentos
             </Button>
           </Link>
           <Link href={`/admin/pastas/${folder.id}/os`}>
@@ -267,7 +267,7 @@ export default function AdminDashboardPlaceholder() {
             </Button>
           </Link>
           <Button type="button" variant="primary" onClick={() => handleCopyLink(folder.id)}>
-            Copiar link privado
+            Copiar link
           </Button>
         </div>
       ) : null}
@@ -294,14 +294,14 @@ export default function AdminDashboardPlaceholder() {
                   </Button>
                 </Link>
                 {user ? (
-                  <Button
-                    variant="secondary"
-                    type="button"
-                    onClick={signOut}
-                    style={{ backgroundColor: '#e2e8f0', color: '#0f172a' }}
-                  >
-                    Sair
-                  </Button>
+                <Button
+                  variant="secondary"
+                  type="button"
+                  onClick={signOut}
+                  style={{ backgroundColor: '#1f2937', color: '#f8fafc' }}
+                >
+                  Sair
+                </Button>
                 ) : null}
               </div>
               {user ? (
