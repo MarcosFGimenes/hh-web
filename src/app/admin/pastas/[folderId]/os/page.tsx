@@ -191,7 +191,7 @@ export default function FolderServiceOrdersPage() {
         <span className="ui-field-label">Descrição</span>
         <textarea
           className="ui-textarea"
-          rows={6}
+          rows={5}
           value={state.description}
           onChange={(event) => onChange('description', event.target.value)}
           required
@@ -209,7 +209,7 @@ export default function FolderServiceOrdersPage() {
             <h1>Ordens de Serviço</h1>
             <p className="dashboard-subtitle">Cadastre, edite e acompanhe as O.S. desta pasta.</p>
           </div>
-          <Link href="/admin/pastas" className="os-header-action">
+          <Link href="/admin/pastas" className="os-header-action os-header-link">
             <Button variant="outline" type="button" aria-label="Voltar para pastas">
               Voltar
             </Button>
