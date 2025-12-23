@@ -172,16 +172,32 @@ main {
 
 .public-header-body {
   display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  gap: 1rem;
+  gap: 0.35rem;
+}
+
+.public-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.public-header-chip {
+  width: 100%;
+  text-align: left;
+  border-radius: 12px;
 }
 
 .public-header-meta {
   display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  align-items: flex-end;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.public-header-updated {
+  margin: 0;
+  color: #475569;
+  font-weight: 600;
 }
 
 .public-header-text {
@@ -998,10 +1014,6 @@ main {
 
   .public-header-body {
     grid-template-columns: 1fr;
-    align-items: flex-start;
-  }
-
-  .public-header-meta {
     align-items: flex-start;
   }
 

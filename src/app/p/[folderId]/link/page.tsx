@@ -363,19 +363,17 @@ export default function PublicFolderPage({ params }: PageProps) {
           <div className="stack public-grid">
             <Card className="public-header-card" bodyClassName="public-header-body">
               <div className="public-header-text">
-                <p className="chip chip-soft">Link do serviço</p>
-                <div className="public-header-title">
-                  <h1 className="public-title">{data.folder.name}</h1>
-                  <p className="dashboard-subtitle">
-                    Acesso público protegido • mantenedores e apontamentos.
-                  </p>
-                </div>
-              </div>
-              <div className="public-header-meta">
-                <p className="public-header-updated">
-                  Atualizado em {new Date(data.folder.updatedAt).toLocaleString('pt-BR')}
+                <p className="chip chip-soft public-header-chip">Link do serviço</p>
+                <h1 className="public-title">{data.folder.name}</h1>
+                <p className="dashboard-subtitle">
+                  Acesso público protegido • mantenedores e apontamentos.
                 </p>
-                <span className="pill pill-soft">{canManageMaintainers ? 'PCM (admin)' : 'Terceiro'}</span>
+                <div className="public-header-meta">
+                  <p className="public-header-updated">
+                    Atualizado em {new Date(data.folder.updatedAt).toLocaleString('pt-BR')}
+                  </p>
+                  <span className="pill pill-soft">{canManageMaintainers ? 'PCM (admin)' : 'Terceiro'}</span>
+                </div>
               </div>
             </Card>
 
