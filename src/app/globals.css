@@ -576,6 +576,16 @@ main {
   justify-content: flex-start;
 }
 
+.os-modal-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.os-modal-actions {
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
 .os-intervals-head {
   display: flex;
   align-items: center;
@@ -586,8 +596,13 @@ main {
 .os-interval-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) auto;
-  gap: 0.5rem;
+  gap: 0.6rem;
   align-items: end;
+}
+
+.os-remove-button {
+  min-width: 0;
+  padding: 0.45rem 0.75rem;
 }
 
 .form-error {
