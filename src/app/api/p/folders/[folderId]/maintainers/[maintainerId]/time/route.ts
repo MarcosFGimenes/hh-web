@@ -22,6 +22,7 @@ export async function POST(request: Request, { params }: Params) {
     const body = await request.json();
     const startRaw = typeof body?.startTime === 'string' ? body.startTime : '';
     const endRaw = typeof body?.endTime === 'string' ? body.endTime : '';
+    const shiftId = typeof body?.shiftId === 'string' ? body.shiftId : '';
     const startTime = normalizeTime(startRaw);
     const endTime = normalizeTime(endRaw);
 
@@ -43,7 +44,35 @@ export async function POST(request: Request, { params }: Params) {
 
     const updatedShifts = [...existingShifts, { id: shiftId, startTime, endTime, createdAt: Date.now() }];
 
-    await ref.update({ startTime, endTime, shifts: updatedShifts, updatedAt: Date.now() });
+    const existingShifts = Array.isArray(snapshot.data()?.shifts)
+      ? (snapshot.data()?.shifts as { id: string; startTime: string; endTime: string; createdAt?: number }[])
+      : [];
+
+    const nextShiftId =
+      shiftId || (typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}`);
+
+    const updatedShifts = existingShifts
+      .filter((shift) => shift.id !== shiftId || !shiftId)
+      .concat([{ id: nextShiftId, startTime, endTime, createdAt: Date.now() }]);
+
+    const hasOverlap = updatedShifts.some((shift, index) =>
+      updatedShifts.some(
+        (other, otherIndex) =>
+          index !== otherIndex &&
+          shift.startTime < (other.endTime || '') &&
+          other.startTime < (shift.endTime || '')
+      )
+    );
+
+    if (hasOverlap) {
+      return NextResponse.json({ error: 'Horários não podem se sobrepor para o mesmo mantenedor.' }, { status: 400 });
+    }
+
+    const sortedShifts = [...updatedShifts].sort((a, b) => a.startTime.localeCompare(b.startTime));
+    const primaryStart = sortedShifts[0]?.startTime ?? startTime;
+    const primaryEnd = sortedShifts[sortedShifts.length - 1]?.endTime ?? endTime;
+
+    await ref.update({ startTime: primaryStart, endTime: primaryEnd, shifts: sortedShifts, updatedAt: Date.now() });
     const updated = await ref.get();
     return NextResponse.json({ maintainer: { id: updated.id, ...(updated.data() || {}) } });
   } catch (error) {

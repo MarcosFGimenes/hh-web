@@ -212,6 +212,12 @@ main {
   align-items: center;
 }
 
+.maintainer-shift-chip {
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+
 .pill {
   display: inline-flex;
   align-items: center;

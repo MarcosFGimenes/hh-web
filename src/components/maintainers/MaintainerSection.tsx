@@ -11,11 +11,12 @@ type MaintainerSectionProps = {
   canAdd: boolean;
   onAdd: (name: string) => void;
   onAddExtra: (maintainerId: string) => void;
+  onSelectShift: (maintainerId: string, shiftId?: string, startTime?: string, endTime?: string) => void;
   onAddOs: (maintainerId: string) => void;
   onUpdateOsTime: (maintainerId: string, osId: string, field: 'startTime' | 'endTime', value: string) => void;
 };
 
-export function MaintainerSection({ maintainers, canAdd, onAdd, onAddExtra, onAddOs, onUpdateOsTime }: MaintainerSectionProps) {
+export function MaintainerSection({ maintainers, canAdd, onAdd, onAddExtra, onSelectShift, onAddOs, onUpdateOsTime }: MaintainerSectionProps) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newMaintainerName, setNewMaintainerName] = useState('');
 
@@ -83,6 +84,7 @@ export function MaintainerSection({ maintainers, canAdd, onAdd, onAddExtra, onAd
               <ExtraTimeChips
                 shifts={maintainer.shifts?.map(({ startTime, endTime, id }) => ({ startTime, endTime, id }))}
                 onAddExtra={() => onAddExtra(maintainer.id)}
+                onSelectShift={(shiftId, startTime, endTime) => onSelectShift(maintainer.id, shiftId, startTime, endTime)}
               />
             </div>
             <div className="public-chip-row">
