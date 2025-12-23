@@ -4,6 +4,7 @@ import { getAdminDb } from '@/lib/firebase/admin';
 import { getAdminFromRequest } from '@/lib/auth/getAdminToken';
 import type { Maintainer } from '@/types/maintainer';
 import type { MaintainerOs } from '@/types/maintainerOs';
+import type { MaintainerOsLog } from '@/types/maintainerOsLog';
 
 type Params = { params: { folderId: string } };
 
@@ -12,6 +13,9 @@ const collectionRef = (folderId: string) =>
 
 const osCollectionRef = (folderId: string, maintainerId: string) =>
   collectionRef(folderId).doc(maintainerId).collection('os');
+
+const osLogsCollectionRef = (folderId: string, maintainerId: string) =>
+  collectionRef(folderId).doc(maintainerId).collection('osLogs');
 
 function mapMaintainer(doc: FirebaseFirestore.QueryDocumentSnapshot): Maintainer {
   const data = doc.data() as Omit<Maintainer, 'id'>;
@@ -31,6 +35,11 @@ function mapMaintainer(doc: FirebaseFirestore.QueryDocumentSnapshot): Maintainer
 
 function mapOs(doc: FirebaseFirestore.QueryDocumentSnapshot): MaintainerOs {
   const data = doc.data() as Omit<MaintainerOs, 'id'>;
+  return { id: doc.id, ...data };
+}
+
+function mapOsLog(doc: FirebaseFirestore.QueryDocumentSnapshot): MaintainerOsLog {
+  const data = doc.data() as Omit<MaintainerOsLog, 'id'>;
   return { id: doc.id, ...data };
 }
 
@@ -62,7 +71,9 @@ export async function GET(request: Request, { params }: Params) {
         .map(async (base) => {
           const osSnapshot = await osCollectionRef(folder.id, base.id).orderBy('createdAt', 'desc').get();
           const os = osSnapshot.docs.map(mapOs);
-          return { ...base, os };
+          const osLogsSnapshot = await osLogsCollectionRef(folder.id, base.id).where('date', '==', date).get();
+          const osLogs = osLogsSnapshot.docs.map(mapOsLog);
+          return { ...base, os, osLogs };
         })
     );
 

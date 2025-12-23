@@ -8,16 +8,18 @@ import { Toast } from '@/components/Toast';
 import { MaintainerSection } from '@/components/maintainers/MaintainerSection';
 import { AddTimeModal } from '@/components/maintainers/AddTimeModal';
 import { OsCardView } from '@/components/maintainers/OsCardView';
+import { AddOsModal } from '@/components/maintainers/AddOsModal';
 import { Input } from '@/components/Input';
 import { Modal } from '@/components/Modal';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import type { Maintainer } from '@/types/maintainer';
-import type { MaintainerOs } from '@/types/maintainerOs';
+import type { MaintainerOsLog } from '@/types/maintainerOsLog';
+import type { ServiceOrder } from '@/types/os';
 import { normalizeTime, validateShiftPair } from '@/lib/time/base';
 
 type FolderResponse = {
   folder: { id: string; name: string; updatedAt: number };
-  maintainers: (Maintainer & { os?: MaintainerOs[] })[];
+  maintainers: (Maintainer & { osLogs?: MaintainerOsLog[] })[];
   userRole: 'ADMIN' | 'THIRD';
 };
 
@@ -93,10 +95,13 @@ export default function PublicFolderPage({ params }: PageProps) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [showAddTimeFor, setShowAddTimeFor] = useState<string | null>(null);
+  const [showAddOsFor, setShowAddOsFor] = useState<string | null>(null);
   const [editMaintainer, setEditMaintainer] = useState<{ id: string; name: string } | null>(null);
   const [deleteMaintainer, setDeleteMaintainer] = useState<{ id: string; name: string } | null>(null);
   const initialDate = useMemo(() => searchParams.get('date') || new Date().toISOString().slice(0, 10), [searchParams]);
   const [selectedDate, setSelectedDate] = useState(initialDate);
+  const [orders, setOrders] = useState<ServiceOrder[]>([]);
+  const [savingOsLog, setSavingOsLog] = useState(false);
 
   const linkKey = useMemo(() => searchParams.get('k') || '', [searchParams]);
   const canManageMaintainers = data?.userRole === 'ADMIN';
@@ -122,6 +127,18 @@ export default function PublicFolderPage({ params }: PageProps) {
     return json as FolderResponse;
   };
 
+  const fetchOrders = async () => {
+    const response = await fetch(
+      `/api/p/folders/${folderId}/os?k=${encodeURIComponent(linkKey)}`,
+      { cache: 'no-store' }
+    );
+    const json = await response.json();
+    if (!response.ok) {
+      throw new Error(json?.error || 'Erro ao carregar O.S.');
+    }
+    return json.orders as ServiceOrder[];
+  };
+
   useEffect(() => {
     const load = async () => {
       setLoading(true);
@@ -130,24 +147,27 @@ export default function PublicFolderPage({ params }: PageProps) {
         if (!linkKey) {
           throw new Error('Link inválido ou expirado. Peça um novo link ao administrador.');
         }
-        const response = await fetchJSON(selectedDate);
+        const [response, fetchedOrders] = await Promise.all([fetchJSON(selectedDate), fetchOrders()]);
         setData(response);
+        setOrders(fetchedOrders);
       } catch (err) {
         const message =
           err instanceof Error
             ? err.message
             : 'Link inválido ou expirado. Peça um novo link ao administrador.';
-        setError(message);
-      } finally {
-        setLoading(false);
-      }
-    };
+      setError(message);
+      setOrders([]);
+    } finally {
+      setLoading(false);
+    }
+  };
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [folderId, linkKey, selectedDate]);
 
   useEffect(() => {
     setShowAddTimeFor(null);
+    setShowAddOsFor(null);
   }, [selectedDate]);
 
   useEffect(() => {
@@ -163,8 +183,9 @@ export default function PublicFolderPage({ params }: PageProps) {
 
   const refetch = async () => {
     try {
-      const response = await fetchJSON(selectedDate);
+      const [response, fetchedOrders] = await Promise.all([fetchJSON(selectedDate), fetchOrders()]);
       setData(response);
+      setOrders(fetchedOrders);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao atualizar dados.';
       setError(message);
@@ -249,60 +270,71 @@ export default function PublicFolderPage({ params }: PageProps) {
 
   const handleAddOs = async (maintainerId: string) => {
     if (!data || !selectedDate) return;
-    const osNumber = typeof window !== 'undefined' ? window.prompt('Número da O.S.')?.trim() : '';
-    const description = typeof window !== 'undefined' ? window.prompt('Descrição da O.S.')?.trim() : '';
-    if (!osNumber || !description) return;
-
-    try {
-      const response = await fetch(
-        `/api/p/folders/${folderId}/maintainers/${maintainerId}/os?k=${encodeURIComponent(linkKey)}&date=${encodeURIComponent(
-          selectedDate
-        )}`,
-        {
-          method: 'POST',
-          ...withAuthHeaders({ headers: { 'Content-Type': 'application/json' } }),
-          body: JSON.stringify({ osNumber, description }),
-        }
-      );
-      const json = await response.json();
-      if (!response.ok) {
-        throw new Error(json?.error || 'Erro ao adicionar O.S.');
-      }
-      await refetch();
-      setSuccess('O.S. adicionada.');
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Erro ao adicionar O.S.';
-      setError(message);
+    setShowAddOsFor(maintainerId);
+  };
+  const handleCreateOrder = async (payload: {
+    osCode: string;
+    tag?: string;
+    machineName?: string;
+    description?: string;
+  }) => {
+    const response = await fetch(`/api/p/folders/${folderId}/os?k=${encodeURIComponent(linkKey)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const json = await response.json();
+    if (!response.ok) {
+      throw new Error(json?.error || 'Erro ao criar O.S.');
     }
+    const created = json.order as ServiceOrder;
+    setOrders((prev) => {
+      const exists = prev.find((item) => item.id === created.id);
+      if (exists) return prev;
+      return [created, ...prev];
+    });
+    return created;
   };
 
-  const handleUpdateOsTime = async (
+  const handleSaveOsLog = async (
     maintainerId: string,
     osId: string,
-    field: 'startTime' | 'endTime',
-    value: string
+    intervals: Array<{ startTime: string; endTime: string }>
   ) => {
-    if (!selectedDate) return;
     try {
+      setSavingOsLog(true);
       const response = await fetch(
-        `/api/p/folders/${folderId}/maintainers/${maintainerId}/os/${osId}?k=${encodeURIComponent(
-          linkKey
-        )}&date=${encodeURIComponent(selectedDate)}`,
+        `/api/p/folders/${folderId}/maintainers/${maintainerId}/os-logs?k=${encodeURIComponent(linkKey)}`,
         {
-          method: 'PATCH',
-          ...withAuthHeaders({ headers: { 'Content-Type': 'application/json' } }),
-          body: JSON.stringify({ field, value }),
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ osId, date: selectedDate, intervals }),
         }
       );
       const json = await response.json();
       if (!response.ok) {
         throw new Error(json?.error || 'Erro ao salvar horário da O.S.');
       }
-      await refetch();
-      setSuccess('Horário da O.S. salvo.');
+
+      setData((prev) =>
+        prev
+          ? {
+              ...prev,
+              maintainers: prev.maintainers.map((maintainer) =>
+                maintainer.id === maintainerId
+                  ? { ...maintainer, osLogs: [...(maintainer.osLogs || []), ...(json.logs || [])] }
+                  : maintainer
+              ),
+            }
+          : prev
+      );
+      setShowAddOsFor(null);
+      setSuccess('Horário salvo.');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao salvar horário da O.S.';
       setError(message);
+    } finally {
+      setSavingOsLog(false);
     }
   };
 
@@ -358,12 +390,12 @@ export default function PublicFolderPage({ params }: PageProps) {
 
             <MaintainerSection
               maintainers={data.maintainers}
+              orders={orders}
               canAdd
               canManage={!!canManageMaintainers}
               onAdd={handleAddMaintainer}
               onAddExtra={(id) => setShowAddTimeFor(id)}
               onAddOs={handleAddOs}
-              onUpdateOsTime={handleUpdateOsTime}
               onEdit={(id, name) => setEditMaintainer({ id, name })}
               onDelete={(id, name) => setDeleteMaintainer({ id, name })}
             />
@@ -385,6 +417,40 @@ export default function PublicFolderPage({ params }: PageProps) {
               data?.maintainers.find((item) => item.id === showAddTimeFor)?.endTime ||
               ''
             }
+          />
+        ) : null}
+
+        {showAddOsFor && data ? (
+          <AddOsModal
+            open={Boolean(showAddOsFor)}
+            date={selectedDate}
+            maintainerName={data.maintainers.find((item) => item.id === showAddOsFor)?.name || 'Mantenedor'}
+            existingIntervals={
+              data.maintainers
+                .find((item) => item.id === showAddOsFor)
+                ?.osLogs?.map((log) => ({ startTime: log.startTime, endTime: log.endTime })) || []
+            }
+            availability={
+              data.maintainers.find((item) => item.id === showAddOsFor)?.shifts?.length
+                ? data.maintainers.find((item) => item.id === showAddOsFor)?.shifts?.map(({ startTime, endTime }) => ({
+                    startTime,
+                    endTime,
+                  }))
+                : data.maintainers.find((item) => item.id === showAddOsFor)?.startTime &&
+                  data.maintainers.find((item) => item.id === showAddOsFor)?.endTime
+                ? [
+                    {
+                      startTime: data.maintainers.find((item) => item.id === showAddOsFor)!.startTime as string,
+                      endTime: data.maintainers.find((item) => item.id === showAddOsFor)!.endTime as string,
+                    },
+                  ]
+                : []
+            }
+            orders={orders}
+            onClose={() => setShowAddOsFor(null)}
+            onCreateOs={handleCreateOrder}
+            onSubmit={(osId, intervals) => handleSaveOsLog(showAddOsFor, osId, intervals)}
+            isSubmitting={savingOsLog}
           />
         ) : null}
 

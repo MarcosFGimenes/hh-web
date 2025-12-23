@@ -23,7 +23,7 @@ export async function GET(_request: Request, { params }: Params) {
 
 export async function POST(request: Request, { params }: Params) {
   try {
-    await getAdminFromRequest();
+    const admin = await getAdminFromRequest();
     const { folderId } = params;
     const body = await request.json();
 
@@ -42,11 +42,25 @@ export async function POST(request: Request, { params }: Params) {
       tag,
       machineName,
       description,
+      createdByRole: 'ADMIN',
+      createdByUserId: admin?.uid || null,
+      isExternal: false,
       createdAt: now,
       updatedAt: now,
     });
 
-    const order: ServiceOrder = { id: docRef.id, osCode, tag, machineName, description, createdAt: now, updatedAt: now };
+    const order: ServiceOrder = {
+      id: docRef.id,
+      osCode,
+      tag,
+      machineName,
+      description,
+      createdByRole: 'ADMIN',
+      createdByUserId: admin?.uid || null,
+      isExternal: false,
+      createdAt: now,
+      updatedAt: now,
+    };
 
     return NextResponse.json({ order }, { status: 201 });
   } catch (error) {

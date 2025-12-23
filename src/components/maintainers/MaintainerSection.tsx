@@ -3,34 +3,40 @@ import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { Input } from '@/components/Input';
 import type { Maintainer } from '@/types/maintainer';
-import type { MaintainerOs } from '@/types/maintainerOs';
+import type { ServiceOrder } from '@/types/os';
+import type { MaintainerOsLog } from '@/types/maintainerOsLog';
 import { ExtraTimeChips } from './ExtraTimeChips';
 
 type MaintainerSectionProps = {
-  maintainers: (Maintainer & { os?: MaintainerOs[] })[];
+  maintainers: Maintainer[];
+  orders: ServiceOrder[];
   canAdd: boolean;
   canManage: boolean;
   onAdd: (name: string) => void;
   onAddExtra: (maintainerId: string) => void;
   onAddOs: (maintainerId: string) => void;
-  onUpdateOsTime: (maintainerId: string, osId: string, field: 'startTime' | 'endTime', value: string) => void;
   onEdit?: (maintainerId: string, currentName: string) => void;
   onDelete?: (maintainerId: string, currentName: string) => void;
 };
 
 export function MaintainerSection({
   maintainers,
+  orders,
   canAdd,
   canManage,
   onAdd,
   onAddExtra,
   onAddOs,
-  onUpdateOsTime,
   onEdit,
   onDelete,
 }: MaintainerSectionProps) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newMaintainerName, setNewMaintainerName] = useState('');
+
+  const ordersMap = orders.reduce<Record<string, ServiceOrder>>((acc, item) => {
+    acc[item.id] = item;
+    return acc;
+  }, {});
 
   const submitAddMaintainer = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -155,36 +161,39 @@ export function MaintainerSection({
                   />
                 </div>
 
-                {(maintainer.os || []).length ? (
+                {(maintainer.osLogs || []).length ? (
                   <div className="maintainer-os-list">
-                    {(maintainer.os || []).map((os) => (
-                      <div key={os.id} className="maintainer-os-card">
-                        <div className="maintainer-os-header">
-                          <span className="pill pill-strong">#{os.osNumber}</span>
-                          <span className="pill pill-soft">{os.description}</span>
+                    {Object.entries(
+                      (maintainer.osLogs || []).reduce<Record<string, MaintainerOsLog[]>>((acc, log) => {
+                        acc[log.osId] = [...(acc[log.osId] || []), log];
+                        return acc;
+                      }, {})
+                    ).map(([osId, logs]) => {
+                      const order = ordersMap[osId];
+                      const title = order ? `${order.osCode} — ${order.tag}` : 'O.S. vinculada';
+                      return (
+                        <div key={osId} className="maintainer-os-card">
+                          <div className="maintainer-os-header">
+                            <span className="pill pill-strong">{title}</span>
+                            {order?.machineName ? <span className="pill pill-soft">{order.machineName}</span> : null}
+                          </div>
+                          <div className="maintainer-os-description">
+                            {order?.description || 'Lançamento de horário associado a esta O.S.'}
+                            {order?.isExternal ? <span className="pill pill-soft">Criada pelo terceiro</span> : null}
+                          </div>
+                          <div className="maintainer-intervals-row">
+                            {logs
+                              .slice()
+                              .sort((a, b) => a.startTime.localeCompare(b.startTime))
+                              .map((log) => (
+                                <span key={log.id} className="pill pill-soft">
+                                  {log.startTime} – {log.endTime}
+                                </span>
+                              ))}
+                          </div>
                         </div>
-                        <div className="maintainer-os-inputs">
-                          <label className="ui-field">
-                            <span className="ui-field-label">Início</span>
-                            <input
-                              type="tel"
-                              inputMode="numeric"
-                              value={os.startTime || ''}
-                              onChange={(event) => onUpdateOsTime(maintainer.id, os.id, 'startTime', event.target.value)}
-                            />
-                          </label>
-                          <label className="ui-field">
-                            <span className="ui-field-label">Fim</span>
-                            <input
-                              type="tel"
-                              inputMode="numeric"
-                              value={os.endTime || ''}
-                              onChange={(event) => onUpdateOsTime(maintainer.id, os.id, 'endTime', event.target.value)}
-                            />
-                          </label>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <p className="footer-note">Nenhuma O.S. adicionada para este mantenedor.</p>
