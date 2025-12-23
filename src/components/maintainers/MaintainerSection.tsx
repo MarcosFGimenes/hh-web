@@ -66,16 +66,6 @@ export function MaintainerSection({
       action={
         <div className="maintainer-head-actions">
           <span className="maintainer-count">Total: {maintainers.length}</span>
-          {canCreateMaintainer && !showAddForm ? (
-            <Button
-              type="button"
-              onClick={() => setShowAddForm(true)}
-              aria-label="Adicionar mantenedor"
-              className="ui-button-compact"
-            >
-              + Adicionar Mantenedor
-            </Button>
-          ) : null}
         </div>
       }
       className="maintainer-card-shell"
@@ -175,7 +165,6 @@ export function MaintainerSection({
                 <div className="maintainer-chip-row">
                   <ExtraTimeChips
                     shifts={maintainer.shifts?.map(({ startTime, endTime, id }) => ({ startTime, endTime, id }))}
-                    onAddExtra={() => onAddExtra(maintainer.id)}
                   />
                 </div>
 

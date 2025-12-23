@@ -189,184 +189,188 @@ export function AddOsModal({
       title={`Adicionar O.S · ${maintainerName}`}
       open={open}
       onClose={onClose}
+      className="os-modal"
+      bodyClassName="os-modal-body"
     >
-      <form className="stack" onSubmit={handleSubmit}>
-        <div className="stack">
-          <div className="ui-field">
-            <span className="ui-field-label">Buscar O.S (código ou tag)</span>
-            <input
-              className="ui-input"
-              type="search"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Digite para filtrar"
-            />
-          </div>
-
-          <div className="os-select-list">
-            {filteredOrders.map((order) => {
-              const isSelected = selectedOsId === order.id;
-              return (
-                <button
-                  type="button"
-                  key={order.id}
-                  className={`os-select-item ${isSelected ? 'is-selected' : ''}`}
-                  onClick={() => {
-                    setSelectedOsId(order.id);
-                    setCreatingNew(false);
-                  }}
-                >
-                  <div className="os-select-head">
-                    <span className="pill pill-strong">{order.osCode}</span>
-                    {order.tag ? <span className="pill pill-soft">{order.tag}</span> : null}
-                    {order.isExternal ? <span className="pill pill-soft">Criada pelo terceiro</span> : null}
-                  </div>
-                  <p className="os-select-sub">
-                    {[order.machineName, order.description].filter(Boolean).join(' · ') || 'Sem descrição'}
-                  </p>
-                </button>
-              );
-            })}
-
-            <button
-              type="button"
-              className={`os-select-item os-select-new ${creatingNew ? 'is-selected' : ''}`}
-              onClick={toggleNewOs}
-            >
-              <div className="os-select-head">
-                <span className="pill pill-strong">Não encontrei — adicionar nova O.S</span>
-              </div>
-              <p className="os-select-sub">Informe código, TAG e equipamento (opcionais) e descreva brevemente.</p>
-            </button>
-          </div>
-
-          {creatingNew ? (
-            <div className="grid">
-              <Input
-                label="Código O.S *"
-                value={osForm.osCode}
-                onChange={(event) => setOsForm((prev) => ({ ...prev, osCode: event.target.value }))}
-                required
-              />
-              <Input
-                label="TAG (opcional)"
-                value={osForm.tag}
-                onChange={(event) => setOsForm((prev) => ({ ...prev, tag: event.target.value }))}
-              />
-              <Input
-                label="Equipamento (opcional)"
-                value={osForm.machineName}
-                onChange={(event) => setOsForm((prev) => ({ ...prev, machineName: event.target.value }))}
-              />
-              <Input
-                label="Descrição (opcional)"
-                value={osForm.description}
-                onChange={(event) => setOsForm((prev) => ({ ...prev, description: event.target.value }))}
-              />
-              <div className="os-new-actions">
-                <Button type="button" onClick={handleCreateOs} isLoading={savingOs} disabled={savingOs}>
-                  Salvar nova O.S
-                </Button>
-              </div>
-            </div>
-          ) : null}
-        </div>
-
-        <div className="stack">
+      <form className="stack os-modal-form" onSubmit={handleSubmit}>
+        <div className="stack os-modal-scroll">
           <div className="stack">
             <div className="ui-field">
-              <span className="ui-field-label">Horários já lançados hoje</span>
-              <div className="maintainer-intervals-row">
-                {existingIntervals.length ? (
-                  existingIntervals.map((interval, index) => (
-                    <span key={`${interval.startTime}-${interval.endTime}-${index}`} className="pill pill-soft">
-                      {interval.startTime} – {interval.endTime}
-                    </span>
-                  ))
-                ) : (
-                  <span className="pill pill-soft">Nenhum horário lançado ainda.</span>
-                )}
-              </div>
+              <span className="ui-field-label">Buscar O.S (código ou tag)</span>
+              <input
+                className="ui-input"
+                type="search"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Digite para filtrar"
+              />
             </div>
+
+            <div className="os-select-list">
+              {filteredOrders.map((order) => {
+                const isSelected = selectedOsId === order.id;
+                return (
+                  <button
+                    type="button"
+                    key={order.id}
+                    className={`os-select-item ${isSelected ? 'is-selected' : ''}`}
+                    onClick={() => {
+                      setSelectedOsId(order.id);
+                      setCreatingNew(false);
+                    }}
+                  >
+                    <div className="os-select-head">
+                      <span className="pill pill-strong">{order.osCode}</span>
+                      {order.tag ? <span className="pill pill-soft">{order.tag}</span> : null}
+                      {order.isExternal ? <span className="pill pill-soft">Criada pelo terceiro</span> : null}
+                    </div>
+                    <p className="os-select-sub">
+                      {[order.machineName, order.description].filter(Boolean).join(' · ') || 'Sem descrição'}
+                    </p>
+                  </button>
+                );
+              })}
+
+              <button
+                type="button"
+                className={`os-select-item os-select-new ${creatingNew ? 'is-selected' : ''}`}
+                onClick={toggleNewOs}
+              >
+                <div className="os-select-head">
+                  <span className="pill pill-strong">Não encontrei — adicionar nova O.S</span>
+                </div>
+                <p className="os-select-sub">Informe código, TAG e equipamento (opcionais) e descreva brevemente.</p>
+              </button>
+            </div>
+
+            {creatingNew ? (
+              <div className="grid">
+                <Input
+                  label="Código O.S *"
+                  value={osForm.osCode}
+                  onChange={(event) => setOsForm((prev) => ({ ...prev, osCode: event.target.value }))}
+                  required
+                />
+                <Input
+                  label="TAG (opcional)"
+                  value={osForm.tag}
+                  onChange={(event) => setOsForm((prev) => ({ ...prev, tag: event.target.value }))}
+                />
+                <Input
+                  label="Equipamento (opcional)"
+                  value={osForm.machineName}
+                  onChange={(event) => setOsForm((prev) => ({ ...prev, machineName: event.target.value }))}
+                />
+                <Input
+                  label="Descrição (opcional)"
+                  value={osForm.description}
+                  onChange={(event) => setOsForm((prev) => ({ ...prev, description: event.target.value }))}
+                />
+                <div className="os-new-actions">
+                  <Button type="button" onClick={handleCreateOs} isLoading={savingOs} disabled={savingOs}>
+                    Salvar nova O.S
+                  </Button>
+                </div>
+              </div>
+            ) : null}
           </div>
 
           <div className="stack">
-            <div className="os-intervals-head">
-              <p className="ui-field-label">Horários trabalhados nesta O.S ({date.split('-').reverse().join('/')})</p>
-              <Button
-                type="button"
-                variant="secondary"
-                className="ui-button-compact"
-                onClick={() =>
-                  setIntervalRows((prev) => [
-                    ...prev,
-                    {
-                      id:
-                        typeof crypto !== 'undefined' && 'randomUUID' in crypto
-                          ? crypto.randomUUID()
-                          : `${Date.now()}-${Math.random()}`,
-                      startTime: '',
-                      endTime: '',
-                    },
-                  ])
-                }
-              >
-                + Adicionar intervalo
-              </Button>
+            <div className="stack">
+              <div className="ui-field">
+                <span className="ui-field-label">Horários já lançados hoje</span>
+                <div className="maintainer-intervals-row">
+                  {existingIntervals.length ? (
+                    existingIntervals.map((interval, index) => (
+                      <span key={`${interval.startTime}-${interval.endTime}-${index}`} className="pill pill-soft">
+                        {interval.startTime} – {interval.endTime}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="pill pill-soft">Nenhum horário lançado ainda.</span>
+                  )}
+                </div>
+              </div>
             </div>
 
             <div className="stack">
-              {intervalRows.map((row, index) => (
-                <div key={row.id} className="os-interval-row">
-                  <Input
-                    label={`Entrada ${index + 1}`}
-                    value={row.startTime}
-                    inputMode="numeric"
-                    onChange={(event) =>
-                      setIntervalRows((prev) =>
-                        prev.map((item) =>
-                          item.id === row.id ? { ...item, startTime: formatTimeInput(event.target.value) } : item
+              <div className="os-intervals-head">
+                <p className="ui-field-label">Horários trabalhados nesta O.S ({date.split('-').reverse().join('/')})</p>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="ui-button-compact"
+                  onClick={() =>
+                    setIntervalRows((prev) => [
+                      ...prev,
+                      {
+                        id:
+                          typeof crypto !== 'undefined' && 'randomUUID' in crypto
+                            ? crypto.randomUUID()
+                            : `${Date.now()}-${Math.random()}`,
+                        startTime: '',
+                        endTime: '',
+                      },
+                    ])
+                  }
+                >
+                  + Adicionar intervalo
+                </Button>
+              </div>
+
+              <div className="stack">
+                {intervalRows.map((row, index) => (
+                  <div key={row.id} className="os-interval-row">
+                    <Input
+                      label={`Entrada ${index + 1}`}
+                      value={row.startTime}
+                      inputMode="numeric"
+                      onChange={(event) =>
+                        setIntervalRows((prev) =>
+                          prev.map((item) =>
+                            item.id === row.id ? { ...item, startTime: formatTimeInput(event.target.value) } : item
+                          )
                         )
-                      )
-                    }
-                    required
-                  />
-                  <Input
-                    label={`Saída ${index + 1}`}
-                    value={row.endTime}
-                    inputMode="numeric"
-                    onChange={(event) =>
-                      setIntervalRows((prev) =>
-                        prev.map((item) =>
-                          item.id === row.id ? { ...item, endTime: formatTimeInput(event.target.value) } : item
+                      }
+                      required
+                    />
+                    <Input
+                      label={`Saída ${index + 1}`}
+                      value={row.endTime}
+                      inputMode="numeric"
+                      onChange={(event) =>
+                        setIntervalRows((prev) =>
+                          prev.map((item) =>
+                            item.id === row.id ? { ...item, endTime: formatTimeInput(event.target.value) } : item
+                          )
                         )
-                      )
-                    }
-                    required
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="ui-button-compact"
-                    onClick={() => removeInterval(row.id)}
-                    disabled={intervalRows.length === 1}
-                  >
-                    Remover
-                  </Button>
-                </div>
-              ))}
+                      }
+                      required
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="ui-button-compact os-remove-button"
+                      onClick={() => removeInterval(row.id)}
+                      disabled={intervalRows.length === 1}
+                    >
+                      Remover
+                    </Button>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
+
+          {localError ? <div className="form-error">{localError}</div> : null}
         </div>
 
-        {localError ? <div className="form-error">{localError}</div> : null}
-
-        <div className="modal-actions">
+        <div className="os-modal-footer">
           <Button type="button" variant="outline" onClick={onClose}>
-            Cancelar
+            Voltar
           </Button>
           <Button type="submit" isLoading={isSubmitting}>
-            Salvar apontamento
+            Confirmar
           </Button>
         </div>
       </form>
