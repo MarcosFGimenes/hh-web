@@ -265,14 +265,12 @@ export default function AdminFoldersPage() {
             <form className="stack" onSubmit={handleCreate}>
               <Input
                 label="Nome da pasta"
-                placeholder="Ex.: Manutenção Linha 1"
                 value={creatingName}
                 onChange={(event) => setCreatingName(event.target.value)}
                 required
               />
               <Input
                 label="Empresa responsável"
-                placeholder="Ex.: ACME Serviços Industriais"
                 value={creatingCompany}
                 onChange={(event) => setCreatingCompany(event.target.value)}
                 required
@@ -348,7 +346,7 @@ export default function AdminFoldersPage() {
                             </Button>
                           </Link>
                           <Button type="button" variant="primary" onClick={() => handleCopyLink(folder.id)}>
-                            Copiar link privado
+                            Copiar link
                           </Button>
                           <Button type="button" variant="secondary" onClick={() => handleOpenFolderLink(folder.id)}>
                             Abrir link
