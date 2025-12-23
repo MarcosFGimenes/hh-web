@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { Input } from '@/components/Input';
@@ -12,6 +12,9 @@ type MaintainerSectionProps = {
   orders: ServiceOrder[];
   canAdd: boolean;
   canManage: boolean;
+  canCreateMaintainer?: boolean;
+  openAddMaintainerToken?: number;
+  onCloseAddMaintainer?: () => void;
   onAdd: (name: string) => void;
   onAddExtra: (maintainerId: string) => void;
   onAddOs: (maintainerId: string) => void;
@@ -24,6 +27,9 @@ export function MaintainerSection({
   orders,
   canAdd,
   canManage,
+  canCreateMaintainer = false,
+  openAddMaintainerToken,
+  onCloseAddMaintainer,
   onAdd,
   onAddExtra,
   onAddOs,
@@ -32,6 +38,12 @@ export function MaintainerSection({
 }: MaintainerSectionProps) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newMaintainerName, setNewMaintainerName] = useState('');
+
+  useEffect(() => {
+    if (openAddMaintainerToken !== undefined) {
+      setShowAddForm(Boolean(openAddMaintainerToken));
+    }
+  }, [openAddMaintainerToken]);
 
   const ordersMap = orders.reduce<Record<string, ServiceOrder>>((acc, item) => {
     acc[item.id] = item;
@@ -45,15 +57,16 @@ export function MaintainerSection({
     onAdd(value);
     setNewMaintainerName('');
     setShowAddForm(false);
+    onCloseAddMaintainer?.();
   };
 
   return (
     <Card
       title="Mantenedores"
-      subtitle={`Total: ${maintainers.length}`}
       action={
-        canManage ? (
-          showAddForm ? null : (
+        <div className="maintainer-head-actions">
+          <span className="maintainer-count">Total: {maintainers.length}</span>
+          {canCreateMaintainer && !showAddForm ? (
             <Button
               type="button"
               onClick={() => setShowAddForm(true)}
@@ -62,13 +75,13 @@ export function MaintainerSection({
             >
               + Adicionar Mantenedor
             </Button>
-          )
-        ) : null
+          ) : null}
+        </div>
       }
       className="maintainer-card-shell"
     >
       <div className="stack">
-        {showAddForm && canManage ? (
+        {showAddForm && canCreateMaintainer ? (
           <form className="maintainer-add-form" onSubmit={submitAddMaintainer}>
             <Input
               label="Nome do mantenedor"
@@ -76,22 +89,23 @@ export function MaintainerSection({
               onChange={(event) => setNewMaintainerName(event.target.value)}
               required
             />
-            <div className="maintainer-add-actions">
-              <Button type="submit" disabled={!newMaintainerName.trim()}>
-                Adicionar
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setShowAddForm(false);
-                  setNewMaintainerName('');
-                }}
-              >
-                Cancelar
-              </Button>
-            </div>
-          </form>
+                <div className="maintainer-add-actions">
+                  <Button type="submit" disabled={!newMaintainerName.trim()}>
+                    Adicionar
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowAddForm(false);
+                      setNewMaintainerName('');
+                      onCloseAddMaintainer?.();
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              </form>
         ) : null}
 
         {!maintainers.length ? (
@@ -101,12 +115,16 @@ export function MaintainerSection({
             {maintainers.map((maintainer) => (
               <div key={maintainer.id} className="maintainer-card">
                 <div className="maintainer-card-header">
-                  <div className="maintainer-avatar" aria-hidden="true">
-                    {maintainer.name.slice(0, 1).toUpperCase()}
-                  </div>
-                  <div className="maintainer-meta">
-                    <p className="maintainer-name">{maintainer.name}</p>
-                    <p className="footer-note">Atualizado em {new Date(maintainer.updatedAt || Date.now()).toLocaleString('pt-BR')}</p>
+                  <div className="maintainer-person">
+                    <div className="maintainer-avatar" aria-hidden="true">
+                      {maintainer.name.slice(0, 1).toUpperCase()}
+                    </div>
+                    <div className="maintainer-meta">
+                      <p className="maintainer-name">{maintainer.name}</p>
+                      <p className="maintainer-updated">
+                        Atualizado em {new Date(maintainer.updatedAt || Date.now()).toLocaleString('pt-BR')}
+                      </p>
+                    </div>
                   </div>
                   <div className="maintainer-actions">
                     <Button
@@ -196,7 +214,7 @@ export function MaintainerSection({
                     })}
                   </div>
                 ) : (
-                  <p className="footer-note">Nenhuma O.S. adicionada para este mantenedor.</p>
+                  <p className="maintainer-empty">Nenhuma O.S. adicionada.</p>
                 )}
               </div>
             ))}
