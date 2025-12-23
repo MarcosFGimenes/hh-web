@@ -110,6 +110,12 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
   const [confirmReplaceOpen, setConfirmReplaceOpen] = useState(false);
   const signatureCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
+  useEffect(() => {
+    if (addEmployeeOpen) {
+      setNewEmployeeName('');
+    }
+  }, [addEmployeeOpen]);
+
   const getRecognitionConstructor = () => {
     if (typeof window === 'undefined') return null;
     const Recognition =
@@ -1094,7 +1100,6 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
                   </p>
                   <Input
                     label="Nome (opcional)"
-                    placeholder="Ex: Responsável do terceiro"
                     value={signatureName}
                     onChange={(event) => setSignatureName(event.target.value)}
                   />
@@ -1144,7 +1149,6 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
         <form className="stack" onSubmit={handleCreateEmployee}>
           <Input
             label="Nome"
-            placeholder="Nome completo"
             value={newEmployeeName}
             onChange={(event) => setNewEmployeeName(event.target.value)}
             required

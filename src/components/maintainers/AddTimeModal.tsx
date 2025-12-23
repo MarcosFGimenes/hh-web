@@ -58,7 +58,6 @@ export function AddTimeModal({ open, onClose, onSave, initialStart = '', initial
           ref={firstFieldRef}
           type="tel"
           inputMode="numeric"
-          placeholder="08:00"
           value={start}
           onChange={(event) => setStart(formatTimeInput(event.target.value))}
           aria-label="Horário de entrada"
@@ -68,7 +67,6 @@ export function AddTimeModal({ open, onClose, onSave, initialStart = '', initial
         <Input
           type="tel"
           inputMode="numeric"
-          placeholder="17:30"
           value={end}
           onChange={(event) => setEnd(formatTimeInput(event.target.value))}
           aria-label="Horário de saída"

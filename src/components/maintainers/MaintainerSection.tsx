@@ -32,7 +32,6 @@ export function MaintainerSection({ maintainers, canAdd, onAdd, onAddExtra, onAd
     <form className="maintainer-add-form" onSubmit={submitAddMaintainer}>
       <Input
         label="Nome do mantenedor"
-        placeholder="Ex.: João da Silva"
         value={newMaintainerName}
         onChange={(event) => setNewMaintainerName(event.target.value)}
         disabled={!canAdd}
@@ -100,12 +99,11 @@ export function MaintainerSection({ maintainers, canAdd, onAdd, onAddExtra, onAd
                       <span className="pill pill-soft">{os.description}</span>
                     </div>
                     <div className="public-chip-row">
-                      <label className="ui-field">
+                    <label className="ui-field">
                       <span className="ui-field-label">Início</span>
                       <input
                         type="tel"
                         inputMode="numeric"
-                        placeholder="08:00"
                         value={os.startTime || ''}
                         onChange={(event) => onUpdateOsTime(maintainer.id, os.id, 'startTime', event.target.value)}
                       />
@@ -115,7 +113,6 @@ export function MaintainerSection({ maintainers, canAdd, onAdd, onAddExtra, onAd
                       <input
                         type="tel"
                         inputMode="numeric"
-                        placeholder="17:30"
                         value={os.endTime || ''}
                         onChange={(event) => onUpdateOsTime(maintainer.id, os.id, 'endTime', event.target.value)}
                       />

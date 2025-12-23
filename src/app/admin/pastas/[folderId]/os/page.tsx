@@ -308,28 +308,24 @@ export default function FolderServiceOrdersPage() {
     <>
       <Input
         label="Código da O.S."
-        placeholder="OS-123"
         value={state.osCode}
         onChange={(event) => onChange('osCode', event.target.value)}
         required
       />
       <Input
         label="TAG"
-        placeholder="TAG-001"
         value={state.tag}
         onChange={(event) => onChange('tag', event.target.value)}
         required
       />
       <Input
         label="Equipamento"
-        placeholder="Máquina / Setor"
         value={state.machineName}
         onChange={(event) => onChange('machineName', event.target.value)}
         required
       />
       <Input
         label="Descrição"
-        placeholder="Descrição da intervenção"
         value={state.description}
         onChange={(event) => onChange('description', event.target.value)}
         required
@@ -487,7 +483,6 @@ export default function FolderServiceOrdersPage() {
           subtitle={loading ? 'Carregando...' : `Total: ${orders.length}`}
           action={
             <Input
-              placeholder="Buscar por código, TAG, máquina ou descrição"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
