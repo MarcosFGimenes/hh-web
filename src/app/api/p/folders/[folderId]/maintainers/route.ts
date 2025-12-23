@@ -15,7 +15,14 @@ const osCollectionRef = (folderId: string, maintainerId: string) =>
 
 function mapMaintainer(doc: FirebaseFirestore.QueryDocumentSnapshot): Maintainer {
   const data = doc.data() as Omit<Maintainer, 'id'>;
-  return { id: doc.id, ...data };
+  const base: Maintainer = { id: doc.id, ...data };
+
+  if (!base.shifts || base.shifts.length === 0) {
+    const hasLegacyShift = base.startTime && base.endTime;
+    base.shifts = hasLegacyShift ? [{ id: `${doc.id}-legacy`, startTime: base.startTime!, endTime: base.endTime! }] : [];
+  }
+
+  return base;
 }
 
 function mapOs(doc: FirebaseFirestore.QueryDocumentSnapshot): MaintainerOs {

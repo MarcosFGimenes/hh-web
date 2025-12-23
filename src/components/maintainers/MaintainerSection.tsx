@@ -80,16 +80,11 @@ export function MaintainerSection({ maintainers, canAdd, onAdd, onAddExtra, onAd
           <div key={maintainer.id} className="public-chip-card">
             <div className="public-chip-row">
               <div className="pill pill-strong">{maintainer.name}</div>
-              <span className="pill pill-soft">ID: {maintainer.id}</span>
+              <ExtraTimeChips
+                shifts={maintainer.shifts?.map(({ startTime, endTime, id }) => ({ startTime, endTime, id }))}
+                onAddExtra={() => onAddExtra(maintainer.id)}
+              />
             </div>
-            <div className="public-chip-row">
-              <span className="pill pill-soft">Início: {maintainer.startTime || '—'} · Fim: {maintainer.endTime || '—'}</span>
-            </div>
-            <ExtraTimeChips
-              startTime={maintainer.startTime ?? null}
-              endTime={maintainer.endTime ?? null}
-              onAddExtra={() => onAddExtra(maintainer.id)}
-            />
             <div className="public-chip-row">
               <strong>O.S.</strong>
               <Button type="button" variant="secondary" onClick={() => onAddOs(maintainer.id)} disabled={!canAdd}>

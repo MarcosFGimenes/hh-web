@@ -249,8 +249,16 @@ export default function PublicFolderPage({ params }: PageProps) {
             open={Boolean(showAddTimeFor)}
             onClose={() => setShowAddTimeFor(null)}
             onSave={(start, end) => handleSaveMaintainerTime(showAddTimeFor, start, end)}
-            initialStart={data?.maintainers.find((item) => item.id === showAddTimeFor)?.startTime || ''}
-            initialEnd={data?.maintainers.find((item) => item.id === showAddTimeFor)?.endTime || ''}
+            initialStart={
+              data?.maintainers.find((item) => item.id === showAddTimeFor)?.shifts?.[0]?.startTime ||
+              data?.maintainers.find((item) => item.id === showAddTimeFor)?.startTime ||
+              ''
+            }
+            initialEnd={
+              data?.maintainers.find((item) => item.id === showAddTimeFor)?.shifts?.[0]?.endTime ||
+              data?.maintainers.find((item) => item.id === showAddTimeFor)?.endTime ||
+              ''
+            }
           />
         ) : null}
 

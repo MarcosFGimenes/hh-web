@@ -217,12 +217,13 @@ export default function AdminDashboardPlaceholder() {
   const handleCopyLink = async (folderId: string) => {
     try {
       const link = lastLinks[folderId] ?? (await generateLink(folderId));
-      if (navigator?.clipboard?.writeText) {
+      if (navigator?.clipboard?.writeText && document?.hasFocus?.()) {
         await navigator.clipboard.writeText(link);
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Erro ao copiar link privado.';
-      setError(message);
+      // Evita quebrar o carregamento quando o navegador bloqueia acesso à área de transferência.
+      // O usuário ainda pode clicar em \"Gerenciar pastas\" para copiar o link manualmente.
+      console.warn('Não foi possível copiar para a área de transferência:', err);
     }
   };
 
