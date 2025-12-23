@@ -129,7 +129,7 @@ export default function FolderEntriesPage() {
         <section className="entries-shell">
           <header className="entries-header">
             <div className="entries-title-group">
-              <span className="entries-badge">Lançamentos do terceiro</span>
+              <span className="entries-badge ui-badge ui-badge-info">Lançamentos do terceiro</span>
               <h1 className="entries-title">{data?.folder.name || 'Carregando...'}</h1>
               <p className="entries-subtitle">
                 {data?.folder.company ? `Responsável: ${data.folder.company}` : 'Responsável não informado'}
@@ -171,7 +171,7 @@ export default function FolderEntriesPage() {
               />
             </div>
             <div className="entries-count">
-              <span className="entries-count-badge">
+              <span className="entries-count-badge ui-badge ui-badge-strong">
                 {filteredEntries.length} {filteredEntries.length === 1 ? 'resultado' : 'resultados'}
               </span>
               {totalEntries ? <p className="entries-count-hint">{totalEntries} datas com lançamentos nesta pasta.</p> : null}
@@ -214,7 +214,9 @@ export default function FolderEntriesPage() {
                         <p className="entry-signature">{signature}</p>
                       </div>
                       <div className="entry-meta">
-                        <span className="entries-badge">{entry.employees.length} mantenedor(es)</span>
+                        <span className="entries-badge ui-badge ui-badge-info">
+                          {entry.employees.length} mantenedor(es)
+                        </span>
                         <span className="entries-chip">Dados da pasta</span>
                       </div>
                     </header>

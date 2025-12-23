@@ -58,7 +58,7 @@ function LoginContent() {
     <main className="auth-main auth-main-immersive">
       <div className="auth-grid auth-grid-balanced">
         <div className="auth-hero auth-hero-modern">
-          <div className="auth-hero-badge">Portal do PCM</div>
+          <div className="auth-hero-badge ui-badge ui-badge-info">Portal do PCM</div>
           <h1>Login do administrador</h1>
           <p className="auth-hero-text">
             Acesse o painel para gerenciar pastas, acompanhar lançamentos do terceiro e garantir visibilidade total das

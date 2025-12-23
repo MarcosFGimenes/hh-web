@@ -193,7 +193,7 @@ export default function ManageEntriesPage() {
         <section className="entries-shell">
           <header className="entries-header">
             <div className="entries-title-group">
-              <span className="entries-badge">Painel</span>
+              <span className="entries-badge ui-badge ui-badge-info">Painel</span>
               <h1 className="entries-title">Gerenciar lançamentos</h1>
               <p className="entries-subtitle">
                 Consulte e filtre lançamentos de todas as pastas em um único lugar.
@@ -243,7 +243,7 @@ export default function ManageEntriesPage() {
               />
             </div>
             <div className="entries-count">
-              <span className="entries-count-badge">
+              <span className="entries-count-badge ui-badge ui-badge-strong">
                 {filteredLaunches.length} {filteredLaunches.length === 1 ? 'lançamento' : 'lançamentos'}
               </span>
               <p className="entries-count-hint">Use os filtros para refinar a visão consolidada.</p>

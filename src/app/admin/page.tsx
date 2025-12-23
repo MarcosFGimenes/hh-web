@@ -280,7 +280,7 @@ export default function AdminDashboardPlaceholder() {
         <div className="dashboard-shell">
           <header className="dashboard-header">
             <div>
-              <p className="chip">Lar Cooperativa Agroindustrial</p>
+              <p className="ui-badge ui-badge-info">Lar Cooperativa Agroindustrial</p>
               <h1>Dashboard do PCM</h1>
               <p className="dashboard-subtitle">
                 Consolide pastas de serviço e acompanhe o fluxo em um painel visual.
