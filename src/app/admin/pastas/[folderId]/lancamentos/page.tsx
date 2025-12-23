@@ -7,6 +7,7 @@ import { AdminGuard } from '@/components/AdminGuard';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { Toast } from '@/components/Toast';
+import { Input } from '@/components/Input';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import type { Employee } from '@/types/employee';
 import type { Service } from '@/types/service';
@@ -45,6 +46,8 @@ export default function FolderEntriesPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const adminFetch = async (input: string, init?: RequestInit) => {
     if (!idToken) throw new Error('Token do administrador indisponível.');
@@ -88,103 +91,188 @@ export default function FolderEntriesPage() {
   }, [error, success]);
 
   const totalEntries = useMemo(() => data?.entries.length ?? 0, [data]);
+  const filteredEntries = useMemo(() => {
+    if (!data) return [];
+    const query = searchTerm.trim().toLowerCase();
+    return data.entries.filter((entry) => {
+      const dateMatch = selectedDate ? entry.date === selectedDate : true;
+      if (!query) return dateMatch;
+      const employeesMatch = entry.employees.some((employee) => {
+        const nameMatch = employee.name.toLowerCase().includes(query);
+        const serviceMatch = employee.services.some((service) =>
+          [service.osCode, service.tag, service.machineName, service.description]
+            .filter(Boolean)
+            .some((value) => value?.toLowerCase().includes(query))
+        );
+        return nameMatch || serviceMatch;
+      });
+      return dateMatch && employeesMatch;
+    });
+  }, [data, searchTerm, selectedDate]);
+
+  const lastUpdatedLabel = useMemo(() => {
+    if (!data) return null;
+    const timestamps = data.entries
+      .map((entry) => entry.signedAt)
+      .filter((value): value is number => Boolean(value));
+    if (!timestamps.length) return null;
+    const latest = Math.max(...timestamps);
+    return new Date(latest).toLocaleString('pt-BR', {
+      dateStyle: 'short',
+      timeStyle: 'short',
+    });
+  }, [data]);
 
   return (
     <AdminGuard>
-      <main className="container stack" style={{ paddingTop: '2rem', paddingBottom: '2rem' }}>
-        <div className="dashboard-actions" style={{ justifyContent: 'space-between', gap: '1rem' }}>
-          <div>
-            <p className="chip">Lançamentos do terceiro</p>
-            <h1>{data?.folder.name || 'Carregando...'}</h1>
-            <p className="dashboard-subtitle">
-              {data?.folder.company ? `Responsável: ${data.folder.company}` : 'Responsável não informado'}
-            </p>
-          </div>
-          <div className="dashboard-actions-row">
-            <Button type="button" variant="secondary" onClick={load} disabled={loading}>
-              {loading ? 'Atualizando...' : 'Atualizar'}
-            </Button>
-            <Link href="/admin">
-              <Button variant="outline" type="button">
-                Voltar ao dashboard
+      <main className="entries-main">
+        <section className="entries-shell">
+          <header className="entries-header">
+            <div className="entries-title-group">
+              <span className="entries-badge">Lançamentos do terceiro</span>
+              <h1 className="entries-title">{data?.folder.name || 'Carregando...'}</h1>
+              <p className="entries-subtitle">
+                {data?.folder.company ? `Responsável: ${data.folder.company}` : 'Responsável não informado'}
+                {lastUpdatedLabel ? ` • Atualizado em ${lastUpdatedLabel}` : ''}
+              </p>
+            </div>
+            <div className="entries-actions">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={load}
+                disabled={loading}
+                aria-label="Atualizar lançamentos"
+              >
+                {loading ? 'Atualizando...' : 'Atualizar'}
               </Button>
-            </Link>
-          </div>
-        </div>
+              <Link href="/admin">
+                <Button variant="outline" type="button" aria-label="Voltar ao dashboard do PCM">
+                  Voltar ao dashboard
+                </Button>
+              </Link>
+            </div>
+          </header>
 
-        {loading && !data ? (
-          <Card title="Carregando lançamentos">
-            <p className="footer-note">Aguarde, buscando registros do terceiro...</p>
-          </Card>
-        ) : null}
+          <section className="entries-controls">
+            <div className="entries-control-grid">
+              <Input
+                type="date"
+                label="Filtrar por data"
+                value={selectedDate}
+                onChange={(event) => setSelectedDate(event.target.value)}
+              />
+              <Input
+                type="search"
+                label="Busca por mantenedor ou O.S."
+                placeholder="Ex.: Maria, 1234, TAG-01"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+              />
+            </div>
+            <div className="entries-count">
+              <span className="entries-count-badge">
+                {filteredEntries.length} {filteredEntries.length === 1 ? 'resultado' : 'resultados'}
+              </span>
+              {totalEntries ? <p className="entries-count-hint">{totalEntries} datas com lançamentos nesta pasta.</p> : null}
+            </div>
+          </section>
 
-        {!loading && data && totalEntries === 0 ? (
-          <Card title="Nenhum lançamento encontrado">
-            <p className="footer-note">Ainda não existem funcionários ou serviços lançados nesta pasta.</p>
-          </Card>
-        ) : null}
+          {loading && !data ? (
+            <Card title="Carregando lançamentos">
+              <p className="footer-note">Aguarde, buscando registros do terceiro...</p>
+            </Card>
+          ) : null}
 
-        {data
-          ? data.entries.map((entry) => {
-              const hasEmployees = entry.employees.length > 0;
-              return (
-                <Card
-                  key={entry.date}
-                  title={`Lançamentos de ${formatDate(entry.date)}`}
-                  subtitle={
-                    entry.signatureName
-                      ? `Assinado por ${entry.signatureName}${entry.signedAt ? ` em ${new Date(entry.signedAt).toLocaleString('pt-BR')}` : ''}`
-                      : 'Sem assinatura registrada'
-                  }
-                >
-                  {hasEmployees ? (
-                    <div className="stack">
-                      {entry.employees.map((employee) => (
-                        <div key={employee.id} className="public-chip-card">
-                          <div className="public-chip-row">
-                            <span className="pill pill-strong">{employee.name}</span>
-                            <span className="pill pill-soft">
-                              Total: {employee.totalMinutes != null ? `${employee.totalMinutes} min` : '—'}
-                            </span>
-                          </div>
-                          {employee.services.length ? (
-                            <div className="stack">
-                              {employee.services.map((service) => (
-                                <div key={service.id} className="public-chip-card">
-                                  <div className="public-chip-row">
-                                    <span className="pill pill-strong">{service.osCode || 'O.S. não informada'}</span>
-                                    <span className="pill pill-soft">{service.tag}</span>
-                                  </div>
-                                  <p className="footer-note">{service.machineName}</p>
-                                  <p className="footer-note" style={{ marginBottom: '0.25rem' }}>
-                                    {service.description}
-                                  </p>
-                                  <div className="public-chip-row">
-                                    <span className="pill pill-soft">T1: {service.t1In} - {service.t1Out}</span>
-                                    <span className="pill pill-soft">T2: {service.t2In} - {service.t2Out}</span>
-                                    <span className="pill pill-strong">
-                                      Total:{' '}
-                                      {service.totalMinutes !== undefined && service.totalMinutes !== null
-                                        ? `${service.totalMinutes} min`
-                                        : '—'}
-                                    </span>
-                                  </div>
-                                </div>
-                              ))}
+          {!loading && data && totalEntries === 0 ? (
+            <Card title="Nenhum lançamento encontrado">
+              <div className="empty-state">
+                <div className="empty-state-icon" aria-hidden>
+                  📄
+                </div>
+                <div>
+                  <p className="footer-note">Ainda não existem funcionários ou serviços lançados nesta pasta.</p>
+                  <p className="footer-note">Atualize ou verifique se já existem lançamentos nesta pasta.</p>
+                </div>
+              </div>
+            </Card>
+          ) : null}
+
+          {data ? (
+            <section className="entries-grid">
+              {filteredEntries.map((entry) => {
+                const hasEmployees = entry.employees.length > 0;
+                const signature = entry.signatureName
+                  ? `Assinado por ${entry.signatureName}${entry.signedAt ? ` em ${new Date(entry.signedAt).toLocaleString('pt-BR')}` : ''}`
+                  : 'Sem assinatura registrada';
+                return (
+                  <article key={entry.date} className="entry-card">
+                    <header className="entry-card-head">
+                      <div>
+                        <p className="entry-date">{formatDate(entry.date)}</p>
+                        <h3 className="entry-title">Lançamentos do dia</h3>
+                        <p className="entry-signature">{signature}</p>
+                      </div>
+                      <div className="entry-meta">
+                        <span className="entries-badge">{entry.employees.length} mantenedor(es)</span>
+                        <span className="entries-chip">Dados da pasta</span>
+                      </div>
+                    </header>
+
+                    {hasEmployees ? (
+                      <div className="entry-body">
+                        {entry.employees.map((employee) => (
+                          <div key={employee.id} className="entry-employee-card">
+                            <div className="entry-employee-head">
+                              <div className="entry-avatar" aria-hidden>
+                                {employee.name.slice(0, 1)}
+                              </div>
+                              <div>
+                                <p className="entry-employee-name">{employee.name}</p>
+                                <p className="entry-employee-meta">
+                                  Total: {employee.totalMinutes != null ? `${employee.totalMinutes} min` : '—'}
+                                </p>
+                              </div>
                             </div>
-                          ) : (
-                            <p className="footer-note">Nenhum serviço lançado para este funcionário.</p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="footer-note">Nenhum funcionário lançado nesta data.</p>
-                  )}
-                </Card>
-              );
-            })
-          : null}
+
+                            {employee.services.length ? (
+                              <div className="entry-services">
+                                {employee.services.map((service) => (
+                                  <div key={service.id} className="entry-service-card">
+                                    <div className="entry-service-head">
+                                      <span className="entries-chip strong">{service.osCode || 'O.S. não informada'}</span>
+                                      {service.tag ? <span className="entries-chip subtle">{service.tag}</span> : null}
+                                    </div>
+                                    <p className="entry-service-machine">{service.machineName}</p>
+                                    <p className="entry-service-description">{service.description}</p>
+                                    <div className="entry-intervals">
+                                      <span className="interval-chip">T1: {service.t1In} - {service.t1Out}</span>
+                                      <span className="interval-chip">T2: {service.t2In} - {service.t2Out}</span>
+                                      <span className="interval-chip strong">
+                                        Total:{' '}
+                                        {service.totalMinutes !== undefined && service.totalMinutes !== null
+                                          ? `${service.totalMinutes} min`
+                                          : '—'}
+                                      </span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="entry-empty">Nenhum serviço lançado para este funcionário.</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="entry-empty">Nenhum funcionário lançado nesta data.</p>
+                    )}
+                  </article>
+                );
+              })}
+            </section>
+          ) : null}
+        </section>
 
         {error ? <Toast type="error" message={error} /> : null}
         {success ? <Toast type="success" message={success} /> : null}
