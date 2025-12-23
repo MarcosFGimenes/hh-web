@@ -31,12 +31,19 @@ export async function POST(request: Request, { params }: Params) {
     }
 
     const ref = maintainerRef(folder.id, maintainerId);
-    const snapshot = await ref.get();
-    if (!snapshot.exists) {
-      return NextResponse.json({ error: 'Mantenedor não encontrado.' }, { status: 404 });
-    }
+  const snapshot = await ref.get();
+  if (!snapshot.exists) {
+    return NextResponse.json({ error: 'Mantenedor não encontrado.' }, { status: 404 });
+  }
 
-    await ref.update({ startTime, endTime, updatedAt: Date.now() });
+    const shiftId = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}`;
+    const existingShifts = Array.isArray(snapshot.data()?.shifts)
+      ? (snapshot.data()?.shifts as { id: string; startTime: string; endTime: string; createdAt?: number }[])
+      : [];
+
+    const updatedShifts = [...existingShifts, { id: shiftId, startTime, endTime, createdAt: Date.now() }];
+
+    await ref.update({ startTime, endTime, shifts: updatedShifts, updatedAt: Date.now() });
     const updated = await ref.get();
     return NextResponse.json({ maintainer: { id: updated.id, ...(updated.data() || {}) } });
   } catch (error) {
