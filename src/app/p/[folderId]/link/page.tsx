@@ -31,7 +31,7 @@ export default function PublicFolderPage({ params }: PageProps) {
   const [showAddTimeFor, setShowAddTimeFor] = useState<string | null>(null);
 
   const linkKey = useMemo(() => searchParams.get('k') || '', [searchParams]);
-  const canAddMaintainer = data?.userRole === 'ADMIN';
+  const canAddMaintainer = data?.userRole === 'ADMIN' || data?.userRole === 'THIRD';
 
   const fetchJSON = async () => {
     const response = await fetch(`/api/p/folders/${folderId}/maintainers?k=${encodeURIComponent(linkKey)}`, {

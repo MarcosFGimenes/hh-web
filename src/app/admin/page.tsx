@@ -16,6 +16,7 @@ export default function AdminDashboardPlaceholder() {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [lastLinks, setLastLinks] = useState<Record<string, string>>({});
+  const [layoutHydrated, setLayoutHydrated] = useState(false);
   const [lanes, setLanes] = useState<Record<'backlog' | 'progress' | 'done', Folder[]>>({
     backlog: [],
     progress: [],
@@ -112,6 +113,7 @@ export default function AdminDashboardPlaceholder() {
         const fetched: Folder[] = data.folders ?? [];
         setFolders(fetched);
         setLanes(applySavedLayout(fetched));
+        setLayoutHydrated(true);
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Erro ao listar pastas.';
         setError(message);
@@ -124,8 +126,9 @@ export default function AdminDashboardPlaceholder() {
   }, [user]);
 
   useEffect(() => {
+    if (!layoutHydrated) return;
     persistLayout(lanes);
-  }, [lanes]);
+  }, [lanes, layoutHydrated]);
 
   const onDragStart = (folderId: string) => setDraggingId(folderId);
 
