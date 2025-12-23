@@ -14,6 +14,9 @@ export default function AdminDashboardPlaceholder() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
+  const [lastLinks, setLastLinks] = useState<Record<string, string>>({});
+  const [layoutHydrated, setLayoutHydrated] = useState(false);
   const [lanes, setLanes] = useState<Record<'backlog' | 'progress' | 'done', Folder[]>>({
     backlog: [],
     progress: [],
@@ -36,6 +39,69 @@ export default function AdminDashboardPlaceholder() {
     return fetch(input, { ...init, headers });
   };
 
+  const buildPrivateLink = (folderId: string, linkKey: string) => {
+    const fallbackOrigin = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    const origin =
+      typeof window !== 'undefined' && window.location?.origin ? window.location.origin : fallbackOrigin;
+    return `${origin.replace(/\/+$/, '')}/p/${folderId}/link?k=${linkKey}`;
+  };
+
+  const persistLayout = (layout: Record<'backlog' | 'progress' | 'done', Folder[]>) => {
+    if (typeof window === 'undefined') return;
+    const payload = {
+      backlog: layout.backlog.map((folder) => folder.id),
+      progress: layout.progress.map((folder) => folder.id),
+      done: layout.done.map((folder) => folder.id),
+    };
+    localStorage.setItem('hh-admin-kanban-layout', JSON.stringify(payload));
+  };
+
+  const applySavedLayout = (items: Folder[]) => {
+    if (typeof window === 'undefined') {
+      return {
+        backlog: items,
+        progress: [],
+        done: [],
+      };
+    }
+
+    const raw = localStorage.getItem('hh-admin-kanban-layout');
+    if (!raw) {
+      return {
+        backlog: items,
+        progress: [],
+        done: [],
+      };
+    }
+
+    try {
+      const saved = JSON.parse(raw) as { backlog?: string[]; progress?: string[]; done?: string[] };
+      const map = new Map(items.map((item) => [item.id, item]));
+
+      const buildLane = (ids: string[] = []) =>
+        ids.map((id) => map.get(id)).filter(Boolean) as Folder[];
+
+      const backlog = buildLane(saved.backlog);
+      const progress = buildLane(saved.progress);
+      const done = buildLane(saved.done);
+
+      const usedIds = new Set([...backlog, ...progress, ...done].map((item) => item.id));
+      const remaining = items.filter((item) => !usedIds.has(item.id));
+
+      return {
+        backlog: [...backlog, ...remaining],
+        progress,
+        done,
+      };
+    } catch {
+      return {
+        backlog: items,
+        progress: [],
+        done: [],
+      };
+    }
+  };
+
   useEffect(() => {
     const load = async () => {
       setLoading(true);
@@ -46,11 +112,8 @@ export default function AdminDashboardPlaceholder() {
         if (!response.ok) throw new Error(data.error || 'Erro ao carregar pastas.');
         const fetched: Folder[] = data.folders ?? [];
         setFolders(fetched);
-        setLanes({
-          backlog: fetched,
-          progress: [],
-          done: [],
-        });
+        setLanes(applySavedLayout(fetched));
+        setLayoutHydrated(true);
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Erro ao listar pastas.';
         setError(message);
@@ -61,6 +124,11 @@ export default function AdminDashboardPlaceholder() {
 
     load();
   }, [user]);
+
+  useEffect(() => {
+    if (!layoutHydrated) return;
+    persistLayout(lanes);
+  }, [lanes, layoutHydrated]);
 
   const onDragStart = (folderId: string) => setDraggingId(folderId);
 
@@ -94,6 +162,70 @@ export default function AdminDashboardPlaceholder() {
     onDragEnd();
   };
 
+  const toggleCardActions = (folderId: string) => {
+    setExpandedCards((prev) => {
+      const next = new Set(prev);
+      if (next.has(folderId)) {
+        next.delete(folderId);
+      } else {
+        next.add(folderId);
+      }
+      return next;
+    });
+  };
+
+  const handleRename = async (folderId: string, currentName: string) => {
+    const newName = typeof window !== 'undefined' ? window.prompt('Novo nome da pasta', currentName)?.trim() : '';
+    if (!newName || newName === currentName) return;
+    try {
+      const response = await adminFetch(`/api/admin/folders/${folderId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ name: newName }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Erro ao renomear a pasta.');
+
+      setLanes((prev) => {
+        const updateLane = (items: Folder[]) =>
+          items.map((item) => (item.id === folderId ? { ...item, name: data.folder.name } : item));
+        return {
+          backlog: updateLane(prev.backlog),
+          progress: updateLane(prev.progress),
+          done: updateLane(prev.done),
+        };
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro ao renomear a pasta.';
+      setError(message);
+    }
+  };
+
+  const generateLink = async (folderId: string) => {
+    const response = await adminFetch(`/api/admin/folders/${folderId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ rotateLinkKey: true }),
+    });
+    const data = await response.json();
+    if (!response.ok || !data.linkKey) {
+      throw new Error(data.error || 'Não foi possível gerar o link privado.');
+    }
+    const link = buildPrivateLink(folderId, data.linkKey);
+    setLastLinks((prev) => ({ ...prev, [folderId]: link }));
+    return link;
+  };
+
+  const handleCopyLink = async (folderId: string) => {
+    try {
+      const link = lastLinks[folderId] ?? (await generateLink(folderId));
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(link);
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro ao copiar link privado.';
+      setError(message);
+    }
+  };
+
   const renderCard = (folder: Folder) => (
     <div
       key={folder.id}
@@ -101,9 +233,25 @@ export default function AdminDashboardPlaceholder() {
       draggable
       onDragStart={() => onDragStart(folder.id)}
       onDragEnd={onDragEnd}
+      onDoubleClick={() => toggleCardActions(folder.id)}
     >
       <p className="kanban-card-title">{folder.name}</p>
       <p className="kanban-card-meta">Responsável: {folder.company || '—'}</p>
+      {expandedCards.has(folder.id) ? (
+        <div className="kanban-card-actions">
+          <Button type="button" variant="secondary" onClick={() => handleRename(folder.id, folder.name)}>
+            Renomear
+          </Button>
+          <Link href={`/admin/pastas/${folder.id}/os`}>
+            <Button type="button" variant="secondary">
+              Gerenciar O.S.
+            </Button>
+          </Link>
+          <Button type="button" variant="primary" onClick={() => handleCopyLink(folder.id)}>
+            Copiar link privado
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 
