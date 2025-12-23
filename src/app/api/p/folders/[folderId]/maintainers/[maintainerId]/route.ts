@@ -27,14 +27,20 @@ export async function PATCH(request: Request, { params }: Params) {
     const linkKey = url.searchParams.get('k') || '';
     const { folderId, maintainerId } = params;
 
-    const folder = await verifyLinkKey(folderId, linkKey);
-    if (!folder) {
-      return NextResponse.json({ error: 'Link inválido ou expirado.' }, { status: 401 });
-    }
-
     const isAdmin = await ensureAdmin();
+    let targetFolderId = folderId;
+
     if (!isAdmin) {
-      return NextResponse.json({ error: 'Apenas administradores podem gerenciar mantenedores.' }, { status: 403 });
+      const folder = await verifyLinkKey(folderId, linkKey);
+      if (!folder) {
+        return NextResponse.json({ error: 'Link inválido ou expirado.' }, { status: 401 });
+      }
+      targetFolderId = folder.id;
+    } else {
+      const folderSnapshot = await getAdminDb().collection('folders').doc(folderId).get();
+      if (!folderSnapshot.exists) {
+        return NextResponse.json({ error: 'Pasta não encontrada.' }, { status: 404 });
+      }
     }
 
     const body = await request.json();
@@ -43,7 +49,7 @@ export async function PATCH(request: Request, { params }: Params) {
       return NextResponse.json({ error: 'Nome do mantenedor é obrigatório.' }, { status: 400 });
     }
 
-    const docRef = collectionRef(folder.id).doc(maintainerId);
+    const docRef = collectionRef(targetFolderId).doc(maintainerId);
     await docRef.update({ name, updatedAt: Date.now() });
     const snapshot = await docRef.get();
     const maintainer = { id: snapshot.id, ...(snapshot.data() as Omit<Maintainer, 'id'>) };
@@ -61,19 +67,25 @@ export async function DELETE(request: Request, { params }: Params) {
     const linkKey = url.searchParams.get('k') || '';
     const { folderId, maintainerId } = params;
 
-    const folder = await verifyLinkKey(folderId, linkKey);
-    if (!folder) {
-      return NextResponse.json({ error: 'Link inválido ou expirado.' }, { status: 401 });
-    }
-
     const isAdmin = await ensureAdmin();
+    let targetFolderId = folderId;
+
     if (!isAdmin) {
-      return NextResponse.json({ error: 'Apenas administradores podem gerenciar mantenedores.' }, { status: 403 });
+      const folder = await verifyLinkKey(folderId, linkKey);
+      if (!folder) {
+        return NextResponse.json({ error: 'Link inválido ou expirado.' }, { status: 401 });
+      }
+      targetFolderId = folder.id;
+    } else {
+      const folderSnapshot = await getAdminDb().collection('folders').doc(folderId).get();
+      if (!folderSnapshot.exists) {
+        return NextResponse.json({ error: 'Pasta não encontrada.' }, { status: 404 });
+      }
     }
 
     const db = getAdminDb();
-    const maintainerRef = collectionRef(folder.id).doc(maintainerId);
-    const osRef = osCollectionRef(folder.id, maintainerId);
+    const maintainerRef = collectionRef(targetFolderId).doc(maintainerId);
+    const osRef = osCollectionRef(targetFolderId, maintainerId);
     const osSnapshot = await osRef.get();
 
     const batch = db.batch();

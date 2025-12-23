@@ -12,6 +12,7 @@ type MaintainerSectionProps = {
   orders: ServiceOrder[];
   canAdd: boolean;
   canManage: boolean;
+  canCreateMaintainer?: boolean;
   onAdd: (name: string) => void;
   onAddExtra: (maintainerId: string) => void;
   onAddOs: (maintainerId: string) => void;
@@ -24,6 +25,7 @@ export function MaintainerSection({
   orders,
   canAdd,
   canManage,
+  canCreateMaintainer = false,
   onAdd,
   onAddExtra,
   onAddOs,
@@ -53,7 +55,7 @@ export function MaintainerSection({
       action={
         <div className="maintainer-head-actions">
           <span className="maintainer-count">Total: {maintainers.length}</span>
-          {canManage && !showAddForm ? (
+          {canCreateMaintainer && !showAddForm ? (
             <Button
               type="button"
               onClick={() => setShowAddForm(true)}
@@ -68,7 +70,7 @@ export function MaintainerSection({
       className="maintainer-card-shell"
     >
       <div className="stack">
-        {showAddForm && canManage ? (
+        {showAddForm && canCreateMaintainer ? (
           <form className="maintainer-add-form" onSubmit={submitAddMaintainer}>
             <Input
               label="Nome do mantenedor"

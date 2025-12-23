@@ -397,17 +397,18 @@ export default function PublicFolderPage({ params }: PageProps) {
               </div>
             </Card>
 
-            <MaintainerSection
-              maintainers={data.maintainers}
-              orders={orders}
-              canAdd
-              canManage={!!canManageMaintainers}
-              onAdd={handleAddMaintainer}
-              onAddExtra={(id) => setShowAddTimeFor(id)}
-              onAddOs={handleAddOs}
-              onEdit={(id, name) => setEditMaintainer({ id, name })}
-              onDelete={(id, name) => setDeleteMaintainer({ id, name })}
-            />
+              <MaintainerSection
+                maintainers={data.maintainers}
+                orders={orders}
+                canAdd
+                canManage
+                canCreateMaintainer={canAddMaintainer}
+                onAdd={handleAddMaintainer}
+                onAddExtra={(id) => setShowAddTimeFor(id)}
+                onAddOs={handleAddOs}
+                onEdit={(id, name) => setEditMaintainer({ id, name })}
+                onDelete={(id, name) => setDeleteMaintainer({ id, name })}
+              />
           </div>
         ) : null}
 
@@ -469,7 +470,7 @@ export default function PublicFolderPage({ params }: PageProps) {
           initialName={editMaintainer?.name || ''}
           onClose={() => setEditMaintainer(null)}
           onSubmit={async (name) => {
-            if (!editMaintainer || !canManageMaintainers) return;
+            if (!editMaintainer) return;
             const trimmed = name.trim();
             if (!trimmed) return;
             try {
@@ -510,7 +511,7 @@ export default function PublicFolderPage({ params }: PageProps) {
           confirmVariant="danger"
           onClose={() => setDeleteMaintainer(null)}
           onSubmit={async () => {
-            if (!deleteMaintainer || !canManageMaintainers) return;
+            if (!deleteMaintainer) return;
             try {
               const response = await fetch(
                 `/api/p/folders/${folderId}/maintainers/${deleteMaintainer.id}?k=${encodeURIComponent(linkKey)}`,
