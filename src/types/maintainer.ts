@@ -1,5 +1,6 @@
 export type Maintainer = {
   id: string;
+  date: string;
   name: string;
   startTime?: string | null;
   endTime?: string | null;

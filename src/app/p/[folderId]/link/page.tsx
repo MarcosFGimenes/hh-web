@@ -8,6 +8,7 @@ import { Toast } from '@/components/Toast';
 import { MaintainerSection } from '@/components/maintainers/MaintainerSection';
 import { AddTimeModal } from '@/components/maintainers/AddTimeModal';
 import { OsCardView } from '@/components/maintainers/OsCardView';
+import { Input } from '@/components/Input';
 import type { Maintainer } from '@/types/maintainer';
 import type { MaintainerOs } from '@/types/maintainerOs';
 import { normalizeTime, validateShiftPair } from '@/lib/time/base';
@@ -29,14 +30,19 @@ export default function PublicFolderPage({ params }: PageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAddTimeFor, setShowAddTimeFor] = useState<string | null>(null);
+  const initialDate = useMemo(() => searchParams.get('date') || new Date().toISOString().slice(0, 10), [searchParams]);
+  const [selectedDate, setSelectedDate] = useState(initialDate);
 
   const linkKey = useMemo(() => searchParams.get('k') || '', [searchParams]);
   const canAddMaintainer = data?.userRole === 'ADMIN' || data?.userRole === 'THIRD';
 
-  const fetchJSON = async () => {
-    const response = await fetch(`/api/p/folders/${folderId}/maintainers?k=${encodeURIComponent(linkKey)}`, {
-      cache: 'no-store',
-    });
+  const fetchJSON = async (date: string) => {
+    const response = await fetch(
+      `/api/p/folders/${folderId}/maintainers?k=${encodeURIComponent(linkKey)}&date=${encodeURIComponent(date)}`,
+      {
+        cache: 'no-store',
+      }
+    );
     const json = await response.json();
     if (!response.ok) {
       throw new Error(json?.error || 'Erro ao carregar dados.');
@@ -52,7 +58,7 @@ export default function PublicFolderPage({ params }: PageProps) {
         if (!linkKey) {
           throw new Error('Link inválido ou expirado. Peça um novo link ao administrador.');
         }
-        const response = await fetchJSON();
+        const response = await fetchJSON(selectedDate);
         setData(response);
       } catch (err) {
         const message =
@@ -66,11 +72,15 @@ export default function PublicFolderPage({ params }: PageProps) {
     };
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [folderId, linkKey]);
+  }, [folderId, linkKey, selectedDate]);
+
+  useEffect(() => {
+    setShowAddTimeFor(null);
+  }, [selectedDate]);
 
   const refetch = async () => {
     try {
-      const response = await fetchJSON();
+      const response = await fetchJSON(selectedDate);
       setData(response);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao atualizar dados.';
@@ -79,14 +89,14 @@ export default function PublicFolderPage({ params }: PageProps) {
   };
 
   const handleAddMaintainer = async (name: string) => {
-    if (!data || !canAddMaintainer) return;
+    if (!data || !canAddMaintainer || !selectedDate) return;
     const trimmedName = name.trim();
     if (!trimmedName) return;
     try {
       const response = await fetch(`/api/p/folders/${folderId}/maintainers?k=${encodeURIComponent(linkKey)}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: trimmedName }),
+        body: JSON.stringify({ name: trimmedName, date: selectedDate }),
       });
       const json = await response.json();
       if (!response.ok) {
@@ -100,7 +110,7 @@ export default function PublicFolderPage({ params }: PageProps) {
   };
 
   const handleSaveMaintainerTime = async (maintainerId: string, start: string, end: string) => {
-    if (!data) return;
+    if (!data || !selectedDate) return;
     const normalizedStart = normalizeTime(start);
     const normalizedEnd = normalizeTime(end);
 
@@ -123,7 +133,9 @@ export default function PublicFolderPage({ params }: PageProps) {
 
     try {
       const response = await fetch(
-        `/api/p/folders/${folderId}/maintainers/${maintainerId}/time?k=${encodeURIComponent(linkKey)}`,
+        `/api/p/folders/${folderId}/maintainers/${maintainerId}/time?k=${encodeURIComponent(linkKey)}&date=${encodeURIComponent(
+          selectedDate
+        )}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -151,14 +163,16 @@ export default function PublicFolderPage({ params }: PageProps) {
   };
 
   const handleAddOs = async (maintainerId: string) => {
-    if (!data || !canAddMaintainer) return;
+    if (!data || !canAddMaintainer || !selectedDate) return;
     const osNumber = typeof window !== 'undefined' ? window.prompt('Número da O.S.')?.trim() : '';
     const description = typeof window !== 'undefined' ? window.prompt('Descrição da O.S.')?.trim() : '';
     if (!osNumber || !description) return;
 
     try {
       const response = await fetch(
-        `/api/p/folders/${folderId}/maintainers/${maintainerId}/os?k=${encodeURIComponent(linkKey)}`,
+        `/api/p/folders/${folderId}/maintainers/${maintainerId}/os?k=${encodeURIComponent(linkKey)}&date=${encodeURIComponent(
+          selectedDate
+        )}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -182,9 +196,12 @@ export default function PublicFolderPage({ params }: PageProps) {
     field: 'startTime' | 'endTime',
     value: string
   ) => {
+    if (!selectedDate) return;
     try {
       const response = await fetch(
-        `/api/p/folders/${folderId}/maintainers/${maintainerId}/os/${osId}?k=${encodeURIComponent(linkKey)}`,
+        `/api/p/folders/${folderId}/maintainers/${maintainerId}/os/${osId}?k=${encodeURIComponent(
+          linkKey
+        )}&date=${encodeURIComponent(selectedDate)}`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -232,6 +249,19 @@ export default function PublicFolderPage({ params }: PageProps) {
             </div>
 
             <OsCardView folderName={data.folder.name} updatedAt={data.folder.updatedAt} />
+
+            <Card>
+              <Input
+                type="date"
+                label="Data do apontamento"
+                required
+                value={selectedDate}
+                onChange={(event) => {
+                  if (!event.target.value) return;
+                  setSelectedDate(event.target.value);
+                }}
+              />
+            </Card>
 
             <MaintainerSection
               maintainers={data.maintainers}
