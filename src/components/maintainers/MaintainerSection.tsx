@@ -165,7 +165,6 @@ export function MaintainerSection({
                 <div className="maintainer-chip-row">
                   <ExtraTimeChips
                     shifts={maintainer.shifts?.map(({ startTime, endTime, id }) => ({ startTime, endTime, id }))}
-                    onAddExtra={() => onAddExtra(maintainer.id)}
                   />
                 </div>
 
