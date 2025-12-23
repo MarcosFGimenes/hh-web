@@ -293,15 +293,15 @@ export default function AdminDashboardPlaceholder() {
                     Gerenciar pastas
                   </Button>
                 </Link>
+                <Link href="/admin/lancamentos">
+                  <Button variant="secondary" type="button">
+                    Gerenciar Lançamentos
+                  </Button>
+                </Link>
                 {user ? (
-                <Button
-                  variant="secondary"
-                  type="button"
-                  onClick={signOut}
-                  style={{ backgroundColor: '#1f2937', color: '#f8fafc' }}
-                >
-                  Sair
-                </Button>
+                  <Button variant="danger" type="button" onClick={signOut}>
+                    Sair
+                  </Button>
                 ) : null}
               </div>
               {user ? (
