@@ -66,16 +66,6 @@ export function MaintainerSection({
       action={
         <div className="maintainer-head-actions">
           <span className="maintainer-count">Total: {maintainers.length}</span>
-          {canCreateMaintainer && !showAddForm ? (
-            <Button
-              type="button"
-              onClick={() => setShowAddForm(true)}
-              aria-label="Adicionar mantenedor"
-              className="ui-button-compact"
-            >
-              + Adicionar Mantenedor
-            </Button>
-          ) : null}
         </div>
       }
       className="maintainer-card-shell"

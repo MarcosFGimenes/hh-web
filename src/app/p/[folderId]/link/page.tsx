@@ -397,7 +397,7 @@ export default function PublicFolderPage({ params }: PageProps) {
                 </div>
                 <Button
                   type="button"
-                  className="ui-button-compact"
+                  className="ui-button-compact public-date-add-button"
                   onClick={() => setAddMaintainerTrigger((value) => value + 1)}
                 >
                   + Adicionar mantenedor
