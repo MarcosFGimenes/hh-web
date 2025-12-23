@@ -466,6 +466,28 @@ main {
   gap: 0.5rem;
 }
 
+.modal-edit-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.modal-edit-options {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.modal-edit-label {
+  margin: 0;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.modal-edit-grid {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
 .pill {
   display: inline-flex;
   align-items: center;
