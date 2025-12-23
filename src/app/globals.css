@@ -177,6 +177,19 @@ main {
 
 .public-header-text {
   display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.public-header-updated {
+  margin: 0;
+  color: #475569;
+  font-weight: 600;
+}
+
+.public-header-text {
+  display: flex;
   flex-direction: column;
   gap: 0.35rem;
 }
@@ -192,23 +205,6 @@ main {
   gap: 0.5rem;
   align-items: center;
   flex-wrap: wrap;
-}
-
-.public-header-updated {
-  margin: 0;
-  color: #475569;
-  font-weight: 600;
-}
-
-.public-header-text {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.public-header-title {
-  display: grid;
-  gap: 0.2rem;
 }
 
 .public-header-updated {
