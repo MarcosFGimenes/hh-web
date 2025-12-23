@@ -101,10 +101,11 @@ export default function PublicFolderPage({ params }: PageProps) {
   const [selectedDate, setSelectedDate] = useState(initialDate);
   const [orders, setOrders] = useState<ServiceOrder[]>([]);
   const [savingOsLog, setSavingOsLog] = useState(false);
+  const [addMaintainerTrigger, setAddMaintainerTrigger] = useState(0);
 
   const linkKey = useMemo(() => searchParams.get('k') || '', [searchParams]);
-  const canManageMaintainers = data?.userRole === 'ADMIN';
-  const canAddMaintainer = Boolean(canManageMaintainers);
+  const canManageMaintainers = true;
+  const canCreateMaintainer = Boolean(data);
   const withAuthHeaders = (init?: RequestInit) => {
     const headers = new Headers(init?.headers);
     if (idToken) headers.set('Authorization', `Bearer ${idToken}`);
@@ -192,7 +193,7 @@ export default function PublicFolderPage({ params }: PageProps) {
   };
 
   const handleAddMaintainer = async (name: string) => {
-    if (!data || !canAddMaintainer || !selectedDate) return;
+    if (!data || !selectedDate) return;
     const trimmedName = name.trim();
     if (!trimmedName) return;
     try {
@@ -383,17 +384,26 @@ export default function PublicFolderPage({ params }: PageProps) {
                 <p className="public-date-title">Data do apontamento</p>
                 <p className="public-date-hint">Selecione a data do lançamento.</p>
               </div>
-              <div className="public-date-input">
-                <Input
-                  type="date"
-                  required
-                  value={selectedDate}
-                  className="ui-input-compact"
-                  onChange={(event) => {
-                    if (!event.target.value) return;
-                    setSelectedDate(event.target.value);
-                  }}
-                />
+              <div className="public-date-actions">
+                <div className="public-date-input">
+                  <Input
+                    type="date"
+                    required
+                    value={selectedDate}
+                    className="ui-input-compact"
+                    onChange={(event) => {
+                      if (!event.target.value) return;
+                      setSelectedDate(event.target.value);
+                    }}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  className="ui-button-compact"
+                  onClick={() => setAddMaintainerTrigger((value) => value + 1)}
+                >
+                  + Adicionar mantenedor
+                </Button>
               </div>
             </Card>
 
@@ -402,7 +412,9 @@ export default function PublicFolderPage({ params }: PageProps) {
                 orders={orders}
                 canAdd
                 canManage
-                canCreateMaintainer={canAddMaintainer}
+                canCreateMaintainer={canCreateMaintainer}
+                openAddMaintainerToken={addMaintainerTrigger}
+                onCloseAddMaintainer={() => setAddMaintainerTrigger(0)}
                 onAdd={handleAddMaintainer}
                 onAddExtra={(id) => setShowAddTimeFor(id)}
                 onAddOs={handleAddOs}

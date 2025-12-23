@@ -13,6 +13,8 @@ type MaintainerSectionProps = {
   canAdd: boolean;
   canManage: boolean;
   canCreateMaintainer?: boolean;
+  openAddMaintainerToken?: number;
+  onCloseAddMaintainer?: () => void;
   onAdd: (name: string) => void;
   onAddExtra: (maintainerId: string) => void;
   onAddOs: (maintainerId: string) => void;
@@ -26,6 +28,8 @@ export function MaintainerSection({
   canAdd,
   canManage,
   canCreateMaintainer = false,
+  openAddMaintainerToken,
+  onCloseAddMaintainer,
   onAdd,
   onAddExtra,
   onAddOs,
@@ -34,6 +38,12 @@ export function MaintainerSection({
 }: MaintainerSectionProps) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newMaintainerName, setNewMaintainerName] = useState('');
+
+  useEffect(() => {
+    if (openAddMaintainerToken !== undefined) {
+      setShowAddForm(Boolean(openAddMaintainerToken));
+    }
+  }, [openAddMaintainerToken]);
 
   const ordersMap = orders.reduce<Record<string, ServiceOrder>>((acc, item) => {
     acc[item.id] = item;
@@ -47,6 +57,7 @@ export function MaintainerSection({
     onAdd(value);
     setNewMaintainerName('');
     setShowAddForm(false);
+    onCloseAddMaintainer?.();
   };
 
   return (
@@ -78,22 +89,23 @@ export function MaintainerSection({
               onChange={(event) => setNewMaintainerName(event.target.value)}
               required
             />
-            <div className="maintainer-add-actions">
-              <Button type="submit" disabled={!newMaintainerName.trim()}>
-                Adicionar
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setShowAddForm(false);
-                  setNewMaintainerName('');
-                }}
-              >
-                Cancelar
-              </Button>
-            </div>
-          </form>
+                <div className="maintainer-add-actions">
+                  <Button type="submit" disabled={!newMaintainerName.trim()}>
+                    Adicionar
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowAddForm(false);
+                      setNewMaintainerName('');
+                      onCloseAddMaintainer?.();
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              </form>
         ) : null}
 
         {!maintainers.length ? (
