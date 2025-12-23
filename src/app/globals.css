@@ -200,6 +200,23 @@ main {
   font-weight: 600;
 }
 
+.public-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.public-header-title {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.public-header-updated {
+  margin: 0;
+  color: #475569;
+  font-weight: 600;
+}
+
 .public-title {
   margin: 0.15rem 0;
 }
