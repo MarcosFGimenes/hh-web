@@ -190,7 +190,16 @@ export function AddOsModal({
       open={open}
       onClose={onClose}
     >
-      <form className="stack" onSubmit={handleSubmit}>
+      <form className="stack os-modal-form" onSubmit={handleSubmit}>
+        <div className="modal-actions os-modal-actions">
+          <Button type="button" variant="outline" onClick={onClose}>
+            Voltar
+          </Button>
+          <Button type="submit" isLoading={isSubmitting}>
+            Confirmar
+          </Button>
+        </div>
+
         <div className="stack">
           <div className="ui-field">
             <span className="ui-field-label">Buscar O.S (código ou tag)</span>
@@ -347,7 +356,7 @@ export function AddOsModal({
                   <Button
                     type="button"
                     variant="outline"
-                    className="ui-button-compact"
+                    className="ui-button-compact os-remove-button"
                     onClick={() => removeInterval(row.id)}
                     disabled={intervalRows.length === 1}
                   >
