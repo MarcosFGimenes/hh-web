@@ -16,6 +16,12 @@ export function AddTimeModal({ open, onClose, onSave, initialStart = '', initial
   const [end, setEnd] = useState(initialEnd);
   const firstFieldRef = useRef<HTMLInputElement | null>(null);
 
+  const formatTimeInput = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 4);
+    if (digits.length <= 2) return digits;
+    return `${digits.slice(0, 2)}:${digits.slice(2)}`;
+  };
+
   useEffect(() => {
     if (open && firstFieldRef.current) {
       firstFieldRef.current.focus();
@@ -54,7 +60,7 @@ export function AddTimeModal({ open, onClose, onSave, initialStart = '', initial
           inputMode="numeric"
           placeholder="08:00"
           value={start}
-          onChange={(event) => setStart(event.target.value)}
+          onChange={(event) => setStart(formatTimeInput(event.target.value))}
           aria-label="Horário de entrada"
           label="Entrada"
           required
@@ -64,7 +70,7 @@ export function AddTimeModal({ open, onClose, onSave, initialStart = '', initial
           inputMode="numeric"
           placeholder="17:30"
           value={end}
-          onChange={(event) => setEnd(event.target.value)}
+          onChange={(event) => setEnd(formatTimeInput(event.target.value))}
           aria-label="Horário de saída"
           label="Saída"
           required
