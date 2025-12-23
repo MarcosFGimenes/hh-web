@@ -4,11 +4,13 @@ type CardProps = PropsWithChildren<{
   title?: string;
   subtitle?: string;
   action?: ReactNode;
+  className?: string;
+  bodyClassName?: string;
 }>;
 
-export function Card({ title, subtitle, action, children }: CardProps) {
+export function Card({ title, subtitle, action, className = '', bodyClassName = '', children }: CardProps) {
   return (
-    <div className="ui-card">
+    <div className={`ui-card ${className}`.trim()}>
       {(title || action) && (
         <header className="ui-card-header">
           <div>
@@ -18,7 +20,7 @@ export function Card({ title, subtitle, action, children }: CardProps) {
           {action ? <div className="ui-card-action">{action}</div> : null}
         </header>
       )}
-      <div className="ui-card-body">{children}</div>
+      <div className={`ui-card-body ${bodyClassName}`.trim()}>{children}</div>
     </div>
   );
 }
