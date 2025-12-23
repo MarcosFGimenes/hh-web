@@ -396,7 +396,7 @@ export default function PublicFolderPage({ params }: PageProps) {
           <div className="stack public-grid">
             <Card className="public-header-card" bodyClassName="public-header-body">
               <div className="public-header-text">
-                <p className="chip chip-soft public-header-chip">Link do serviço</p>
+                <p className="ui-badge ui-badge-info public-header-chip">Link do serviço</p>
                 <h1 className="public-title">{data.folder.name}</h1>
                 <p className="dashboard-subtitle">
                   Acesso público protegido • mantenedores e apontamentos.

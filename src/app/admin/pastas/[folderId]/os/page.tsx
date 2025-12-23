@@ -205,7 +205,7 @@ export default function FolderServiceOrdersPage() {
       <div className="os-page-container stack os-page">
         <div className="os-header">
           <div className="os-header-content">
-            <p className="chip">Gerenciar O.S.</p>
+            <p className="ui-badge ui-badge-info">Gerenciar O.S.</p>
             <h1>Ordens de Serviço</h1>
             <p className="dashboard-subtitle">Cadastre, edite e acompanhe as O.S. desta pasta.</p>
           </div>

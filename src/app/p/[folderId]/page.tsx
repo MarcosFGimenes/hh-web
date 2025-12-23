@@ -757,7 +757,7 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
           <>
             <div className="public-hero">
               <div>
-                <p className="chip">Link privado</p>
+                <p className="ui-badge ui-badge-info">Link privado</p>
                 <h1 className="public-title">{folder ? folder.name : 'Validando link...'}</h1>
                 <p className="footer-note">
                   Preencha os lançamentos do dia. Use &quot;Adicionar Funcionário&quot; e registre as O.S. dentro de cada card.
