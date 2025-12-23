@@ -26,7 +26,10 @@ export function TimeSequenceInput({ value, onChange, disabled, label }: TimeSequ
       <div className="grid">
         <Input
           label="T1 Entrada"
-          type="time"
+          type="text"
+          inputMode="numeric"
+          pattern="\\d{2}:\\d{2}"
+          placeholder="08:00"
           value={normalizedTimes.t1In}
           onChange={(event) => handleChange('t1In', event.target.value)}
           disabled={disabled}
@@ -34,7 +37,10 @@ export function TimeSequenceInput({ value, onChange, disabled, label }: TimeSequ
         />
         <Input
           label="T1 Saída"
-          type="time"
+          type="text"
+          inputMode="numeric"
+          pattern="\\d{2}:\\d{2}"
+          placeholder="12:00"
           value={normalizedTimes.t1Out}
           onChange={(event) => handleChange('t1Out', event.target.value)}
           disabled={disabled}
@@ -42,14 +48,20 @@ export function TimeSequenceInput({ value, onChange, disabled, label }: TimeSequ
         />
         <Input
           label="T2 Entrada (opcional)"
-          type="time"
+          type="text"
+          inputMode="numeric"
+          pattern="\\d{2}:\\d{2}"
+          placeholder="13:30"
           value={normalizedTimes.t2In}
           onChange={(event) => handleChange('t2In', event.target.value)}
           disabled={disabled}
         />
         <Input
           label="T2 Saída (opcional)"
-          type="time"
+          type="text"
+          inputMode="numeric"
+          pattern="\\d{2}:\\d{2}"
+          placeholder="17:30"
           value={normalizedTimes.t2Out}
           onChange={(event) => handleChange('t2Out', event.target.value)}
           disabled={disabled}

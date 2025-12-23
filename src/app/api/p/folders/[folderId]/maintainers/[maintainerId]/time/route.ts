@@ -12,7 +12,12 @@ export async function POST(request: Request, { params }: Params) {
   try {
     const url = new URL(request.url);
     const linkKey = url.searchParams.get('k') || '';
+    const date = url.searchParams.get('date') || '';
     const { folderId, maintainerId } = params;
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return NextResponse.json({ error: 'Data do apontamento é obrigatória.' }, { status: 400 });
+    }
 
     const folder = await verifyLinkKey(folderId, linkKey);
     if (!folder) {
@@ -31,10 +36,15 @@ export async function POST(request: Request, { params }: Params) {
     }
 
     const ref = maintainerRef(folder.id, maintainerId);
-  const snapshot = await ref.get();
-  if (!snapshot.exists) {
-    return NextResponse.json({ error: 'Mantenedor não encontrado.' }, { status: 404 });
-  }
+    const snapshot = await ref.get();
+    if (!snapshot.exists) {
+      return NextResponse.json({ error: 'Mantenedor não encontrado.' }, { status: 404 });
+    }
+
+    const maintainerDate = (snapshot.data()?.date as string | undefined) || '';
+    if (date && maintainerDate && maintainerDate !== date) {
+      return NextResponse.json({ error: 'Apontamento não pertence a esta data.' }, { status: 403 });
+    }
 
     const shiftId = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}`;
     const existingShifts = Array.isArray(snapshot.data()?.shifts)
@@ -43,7 +53,13 @@ export async function POST(request: Request, { params }: Params) {
 
     const updatedShifts = [...existingShifts, { id: shiftId, startTime, endTime, createdAt: Date.now() }];
 
-    await ref.update({ startTime, endTime, shifts: updatedShifts, updatedAt: Date.now() });
+    await ref.update({
+      startTime,
+      endTime,
+      shifts: updatedShifts,
+      updatedAt: Date.now(),
+      date: maintainerDate || date,
+    });
     const updated = await ref.get();
     return NextResponse.json({ maintainer: { id: updated.id, ...(updated.data() || {}) } });
   } catch (error) {
