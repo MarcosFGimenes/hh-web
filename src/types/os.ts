@@ -4,6 +4,9 @@ export type ServiceOrder = {
   tag: string;
   machineName: string;
   description: string;
+  createdByRole?: 'ADMIN' | 'THIRD';
+  createdByUserId?: string | null;
+  isExternal?: boolean;
   createdAt: number;
   updatedAt: number;
 };

@@ -6,5 +6,16 @@ export const osCollectionRef = (folderId: string) =>
 
 export const mapOsDoc = (doc: FirebaseFirestore.QueryDocumentSnapshot): ServiceOrder => {
   const data = doc.data() as Omit<ServiceOrder, 'id'>;
-  return { id: doc.id, ...data };
+  return {
+    id: doc.id,
+    osCode: data.osCode || '',
+    tag: data.tag || '',
+    machineName: data.machineName || '',
+    description: data.description || '',
+    createdByRole: data.createdByRole || 'ADMIN',
+    createdByUserId: data.createdByUserId ?? null,
+    isExternal: Boolean((data as { isExternal?: boolean }).isExternal),
+    createdAt: data.createdAt,
+    updatedAt: data.updatedAt,
+  };
 };
