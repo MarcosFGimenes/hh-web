@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
+import { Input } from '@/components/Input';
 import type { Maintainer } from '@/types/maintainer';
 import type { MaintainerOs } from '@/types/maintainerOs';
 import { ExtraTimeChips } from './ExtraTimeChips';
@@ -7,48 +9,84 @@ import { ExtraTimeChips } from './ExtraTimeChips';
 type MaintainerSectionProps = {
   maintainers: (Maintainer & { os?: MaintainerOs[] })[];
   canAdd: boolean;
-  onAdd: () => void;
+  onAdd: (name: string) => void;
   onAddExtra: (maintainerId: string) => void;
+  onSelectShift: (maintainerId: string, shiftId?: string, startTime?: string, endTime?: string) => void;
   onAddOs: (maintainerId: string) => void;
   onUpdateOsTime: (maintainerId: string, osId: string, field: 'startTime' | 'endTime', value: string) => void;
 };
 
-export function MaintainerSection({ maintainers, canAdd, onAdd, onAddExtra, onAddOs, onUpdateOsTime }: MaintainerSectionProps) {
+export function MaintainerSection({ maintainers, canAdd, onAdd, onAddExtra, onSelectShift, onAddOs, onUpdateOsTime }: MaintainerSectionProps) {
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newMaintainerName, setNewMaintainerName] = useState('');
+
+  const submitAddMaintainer = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const value = newMaintainerName.trim();
+    if (!value) return;
+    onAdd(value);
+    setNewMaintainerName('');
+    setShowAddForm(false);
+  };
+
+  const AddMaintainerForm = (
+    <form className="maintainer-add-form" onSubmit={submitAddMaintainer}>
+      <Input
+        label="Nome do mantenedor"
+        placeholder="Ex.: João da Silva"
+        value={newMaintainerName}
+        onChange={(event) => setNewMaintainerName(event.target.value)}
+        disabled={!canAdd}
+        required
+      />
+      <div className="maintainer-add-actions">
+        <Button type="submit" disabled={!canAdd || !newMaintainerName.trim()}>
+          Adicionar
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => {
+            setShowAddForm(false);
+            setNewMaintainerName('');
+          }}
+        >
+          Cancelar
+        </Button>
+      </div>
+    </form>
+  );
+
+  const AddMaintainerCallToAction = showAddForm ? (
+    AddMaintainerForm
+  ) : (
+    <Button type="button" onClick={() => setShowAddForm(true)} disabled={!canAdd} aria-label="Adicionar mantenedor">
+      + Adicionar Mantenedor
+    </Button>
+  );
+
   if (!maintainers.length) {
     return (
       <Card title="Mantenedores">
         <p className="footer-note">Nenhum mantenedor cadastrado ainda.</p>
-        <Button type="button" onClick={onAdd} disabled={!canAdd} aria-label="Adicionar mantenedor">
-          + Adicionar Mantenedor
-        </Button>
+        {AddMaintainerCallToAction}
       </Card>
     );
   }
 
   return (
-    <Card
-      title="Mantenedores"
-      action={
-        <Button type="button" onClick={onAdd} disabled={!canAdd} aria-label="Adicionar novo mantenedor">
-          + Adicionar Mantenedor
-        </Button>
-      }
-    >
+    <Card title="Mantenedores">
       <div className="public-chip-list">
         {maintainers.map((maintainer) => (
           <div key={maintainer.id} className="public-chip-card">
             <div className="public-chip-row">
               <div className="pill pill-strong">{maintainer.name}</div>
-              <span className="pill pill-soft">ID: {maintainer.id}</span>
+              <ExtraTimeChips
+                shifts={maintainer.shifts?.map(({ startTime, endTime, id }) => ({ startTime, endTime, id }))}
+                onAddExtra={() => onAddExtra(maintainer.id)}
+                onSelectShift={(shiftId, startTime, endTime) => onSelectShift(maintainer.id, shiftId, startTime, endTime)}
+              />
             </div>
-            <div className="public-chip-row">
-              <span className="pill pill-soft">Início: {maintainer.startTime || '—'} · Fim: {maintainer.endTime || '—'}</span>
-            </div>
-            <ExtraTimeChips
-              startTime={maintainer.startTime ?? null}
-              endTime={maintainer.endTime ?? null}
-              onAddExtra={() => onAddExtra(maintainer.id)}
-            />
             <div className="public-chip-row">
               <strong>O.S.</strong>
               <Button type="button" variant="secondary" onClick={() => onAddOs(maintainer.id)} disabled={!canAdd}>
@@ -90,6 +128,7 @@ export function MaintainerSection({ maintainers, canAdd, onAdd, onAddExtra, onAd
           </div>
         ))}
       </div>
+      <div className="maintainer-add-footer">{AddMaintainerCallToAction}</div>
     </Card>
   );
 }

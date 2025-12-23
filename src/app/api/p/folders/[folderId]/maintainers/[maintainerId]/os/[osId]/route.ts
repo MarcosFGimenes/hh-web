@@ -53,6 +53,30 @@ export async function PATCH(request: Request, { params }: Params) {
       return NextResponse.json({ error: validation.message || 'Horário inválido.' }, { status: 400 });
     }
 
+    if (nextStart && nextEnd) {
+      const siblingSnapshot = await getAdminDb()
+        .collection('folders')
+        .doc(folder.id)
+        .collection('maintainers')
+        .doc(maintainerId)
+        .collection('os')
+        .get();
+
+      const hasOverlap = siblingSnapshot.docs.some((doc) => {
+        if (doc.id === osId) return false;
+        const data = doc.data() as { startTime?: string | null; endTime?: string | null };
+        if (!data.startTime || !data.endTime) return false;
+        return nextStart < data.endTime && data.startTime < nextEnd;
+      });
+
+      if (hasOverlap) {
+        return NextResponse.json(
+          { error: 'Horários de O.S. não podem se sobrepor para o mesmo mantenedor.' },
+          { status: 400 }
+        );
+      }
+    }
+
     await docRef.update({ [field]: normalizedValue, updatedAt: Date.now() });
     const updated = await docRef.get();
     return NextResponse.json({ os: { id: updated.id, ...(updated.data() || {}) } });
