@@ -23,6 +23,7 @@ type EntryService = Service & {
 
 type EntryEmployee = Employee & {
   services: EntryService[];
+  shifts?: Array<{ id: string; startTime: string; endTime: string }>;
 };
 
 type EntryDay = {
@@ -210,6 +211,11 @@ export async function GET(_request: Request, { params }: Params) {
         createdAt: maintainer.createdAt,
         updatedAt: maintainer.updatedAt,
         services,
+        shifts: (maintainer.shifts || []).map((shift) => ({
+          id: shift.id,
+          startTime: shift.startTime,
+          endTime: shift.endTime,
+        })),
       });
 
       entriesByDate.set(entry.date, entry);
