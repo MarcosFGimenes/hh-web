@@ -6,7 +6,6 @@ import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { Toast } from '@/components/Toast';
 import { MaintainerSection } from '@/components/maintainers/MaintainerSection';
-import { AddTimeModal } from '@/components/maintainers/AddTimeModal';
 import { AddOsModal } from '@/components/maintainers/AddOsModal';
 import { Input } from '@/components/Input';
 import { Modal } from '@/components/Modal';
@@ -14,7 +13,6 @@ import { useAdminAuth } from '@/hooks/useAdminAuth';
 import type { Maintainer } from '@/types/maintainer';
 import type { MaintainerOsLog } from '@/types/maintainerOsLog';
 import type { ServiceOrder } from '@/types/os';
-import { normalizeTime, validateShiftPair } from '@/lib/time/base';
 
 type FolderResponse = {
   folder: { id: string; name: string; updatedAt: number };
@@ -30,7 +28,6 @@ type ManageMaintainerModalProps = {
   confirmVariant?: 'primary' | 'danger';
   onClose: () => void;
   onSubmit: (name: string) => Promise<void> | void;
-  onOpenTime?: () => void;
   onOpenOs?: () => void;
 };
 
@@ -42,7 +39,6 @@ function ManageMaintainerModal({
   confirmVariant = 'primary',
   onClose,
   onSubmit,
-  onOpenTime,
   onOpenOs,
 }: ManageMaintainerModalProps) {
   const [name, setName] = useState(initialName);
@@ -71,17 +67,6 @@ function ManageMaintainerModal({
         <div className="modal-edit-options">
           <p className="modal-edit-label">Outras opções</p>
           <div className="modal-edit-grid">
-            <Button
-              type="button"
-              variant="secondary"
-              className="ui-button-compact"
-              onClick={() => {
-                onOpenTime?.();
-                onClose();
-              }}
-            >
-              Editar horários
-            </Button>
             <Button
               type="button"
               variant="secondary"
@@ -126,7 +111,6 @@ export default function PublicFolderPage({ params }: PageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [showAddTimeFor, setShowAddTimeFor] = useState<string | null>(null);
   const [showAddOsFor, setShowAddOsFor] = useState<string | null>(null);
   const [editMaintainer, setEditMaintainer] = useState<{ id: string; name: string } | null>(null);
   const [deleteMaintainer, setDeleteMaintainer] = useState<{ id: string; name: string } | null>(null);
@@ -199,7 +183,6 @@ export default function PublicFolderPage({ params }: PageProps) {
   }, [folderId, linkKey, selectedDate]);
 
   useEffect(() => {
-    setShowAddTimeFor(null);
     setShowAddOsFor(null);
   }, [selectedDate]);
 
@@ -243,60 +226,6 @@ export default function PublicFolderPage({ params }: PageProps) {
       setSuccess('Mantenedor adicionado.');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao adicionar mantenedor.';
-      setError(message);
-    }
-  };
-
-  const handleSaveMaintainerTime = async (maintainerId: string, start: string, end: string) => {
-    if (!data || !selectedDate) return;
-    const normalizedStart = normalizeTime(start);
-    const normalizedEnd = normalizeTime(end);
-
-    if (!normalizedStart && !normalizedEnd) {
-      setError('Informe entrada e saída do turno.');
-      return;
-    }
-
-    const validation = validateShiftPair(normalizedStart, normalizedEnd);
-    if (!validation.ok) {
-      setError(validation.message || 'Horário inválido.');
-      return;
-    }
-
-    const maintainer = data.maintainers.find((item) => item.id === maintainerId);
-    if (maintainer && maintainer.startTime === normalizedStart && maintainer.endTime === normalizedEnd) {
-      setError('Esse horário já está definido para este mantenedor.');
-      return;
-    }
-
-    try {
-      const response = await fetch(
-        `/api/p/folders/${folderId}/maintainers/${maintainerId}/time?k=${encodeURIComponent(linkKey)}&date=${encodeURIComponent(
-          selectedDate
-        )}`,
-        {
-          method: 'POST',
-          ...withAuthHeaders({ headers: { 'Content-Type': 'application/json' } }),
-          body: JSON.stringify({ startTime: normalizedStart, endTime: normalizedEnd }),
-        }
-      );
-      const json = await response.json();
-      if (!response.ok) {
-        throw new Error(json?.error || 'Erro ao salvar horário.');
-      }
-      setData((prev) =>
-        prev
-          ? {
-              ...prev,
-              maintainers: prev.maintainers.map((item) => (item.id === maintainerId ? json.maintainer : item)),
-            }
-          : prev
-      );
-      setShowAddTimeFor(null);
-      setError(null);
-      setSuccess('Horário salvo.');
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Erro ao salvar horário.';
       setError(message);
     }
   };
@@ -447,30 +376,11 @@ export default function PublicFolderPage({ params }: PageProps) {
                 openAddMaintainerToken={addMaintainerTrigger}
                 onCloseAddMaintainer={() => setAddMaintainerTrigger(0)}
                 onAdd={handleAddMaintainer}
-                onAddExtra={(id) => setShowAddTimeFor(id)}
                 onAddOs={handleAddOs}
                 onEdit={(id, name) => setEditMaintainer({ id, name })}
                 onDelete={(id, name) => setDeleteMaintainer({ id, name })}
               />
           </div>
-        ) : null}
-
-        {showAddTimeFor ? (
-          <AddTimeModal
-            open={Boolean(showAddTimeFor)}
-            onClose={() => setShowAddTimeFor(null)}
-            onSave={(start, end) => handleSaveMaintainerTime(showAddTimeFor, start, end)}
-            initialStart={
-              data?.maintainers.find((item) => item.id === showAddTimeFor)?.shifts?.[0]?.startTime ||
-              data?.maintainers.find((item) => item.id === showAddTimeFor)?.startTime ||
-              ''
-            }
-            initialEnd={
-              data?.maintainers.find((item) => item.id === showAddTimeFor)?.shifts?.[0]?.endTime ||
-              data?.maintainers.find((item) => item.id === showAddTimeFor)?.endTime ||
-              ''
-            }
-          />
         ) : null}
 
         {showAddOsFor && data ? (
@@ -511,13 +421,6 @@ export default function PublicFolderPage({ params }: PageProps) {
           title="Editar mantenedor"
           open={Boolean(editMaintainer)}
           initialName={editMaintainer?.name || ''}
-          onOpenTime={
-            editMaintainer
-              ? () => {
-                  setShowAddTimeFor(editMaintainer.id);
-                }
-              : undefined
-          }
           onOpenOs={
             editMaintainer
               ? () => {

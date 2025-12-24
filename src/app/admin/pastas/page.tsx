@@ -22,6 +22,15 @@ export default function AdminFoldersPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [creatingName, setCreatingName] = useState('');
   const [creatingCompany, setCreatingCompany] = useState('');
+  const [creatingHourRate, setCreatingHourRate] = useState('');
+  const [creatingHourRate50, setCreatingHourRate50] = useState('');
+  const [creatingHourRate100, setCreatingHourRate100] = useState('');
+  const [creatingNormalHours, setCreatingNormalHours] = useState('');
+  const [creatingSignatures, setCreatingSignatures] = useState([
+    { name: '', role: '' },
+    { name: '', role: '' },
+    { name: '', role: '' },
+  ]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
 
@@ -89,9 +98,28 @@ export default function AdminFoldersPage() {
     if (!creatingName.trim()) return;
 
     try {
+      const normalizedRate = creatingHourRate.trim().replace(',', '.');
+      const normalizedRate50 = creatingHourRate50.trim().replace(',', '.');
+      const normalizedRate100 = creatingHourRate100.trim().replace(',', '.');
+      const normalizedNormalHours = creatingNormalHours.trim().replace(',', '.');
+      const hourRate = normalizedRate ? Number(normalizedRate) : null;
+      const hourRate50 = normalizedRate50 ? Number(normalizedRate50) : null;
+      const hourRate100 = normalizedRate100 ? Number(normalizedRate100) : null;
+      const normalHoursPerDay = normalizedNormalHours ? Number(normalizedNormalHours) : null;
+      const signatures = creatingSignatures
+        .map((signature) => ({ name: signature.name.trim(), role: signature.role.trim() }))
+        .filter((signature) => signature.name && signature.role);
       const response = await adminFetch('/api/admin/folders', {
         method: 'POST',
-        body: JSON.stringify({ name: creatingName, company: creatingCompany }),
+        body: JSON.stringify({
+          name: creatingName,
+          company: creatingCompany,
+          hourRate,
+          hourRate50,
+          hourRate100,
+          normalHoursPerDay,
+          signatures,
+        }),
       });
       const data = await response.json();
 
@@ -104,6 +132,15 @@ export default function AdminFoldersPage() {
       setSuccess('Pasta criada e link privado gerado.');
       setCreatingName('');
       setCreatingCompany('');
+      setCreatingHourRate('');
+      setCreatingHourRate50('');
+      setCreatingHourRate100('');
+      setCreatingNormalHours('');
+      setCreatingSignatures([
+        { name: '', role: '' },
+        { name: '', role: '' },
+        { name: '', role: '' },
+      ]);
       await copyLink(link);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao criar a pasta.';
@@ -136,6 +173,12 @@ export default function AdminFoldersPage() {
       const message = err instanceof Error ? err.message : 'Erro ao renomear.';
       setError(message);
     }
+  };
+
+  const handleSignatureChange = (index: number, field: 'name' | 'role', value: string) => {
+    setCreatingSignatures((prev) =>
+      prev.map((item, itemIndex) => (itemIndex === index ? { ...item, [field]: value } : item))
+    );
   };
 
   const handleDelete = async (folderId: string) => {
@@ -269,9 +312,78 @@ export default function AdminFoldersPage() {
                 label="Empresa responsável"
                 value={creatingCompany}
                 onChange={(event) => setCreatingCompany(event.target.value)}
+                required
               />
+              <Input
+                type="number"
+                label="Valor hora homem (R$)"
+                value={creatingHourRate}
+                onChange={(event) => setCreatingHourRate(event.target.value)}
+                min="0"
+                step="0.01"
+                required
+              />
+              <Input
+                type="number"
+                label="Valor hora 50% (R$)"
+                value={creatingHourRate50}
+                onChange={(event) => setCreatingHourRate50(event.target.value)}
+                min="0"
+                step="0.01"
+                required
+              />
+              <Input
+                type="number"
+                label="Valor hora 100% (R$)"
+                value={creatingHourRate100}
+                onChange={(event) => setCreatingHourRate100(event.target.value)}
+                min="0"
+                step="0.01"
+                required
+              />
+              <Input
+                type="number"
+                label="Horas normais por dia"
+                value={creatingNormalHours}
+                onChange={(event) => setCreatingNormalHours(event.target.value)}
+                min="0"
+                step="0.5"
+                required
+              />
+              <div className="admin-folders-signatures">
+                <p className="ui-field-label">Assinaturas do fechamento</p>
+                {creatingSignatures.map((signature, index) => (
+                  <div key={`signature-${index}`} className="admin-folders-signature-row">
+                    <Input
+                      label={`Nome assinatura ${index + 1}`}
+                      value={signature.name}
+                      onChange={(event) => handleSignatureChange(index, 'name', event.target.value)}
+                      required={index === 0}
+                    />
+                    <Input
+                      label={`Cargo assinatura ${index + 1}`}
+                      value={signature.role}
+                      onChange={(event) => handleSignatureChange(index, 'role', event.target.value)}
+                      required={index === 0}
+                    />
+                  </div>
+                ))}
+              </div>
               <div className="admin-folders-actions">
-                <Button type="submit" disabled={!creatingName.trim()} className="ui-button-compact">
+                <Button
+                  type="submit"
+                  disabled={
+                    !creatingName.trim() ||
+                    !creatingCompany.trim() ||
+                    !creatingHourRate.trim() ||
+                    !creatingHourRate50.trim() ||
+                    !creatingHourRate100.trim() ||
+                    !creatingNormalHours.trim() ||
+                    !creatingSignatures[0].name.trim() ||
+                    !creatingSignatures[0].role.trim()
+                  }
+                  className="ui-button-compact"
+                >
                   Criar pasta e gerar link
                 </Button>
               </div>
@@ -317,8 +429,15 @@ export default function AdminFoldersPage() {
                             Renomear
                           </Button>
                           <Link href={`/admin/pastas/${folder.id}/os`}>
-                          <Button type="button" variant="secondary">Gerenciar O.S.</Button>
-                        </Link>
+                            <Button type="button" variant="secondary">
+                              Gerenciar O.S.
+                            </Button>
+                          </Link>
+                          <Link href={`/admin/pastas/${folder.id}/fechamento`}>
+                            <Button type="button" variant="secondary">
+                              Fechamento
+                            </Button>
+                          </Link>
                           <Button type="button" variant="primary" onClick={() => handleCopyLink(folder.id)}>
                             Copiar link
                           </Button>
