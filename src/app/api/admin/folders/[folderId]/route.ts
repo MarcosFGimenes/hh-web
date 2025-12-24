@@ -27,6 +27,19 @@ export async function PATCH(
       updates.company = body.company.trim();
     }
 
+    if (Array.isArray(body?.signatures)) {
+      const sanitized = body.signatures
+        .map((entry: { name?: string; role?: string }) => ({
+          name: typeof entry?.name === 'string' ? entry.name.trim() : '',
+          role: typeof entry?.role === 'string' ? entry.role.trim() : '',
+        }))
+        .filter((entry: { name: string; role: string }) => entry.name && entry.role);
+      if (!sanitized.length) {
+        return NextResponse.json({ error: 'Informe ao menos uma assinatura com nome e cargo.' }, { status: 400 });
+      }
+      updates.signatures = sanitized;
+    }
+
     if (body?.rotateLinkKey) {
       linkKey = crypto.randomBytes(24).toString('hex');
       updates.linkKeyHash = crypto.createHash('sha256').update(linkKey).digest('hex');

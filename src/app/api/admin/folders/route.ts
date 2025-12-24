@@ -42,10 +42,17 @@ export async function POST(request: Request) {
     const rawHourRate50 = body?.hourRate50;
     const rawHourRate100 = body?.hourRate100;
     const rawNormalHours = body?.normalHoursPerDay;
+    const rawSignatures = Array.isArray(body?.signatures) ? body.signatures : [];
     let hourRate: number | null = null;
     let hourRate50: number | null = null;
     let hourRate100: number | null = null;
     let normalHoursPerDay: number | null = null;
+    const signatures = rawSignatures
+      .map((entry) => ({
+        name: typeof entry?.name === 'string' ? entry.name.trim() : '',
+        role: typeof entry?.role === 'string' ? entry.role.trim() : '',
+      }))
+      .filter((entry) => entry.name && entry.role);
 
     if (rawHourRate !== undefined && rawHourRate !== null && rawHourRate !== '') {
       const parsed = typeof rawHourRate === 'number' ? rawHourRate : Number(rawHourRate);
@@ -79,6 +86,10 @@ export async function POST(request: Request) {
       normalHoursPerDay = parsed;
     }
 
+    if (signatures.length === 0) {
+      return NextResponse.json({ error: 'Informe ao menos uma assinatura com nome e cargo.' }, { status: 400 });
+    }
+
     if (
       !name ||
       !company ||
@@ -107,6 +118,7 @@ export async function POST(request: Request) {
       hourRate50,
       hourRate100,
       normalHoursPerDay,
+      signatures,
       linkKeyHash,
       createdAt: now,
       updatedAt: now,
@@ -120,6 +132,7 @@ export async function POST(request: Request) {
       hourRate50,
       hourRate100,
       normalHoursPerDay,
+      signatures,
       linkKeyHash,
       createdAt: now,
       updatedAt: now,

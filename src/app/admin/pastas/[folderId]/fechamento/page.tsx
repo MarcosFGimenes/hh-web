@@ -37,6 +37,7 @@ type EntriesResponse = {
     hourRate50: number | null;
     hourRate100: number | null;
     normalHoursPerDay: number | null;
+    signatures: Array<{ name: string; role: string }> | null;
   };
   entries: EntryDay[];
 };
@@ -114,6 +115,14 @@ const splitMinutes = (totalMinutes: number, normalLimitMinutes: number, isHolida
   const extra50Minutes = Math.max(totalMinutes - normalMinutes, 0);
   return { normalMinutes, extra50Minutes, extra100Minutes: 0 };
 };
+
+const formatDateLabel = (value: string) => {
+  const [year, month, day] = value.split('-');
+  return `${day}/${month}/${year}`;
+};
+
+const toDayLabel = (value: string) =>
+  new Date(value).toLocaleDateString('pt-BR', { weekday: 'long' }).toUpperCase();
 
 export default function FolderClosingPage() {
   const params = useParams<{ folderId: string }>();
@@ -297,16 +306,22 @@ export default function FolderClosingPage() {
           .slice()
           .sort((a, b) => a.startTime.localeCompare(b.startTime));
         const totalMinutes = employee.services.reduce((sum, service) => sum + computeIntervalsMinutes(service), 0);
+        const sortedIntervals = intervals.slice().sort((a, b) => a.startTime.localeCompare(b.startTime));
+        const morningStart = sortedIntervals[0]?.startTime || '—';
+        const morningEnd = sortedIntervals[0]?.endTime || '—';
+        const afternoonStart = sortedIntervals.length > 1 ? sortedIntervals[1]?.startTime || '—' : '—';
+        const afternoonEnd =
+          sortedIntervals.length > 1 ? sortedIntervals[sortedIntervals.length - 1]?.endTime || '—' : '—';
         const split = splitMinutes(totalMinutes, normalLimitMinutes, isHoliday);
         rows.push({
           id: `${entry.date}-${employee.id}`,
           date: entry.date,
-          dayLabel: new Date(entry.date).toLocaleDateString('pt-BR', { weekday: 'long' }).toUpperCase(),
+          dayLabel: toDayLabel(entry.date),
           employeeName: employee.name,
-          morningStart: intervals[0]?.startTime || '—',
-          morningEnd: intervals[0]?.endTime || '—',
-          afternoonStart: intervals[1]?.startTime || '—',
-          afternoonEnd: intervals[1]?.endTime || '—',
+          morningStart,
+          morningEnd,
+          afternoonStart,
+          afternoonEnd,
           totalMinutes,
           extra50Minutes: split.extra50Minutes,
           extra100Minutes: split.extra100Minutes,
@@ -380,7 +395,7 @@ export default function FolderClosingPage() {
                           checked={holidayDates.has(date)}
                           onChange={() => toggleHoliday(date)}
                         />
-                        <span>{formatDate(date)}</span>
+                        <span>{formatDateLabel(date)} — {toDayLabel(date)}</span>
                       </label>
                     ))
                   ) : (
@@ -518,23 +533,17 @@ export default function FolderClosingPage() {
                 <div className="closing-total-footer">
                   <span>{formatCurrency(totalAmount)}</span>
                 </div>
-                <div className="closing-signatures">
-                  <div className="closing-signature">
-                    <div className="closing-signature-line" />
-                    <div className="closing-signature-name">Assinatura 1</div>
-                    <div className="closing-signature-role">Cargo</div>
+                {data.folder.signatures?.length ? (
+                  <div className="closing-signatures">
+                    {data.folder.signatures.map((signature, index) => (
+                      <div key={`${signature.name}-${index}`} className="closing-signature">
+                        <div className="closing-signature-line" />
+                        <div className="closing-signature-name">{signature.name}</div>
+                        <div className="closing-signature-role">{signature.role}</div>
+                      </div>
+                    ))}
                   </div>
-                  <div className="closing-signature">
-                    <div className="closing-signature-line" />
-                    <div className="closing-signature-name">Assinatura 2</div>
-                    <div className="closing-signature-role">Cargo</div>
-                  </div>
-                  <div className="closing-signature">
-                    <div className="closing-signature-line" />
-                    <div className="closing-signature-name">Assinatura 3</div>
-                    <div className="closing-signature-role">Cargo</div>
-                  </div>
-                </div>
+                ) : null}
               </article>
 
               <article className="closing-sheet">

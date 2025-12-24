@@ -1511,6 +1511,18 @@ main {
   justify-content: flex-start;
 }
 
+.admin-folders-signatures {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-folders-signature-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
 .admin-folders-actions {
   display: flex;
   justify-content: flex-end;
