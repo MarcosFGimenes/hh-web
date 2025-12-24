@@ -2423,7 +2423,7 @@ main {
 }
 
 .closing-sheet {
-  border: 1px solid #cfd6c7;
+  border: 1px solid #000;
   background: white;
   padding: 0;
   box-shadow: var(--shadow-soft);
@@ -2436,7 +2436,7 @@ main {
 }
 
 .closing-header-table td {
-  border: 1px solid #cfd6c7;
+  border: 1px solid #000;
   padding: 6px 8px;
 }
 
@@ -2464,7 +2464,7 @@ main {
 }
 
 .closing-doc-code {
-  border-bottom: 1px solid #cfd6c7;
+  border-bottom: 1px solid #000;
   padding: 6px 8px;
   font-weight: 600;
   text-align: left;
@@ -2479,8 +2479,8 @@ main {
 }
 
 .closing-doc-grid div {
-  border-right: 1px solid #cfd6c7;
-  border-bottom: 1px solid #cfd6c7;
+  border-right: 1px solid #000;
+  border-bottom: 1px solid #000;
   padding: 4px 2px;
 }
 
@@ -2523,7 +2523,7 @@ main {
 
 .closing-table th,
 .closing-table td {
-  border: 1px solid #cfd6c7;
+  border: 1px solid #000;
   padding: 6px 8px;
   text-align: left;
   vertical-align: middle;
@@ -2537,12 +2537,12 @@ main {
 }
 
 .closing-table tbody tr:nth-child(even) {
-  background: #eaf4dd;
+  background: #fff;
 }
 
 .closing-total-row td {
   font-weight: 700;
-  background: #d8edc2;
+  background: #fff;
 }
 
 .closing-total-footer {
@@ -2550,7 +2550,7 @@ main {
   justify-content: flex-end;
   padding: 10px 12px;
   font-weight: 700;
-  border-top: 1px solid #cfd6c7;
+  border-top: 1px solid #000;
 }
 
 .closing-currency {
@@ -2570,7 +2570,7 @@ main {
 }
 
 .closing-signature-line {
-  border-top: 1px solid #111;
+  border-top: 1px solid #000;
   margin-bottom: 6px;
 }
 
@@ -2586,7 +2586,7 @@ main {
   text-align: center;
   padding: 8px;
   font-weight: 700;
-  border-bottom: 1px solid #cfd6c7;
+  border-bottom: 1px solid #000;
   text-transform: uppercase;
   background: #fff;
 }
@@ -2595,13 +2595,18 @@ main {
 .closing-os-table td:last-child,
 .closing-main-table td:nth-last-child(1),
 .closing-main-table td:nth-last-child(2) {
-  background: #eaf4dd;
+  background: #fff;
 }
 
 .closing-schedule-table td:nth-last-child(1),
 .closing-schedule-table td:nth-last-child(2),
 .closing-schedule-table td:nth-last-child(3) {
-  background: #eaf4dd;
+  background: #fff;
+}
+
+.closing-rate-empty {
+  border: none;
+  background: #fff;
 }
 
 @media print {

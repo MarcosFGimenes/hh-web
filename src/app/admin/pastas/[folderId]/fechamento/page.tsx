@@ -453,7 +453,7 @@ export default function FolderClosingPage() {
                       <td className="closing-rate-value closing-currency">
                         {formatCurrency(hourRate).replace('R$', '').trim()}
                       </td>
-                      <td colSpan={5} />
+                      <td colSpan={5} className="closing-rate-empty" />
                     </tr>
                     <tr>
                       <td className="closing-rate-label">HORA 50%</td>
@@ -461,7 +461,7 @@ export default function FolderClosingPage() {
                       <td className="closing-rate-value closing-currency">
                         {formatCurrency(hourRate50).replace('R$', '').trim()}
                       </td>
-                      <td colSpan={5} />
+                      <td colSpan={5} className="closing-rate-empty" />
                     </tr>
                     <tr>
                       <td className="closing-rate-label">HORA 100%</td>
@@ -469,7 +469,7 @@ export default function FolderClosingPage() {
                       <td className="closing-rate-value closing-currency">
                         {formatCurrency(hourRate100).replace('R$', '').trim()}
                       </td>
-                      <td colSpan={5} />
+                      <td colSpan={5} className="closing-rate-empty" />
                     </tr>
                   </tbody>
                 </table>
