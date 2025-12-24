@@ -2326,3 +2326,149 @@ main {
     align-items: flex-start;
   }
 }
+
+.closing-page {
+  padding: 32px 0 64px;
+}
+
+.closing-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.closing-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.closing-title {
+  font-size: 28px;
+  margin: 6px 0 4px;
+}
+
+.closing-subtitle {
+  color: var(--color-text-muted);
+}
+
+.closing-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.closing-toolbar {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.closing-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.closing-section {
+  background: var(--color-surface);
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-soft);
+}
+
+.closing-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.closing-section-header h2 {
+  font-size: 20px;
+  margin: 0;
+}
+
+.closing-section-header p {
+  margin: 6px 0 0;
+  color: var(--color-text-muted);
+}
+
+.closing-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--color-text-muted);
+}
+
+.closing-rate-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.closing-rate-grid > div {
+  background: var(--color-surface-muted);
+  border-radius: 12px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.closing-table-wrapper {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+}
+
+.closing-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  min-width: 860px;
+}
+
+.closing-table th,
+.closing-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+}
+
+.closing-table thead th {
+  background: #9ad25a;
+  color: #13320f;
+  font-weight: 600;
+}
+
+.closing-table tbody tr:nth-child(even) {
+  background: rgba(154, 210, 90, 0.08);
+}
+
+.closing-total-row td {
+  font-weight: 600;
+  background: rgba(154, 210, 90, 0.18);
+}
+
+@media print {
+  body {
+    background: white;
+  }
+
+  .print-hidden {
+    display: none !important;
+  }
+
+  .closing-section {
+    box-shadow: none;
+    border: 1px solid #cbd3c1;
+  }
+}

@@ -228,6 +228,7 @@ export async function GET(_request: Request, { params }: Params) {
         id: folderDoc.id,
         name: (folderData as { name?: string }).name || 'Pasta sem nome',
         company: (folderData as { company?: string | null }).company || null,
+        hourRate: (folderData as { hourRate?: number | null }).hourRate ?? null,
       },
       entries,
     });
