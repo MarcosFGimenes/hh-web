@@ -449,7 +449,7 @@ export default function PublicFolderPage({ params }: PageProps) {
                   ? {
                       ...prev,
                       maintainers: prev.maintainers.map((item) =>
-                        item.id === editMaintainer.id ? json.maintainer : item
+                        item.id === editMaintainer.id ? { ...item, ...json.maintainer } : item
                       ),
                     }
                   : prev
