@@ -38,9 +38,61 @@ export async function POST(request: Request) {
     const body = await request.json();
     const name = typeof body?.name === 'string' ? body.name.trim() : '';
     const company = typeof body?.company === 'string' ? body.company.trim() : '';
+    const rawHourRate = body?.hourRate;
+    const rawHourRate50 = body?.hourRate50;
+    const rawHourRate100 = body?.hourRate100;
+    const rawNormalHours = body?.normalHoursPerDay;
+    let hourRate: number | null = null;
+    let hourRate50: number | null = null;
+    let hourRate100: number | null = null;
+    let normalHoursPerDay: number | null = null;
 
-    if (!name || !company) {
-      return NextResponse.json({ error: 'Nome da pasta e empresa responsável são obrigatórios.' }, { status: 400 });
+    if (rawHourRate !== undefined && rawHourRate !== null && rawHourRate !== '') {
+      const parsed = typeof rawHourRate === 'number' ? rawHourRate : Number(rawHourRate);
+      if (!Number.isFinite(parsed) || parsed < 0) {
+        return NextResponse.json({ error: 'Valor da hora homem inválido.' }, { status: 400 });
+      }
+      hourRate = parsed;
+    }
+
+    if (rawHourRate50 !== undefined && rawHourRate50 !== null && rawHourRate50 !== '') {
+      const parsed = typeof rawHourRate50 === 'number' ? rawHourRate50 : Number(rawHourRate50);
+      if (!Number.isFinite(parsed) || parsed < 0) {
+        return NextResponse.json({ error: 'Valor da hora 50% inválido.' }, { status: 400 });
+      }
+      hourRate50 = parsed;
+    }
+
+    if (rawHourRate100 !== undefined && rawHourRate100 !== null && rawHourRate100 !== '') {
+      const parsed = typeof rawHourRate100 === 'number' ? rawHourRate100 : Number(rawHourRate100);
+      if (!Number.isFinite(parsed) || parsed < 0) {
+        return NextResponse.json({ error: 'Valor da hora 100% inválido.' }, { status: 400 });
+      }
+      hourRate100 = parsed;
+    }
+
+    if (rawNormalHours !== undefined && rawNormalHours !== null && rawNormalHours !== '') {
+      const parsed = typeof rawNormalHours === 'number' ? rawNormalHours : Number(rawNormalHours);
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        return NextResponse.json({ error: 'Horas normais por dia inválidas.' }, { status: 400 });
+      }
+      normalHoursPerDay = parsed;
+    }
+
+    if (
+      !name ||
+      !company ||
+      hourRate === null ||
+      hourRate50 === null ||
+      hourRate100 === null ||
+      normalHoursPerDay === null
+    ) {
+      return NextResponse.json(
+        {
+          error: 'Nome da pasta, empresa responsável, horas normais por dia e valores de hora normal/50%/100% são obrigatórios.',
+        },
+        { status: 400 }
+      );
     }
 
     const linkKey = crypto.randomBytes(24).toString('hex');
@@ -51,6 +103,10 @@ export async function POST(request: Request) {
     const docRef = await adminDb.collection(COLLECTION).add({
       name,
       company,
+      hourRate,
+      hourRate50,
+      hourRate100,
+      normalHoursPerDay,
       linkKeyHash,
       createdAt: now,
       updatedAt: now,
@@ -60,6 +116,10 @@ export async function POST(request: Request) {
       id: docRef.id,
       name,
       company,
+      hourRate,
+      hourRate50,
+      hourRate100,
+      normalHoursPerDay,
       linkKeyHash,
       createdAt: now,
       updatedAt: now,

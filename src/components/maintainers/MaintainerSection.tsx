@@ -5,7 +5,6 @@ import { Input } from '@/components/Input';
 import type { Maintainer } from '@/types/maintainer';
 import type { ServiceOrder } from '@/types/os';
 import type { MaintainerOsLog } from '@/types/maintainerOsLog';
-import { ExtraTimeChips } from './ExtraTimeChips';
 
 type MaintainerSectionProps = {
   maintainers: Maintainer[];
@@ -16,7 +15,6 @@ type MaintainerSectionProps = {
   openAddMaintainerToken?: number;
   onCloseAddMaintainer?: () => void;
   onAdd: (name: string) => void;
-  onAddExtra: (maintainerId: string) => void;
   onAddOs: (maintainerId: string) => void;
   onEdit?: (maintainerId: string, currentName: string) => void;
   onDelete?: (maintainerId: string, currentName: string) => void;
@@ -31,7 +29,6 @@ export function MaintainerSection({
   openAddMaintainerToken,
   onCloseAddMaintainer,
   onAdd,
-  onAddExtra,
   onAddOs,
   onEdit,
   onDelete,
@@ -121,16 +118,6 @@ export function MaintainerSection({
                       type="button"
                       variant="secondary"
                       className="ui-button-compact"
-                      onClick={() => onAddExtra(maintainer.id)}
-                      aria-label={`Adicionar horário para ${maintainer.name}`}
-                      disabled={!canAdd}
-                    >
-                      + Horário
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      className="ui-button-compact"
                       onClick={() => onAddOs(maintainer.id)}
                       aria-label={`Adicionar O.S. para ${maintainer.name}`}
                       disabled={!canAdd}
@@ -160,12 +147,6 @@ export function MaintainerSection({
                       </div>
                     ) : null}
                   </div>
-                </div>
-
-                <div className="maintainer-chip-row">
-                  <ExtraTimeChips
-                    shifts={maintainer.shifts?.map(({ startTime, endTime, id }) => ({ startTime, endTime, id }))}
-                  />
                 </div>
 
                 {(maintainer.osLogs || []).length ? (
