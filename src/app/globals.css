@@ -2367,6 +2367,43 @@ main {
   flex-wrap: wrap;
 }
 
+.closing-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.closing-control-card {
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 12px 16px;
+  background: var(--color-surface);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.closing-control-title {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.closing-holiday-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.closing-holiday-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
 .closing-print-area {
   display: flex;
   flex-direction: column;
@@ -2460,8 +2497,9 @@ main {
 }
 
 .closing-rate-value {
-  width: 90px;
+  width: 120px;
   text-align: right;
+  white-space: nowrap;
 }
 
 .closing-table {
@@ -2502,6 +2540,35 @@ main {
   border-top: 1px solid #cfd6c7;
 }
 
+.closing-currency {
+  white-space: nowrap;
+}
+
+.closing-signatures {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  padding: 32px 24px 24px;
+}
+
+.closing-signature {
+  text-align: center;
+  font-size: 12px;
+}
+
+.closing-signature-line {
+  border-top: 1px solid #111;
+  margin-bottom: 6px;
+}
+
+.closing-signature-name {
+  font-weight: 600;
+}
+
+.closing-signature-role {
+  color: #333;
+}
+
 .closing-month-title {
   text-align: center;
   padding: 8px;
@@ -2535,6 +2602,10 @@ main {
 
   .closing-page {
     padding: 0;
+  }
+
+  .closing-controls {
+    display: none;
   }
 
   .closing-sheet {

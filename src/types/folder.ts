@@ -5,6 +5,7 @@ export type Folder = {
   hourRate?: number | null;
   hourRate50?: number | null;
   hourRate100?: number | null;
+  normalHoursPerDay?: number | null;
   linkKeyHash: string;
   createdAt: number;
   updatedAt: number;

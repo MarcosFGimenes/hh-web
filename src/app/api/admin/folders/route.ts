@@ -41,9 +41,11 @@ export async function POST(request: Request) {
     const rawHourRate = body?.hourRate;
     const rawHourRate50 = body?.hourRate50;
     const rawHourRate100 = body?.hourRate100;
+    const rawNormalHours = body?.normalHoursPerDay;
     let hourRate: number | null = null;
     let hourRate50: number | null = null;
     let hourRate100: number | null = null;
+    let normalHoursPerDay: number | null = null;
 
     if (rawHourRate !== undefined && rawHourRate !== null && rawHourRate !== '') {
       const parsed = typeof rawHourRate === 'number' ? rawHourRate : Number(rawHourRate);
@@ -69,9 +71,26 @@ export async function POST(request: Request) {
       hourRate100 = parsed;
     }
 
-    if (!name || !company || hourRate === null || hourRate50 === null || hourRate100 === null) {
+    if (rawNormalHours !== undefined && rawNormalHours !== null && rawNormalHours !== '') {
+      const parsed = typeof rawNormalHours === 'number' ? rawNormalHours : Number(rawNormalHours);
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        return NextResponse.json({ error: 'Horas normais por dia inválidas.' }, { status: 400 });
+      }
+      normalHoursPerDay = parsed;
+    }
+
+    if (
+      !name ||
+      !company ||
+      hourRate === null ||
+      hourRate50 === null ||
+      hourRate100 === null ||
+      normalHoursPerDay === null
+    ) {
       return NextResponse.json(
-        { error: 'Nome da pasta, empresa responsável e valores de hora normal/50%/100% são obrigatórios.' },
+        {
+          error: 'Nome da pasta, empresa responsável, horas normais por dia e valores de hora normal/50%/100% são obrigatórios.',
+        },
         { status: 400 }
       );
     }
@@ -87,6 +106,7 @@ export async function POST(request: Request) {
       hourRate,
       hourRate50,
       hourRate100,
+      normalHoursPerDay,
       linkKeyHash,
       createdAt: now,
       updatedAt: now,
@@ -99,6 +119,7 @@ export async function POST(request: Request) {
       hourRate,
       hourRate50,
       hourRate100,
+      normalHoursPerDay,
       linkKeyHash,
       createdAt: now,
       updatedAt: now,

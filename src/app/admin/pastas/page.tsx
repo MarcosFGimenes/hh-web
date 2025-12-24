@@ -25,6 +25,7 @@ export default function AdminFoldersPage() {
   const [creatingHourRate, setCreatingHourRate] = useState('');
   const [creatingHourRate50, setCreatingHourRate50] = useState('');
   const [creatingHourRate100, setCreatingHourRate100] = useState('');
+  const [creatingNormalHours, setCreatingNormalHours] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
 
@@ -95,12 +96,21 @@ export default function AdminFoldersPage() {
       const normalizedRate = creatingHourRate.trim().replace(',', '.');
       const normalizedRate50 = creatingHourRate50.trim().replace(',', '.');
       const normalizedRate100 = creatingHourRate100.trim().replace(',', '.');
+      const normalizedNormalHours = creatingNormalHours.trim().replace(',', '.');
       const hourRate = normalizedRate ? Number(normalizedRate) : null;
       const hourRate50 = normalizedRate50 ? Number(normalizedRate50) : null;
       const hourRate100 = normalizedRate100 ? Number(normalizedRate100) : null;
+      const normalHoursPerDay = normalizedNormalHours ? Number(normalizedNormalHours) : null;
       const response = await adminFetch('/api/admin/folders', {
         method: 'POST',
-        body: JSON.stringify({ name: creatingName, company: creatingCompany, hourRate, hourRate50, hourRate100 }),
+        body: JSON.stringify({
+          name: creatingName,
+          company: creatingCompany,
+          hourRate,
+          hourRate50,
+          hourRate100,
+          normalHoursPerDay,
+        }),
       });
       const data = await response.json();
 
@@ -116,6 +126,7 @@ export default function AdminFoldersPage() {
       setCreatingHourRate('');
       setCreatingHourRate50('');
       setCreatingHourRate100('');
+      setCreatingNormalHours('');
       await copyLink(link);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao criar a pasta.';
@@ -310,6 +321,15 @@ export default function AdminFoldersPage() {
                 step="0.01"
                 required
               />
+              <Input
+                type="number"
+                label="Horas normais por dia"
+                value={creatingNormalHours}
+                onChange={(event) => setCreatingNormalHours(event.target.value)}
+                min="0"
+                step="0.5"
+                required
+              />
               <div className="admin-folders-actions">
                 <Button
                   type="submit"
@@ -318,7 +338,8 @@ export default function AdminFoldersPage() {
                     !creatingCompany.trim() ||
                     !creatingHourRate.trim() ||
                     !creatingHourRate50.trim() ||
-                    !creatingHourRate100.trim()
+                    !creatingHourRate100.trim() ||
+                    !creatingNormalHours.trim()
                   }
                   className="ui-button-compact"
                 >

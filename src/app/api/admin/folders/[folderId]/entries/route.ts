@@ -231,6 +231,7 @@ export async function GET(_request: Request, { params }: Params) {
         hourRate: (folderData as { hourRate?: number | null }).hourRate ?? null,
         hourRate50: (folderData as { hourRate50?: number | null }).hourRate50 ?? null,
         hourRate100: (folderData as { hourRate100?: number | null }).hourRate100 ?? null,
+        normalHoursPerDay: (folderData as { normalHoursPerDay?: number | null }).normalHoursPerDay ?? null,
       },
       entries,
     });

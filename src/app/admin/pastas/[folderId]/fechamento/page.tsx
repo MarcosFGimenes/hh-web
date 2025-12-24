@@ -36,6 +36,7 @@ type EntriesResponse = {
     hourRate: number | null;
     hourRate50: number | null;
     hourRate100: number | null;
+    normalHoursPerDay: number | null;
   };
   entries: EntryDay[];
 };
@@ -54,6 +55,7 @@ type OsSummary = {
   title: string;
   description: string;
   totalMinutes: number;
+  totalCost: number;
 };
 
 type ScheduleRow = {
@@ -92,6 +94,27 @@ const buildIntervals = (service: EntryService) => {
   return intervals;
 };
 
+const computeIntervalsMinutes = (service: EntryService) => {
+  if (service.totalMinutes != null) return service.totalMinutes;
+  return buildIntervals(service).reduce((acc, interval) => {
+    const [startH, startM] = interval.startTime.split(':').map(Number);
+    const [endH, endM] = interval.endTime.split(':').map(Number);
+    return acc + (endH * 60 + endM - (startH * 60 + startM));
+  }, 0);
+};
+
+const splitMinutes = (totalMinutes: number, normalLimitMinutes: number, isHoliday: boolean) => {
+  if (totalMinutes <= 0) {
+    return { normalMinutes: 0, extra50Minutes: 0, extra100Minutes: 0 };
+  }
+  if (isHoliday) {
+    return { normalMinutes: 0, extra50Minutes: 0, extra100Minutes: totalMinutes };
+  }
+  const normalMinutes = Math.min(totalMinutes, Math.max(normalLimitMinutes, 0));
+  const extra50Minutes = Math.max(totalMinutes - normalMinutes, 0);
+  return { normalMinutes, extra50Minutes, extra100Minutes: 0 };
+};
+
 export default function FolderClosingPage() {
   const params = useParams<{ folderId: string }>();
   const folderId = params.folderId;
@@ -101,6 +124,7 @@ export default function FolderClosingPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState('');
+  const [holidayDates, setHolidayDates] = useState<Set<string>>(new Set());
 
   const adminFetch = async (input: string, init?: RequestInit) => {
     if (!idToken) throw new Error('Token do administrador indisponível.');
@@ -151,19 +175,33 @@ export default function FolderClosingPage() {
   const hourRate = data?.folder.hourRate ?? 0;
   const hourRate50 = data?.folder.hourRate50 ?? 0;
   const hourRate100 = data?.folder.hourRate100 ?? 0;
+  const normalHoursPerDay = data?.folder.normalHoursPerDay ?? 0;
+  const normalLimitMinutes = normalHoursPerDay * 60;
+
+  const availableDates = useMemo(
+    () => (data?.entries ?? []).map((entry) => entry.date).sort((a, b) => a.localeCompare(b)),
+    [data]
+  );
+
+  const toggleHoliday = (date: string) => {
+    setHolidayDates((prev) => {
+      const next = new Set(prev);
+      if (next.has(date)) {
+        next.delete(date);
+      } else {
+        next.add(date);
+      }
+      return next;
+    });
+  };
 
   const employeeSummaries = useMemo<EmployeeSummary[]>(() => {
     const map = new Map<string, EmployeeSummary>();
     filteredEntries.forEach((entry) => {
+      const isHoliday = holidayDates.has(entry.date);
       entry.employees.forEach((employee) => {
-        const totalMinutes = employee.services.reduce((sum, service) => {
-          const minutes = service.totalMinutes ?? buildIntervals(service).reduce((acc, interval) => {
-            const [startH, startM] = interval.startTime.split(':').map(Number);
-            const [endH, endM] = interval.endTime.split(':').map(Number);
-            return acc + (endH * 60 + endM - (startH * 60 + startM));
-          }, 0);
-          return sum + minutes;
-        }, 0);
+        const totalMinutes = employee.services.reduce((sum, service) => sum + computeIntervalsMinutes(service), 0);
+        const split = splitMinutes(totalMinutes, normalLimitMinutes, isHoliday);
         if (!map.has(employee.id)) {
           map.set(employee.id, {
             id: employee.id,
@@ -174,11 +212,13 @@ export default function FolderClosingPage() {
           });
         }
         const item = map.get(employee.id)!;
-        item.normalMinutes += totalMinutes;
+        item.normalMinutes += split.normalMinutes;
+        item.extra50Minutes += split.extra50Minutes;
+        item.extra100Minutes += split.extra100Minutes;
       });
     });
     return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
-  }, [filteredEntries]);
+  }, [filteredEntries, holidayDates, normalLimitMinutes]);
 
   const employeeTotals = useMemo(() => {
     return employeeSummaries.reduce(
@@ -195,9 +235,24 @@ export default function FolderClosingPage() {
   const osSummaries = useMemo<OsSummary[]>(() => {
     const map = new Map<string, OsSummary>();
     filteredEntries.forEach((entry) => {
+      const isHoliday = holidayDates.has(entry.date);
       entry.employees.forEach((employee) => {
+        const serviceMinutes = employee.services.map((service) => ({
+          service,
+          minutes: computeIntervalsMinutes(service),
+        }));
+        const totalMinutes = serviceMinutes.reduce((sum, item) => sum + item.minutes, 0);
+        const split = splitMinutes(totalMinutes, normalLimitMinutes, isHoliday);
         employee.services.forEach((service) => {
-          const minutes = service.totalMinutes ?? 0;
+          const minutes = computeIntervalsMinutes(service);
+          const ratio = totalMinutes > 0 ? minutes / totalMinutes : 0;
+          const normalMinutes = split.normalMinutes * ratio;
+          const extra50Minutes = split.extra50Minutes * ratio;
+          const extra100Minutes = split.extra100Minutes * ratio;
+          const cost =
+            (normalMinutes / 60) * hourRate +
+            (extra50Minutes / 60) * hourRate50 +
+            (extra100Minutes / 60) * hourRate100;
           if (!map.has(service.osId)) {
             map.set(service.osId, {
               osId: service.osId,
@@ -205,19 +260,24 @@ export default function FolderClosingPage() {
               title: [service.tag, service.machineName].filter(Boolean).join(' · ') || '—',
               description: service.description || 'Sem descrição',
               totalMinutes: 0,
+              totalCost: 0,
             });
           }
-          map.get(service.osId)!.totalMinutes += minutes;
+          const entryItem = map.get(service.osId)!;
+          entryItem.totalMinutes += minutes;
+          entryItem.totalCost += cost;
         });
       });
     });
     return Array.from(map.values()).sort((a, b) => a.osCode.localeCompare(b.osCode));
-  }, [filteredEntries]);
+  }, [filteredEntries, holidayDates, normalLimitMinutes, hourRate, hourRate50, hourRate100]);
 
   const osTotals = useMemo(
     () => osSummaries.reduce((sum, item) => sum + item.totalMinutes, 0),
     [osSummaries]
   );
+
+  const osTotalCost = useMemo(() => osSummaries.reduce((sum, item) => sum + item.totalCost, 0), [osSummaries]);
 
   const totalAmount = useMemo(() => {
     return (
@@ -230,12 +290,14 @@ export default function FolderClosingPage() {
   const scheduleRows = useMemo<ScheduleRow[]>(() => {
     const rows: ScheduleRow[] = [];
     filteredEntries.forEach((entry) => {
+      const isHoliday = holidayDates.has(entry.date);
       entry.employees.forEach((employee) => {
         const intervals = employee.services
           .flatMap((service) => buildIntervals(service))
           .slice()
           .sort((a, b) => a.startTime.localeCompare(b.startTime));
-        const totalMinutes = employee.services.reduce((sum, service) => sum + (service.totalMinutes ?? 0), 0);
+        const totalMinutes = employee.services.reduce((sum, service) => sum + computeIntervalsMinutes(service), 0);
+        const split = splitMinutes(totalMinutes, normalLimitMinutes, isHoliday);
         rows.push({
           id: `${entry.date}-${employee.id}`,
           date: entry.date,
@@ -246,13 +308,13 @@ export default function FolderClosingPage() {
           afternoonStart: intervals[1]?.startTime || '—',
           afternoonEnd: intervals[1]?.endTime || '—',
           totalMinutes,
-          extra50Minutes: 0,
-          extra100Minutes: 0,
+          extra50Minutes: split.extra50Minutes,
+          extra100Minutes: split.extra100Minutes,
         });
       });
     });
     return rows.sort((a, b) => a.date.localeCompare(b.date) || a.employeeName.localeCompare(b.employeeName));
-  }, [filteredEntries]);
+  }, [filteredEntries, holidayDates, normalLimitMinutes]);
 
   const monthLabel = useMemo(() => {
     if (!data?.entries.length) return '';
@@ -301,6 +363,34 @@ export default function FolderClosingPage() {
             </Button>
           </section>
 
+          {data ? (
+            <section className="closing-controls print-hidden">
+              <div className="closing-control-card">
+                <p className="closing-control-title">Horas normais por dia</p>
+                <strong>{normalHoursPerDay ? `${normalHoursPerDay}h` : '—'}</strong>
+              </div>
+              <div className="closing-control-card">
+                <p className="closing-control-title">Dias com hora 100%</p>
+                <div className="closing-holiday-list">
+                  {availableDates.length ? (
+                    availableDates.map((date) => (
+                      <label key={date} className="closing-holiday-item">
+                        <input
+                          type="checkbox"
+                          checked={holidayDates.has(date)}
+                          onChange={() => toggleHoliday(date)}
+                        />
+                        <span>{formatDate(date)}</span>
+                      </label>
+                    ))
+                  ) : (
+                    <p className="footer-note">Nenhuma data disponível.</p>
+                  )}
+                </div>
+              </div>
+            </section>
+          ) : null}
+
           {loading && !data ? (
             <Card title="Carregando fechamento" className="print-hidden">
               <p className="footer-note">Aguarde, preparando o fechamento...</p>
@@ -345,19 +435,25 @@ export default function FolderClosingPage() {
                     <tr>
                       <td className="closing-rate-label">HORA NORMAL</td>
                       <td className="closing-rate-currency">R$</td>
-                      <td className="closing-rate-value">{formatCurrency(hourRate).replace('R$', '').trim()}</td>
+                      <td className="closing-rate-value closing-currency">
+                        {formatCurrency(hourRate).replace('R$', '').trim()}
+                      </td>
                       <td colSpan={5} />
                     </tr>
                     <tr>
                       <td className="closing-rate-label">HORA 50%</td>
                       <td className="closing-rate-currency">R$</td>
-                      <td className="closing-rate-value">{formatCurrency(hourRate50).replace('R$', '').trim()}</td>
+                      <td className="closing-rate-value closing-currency">
+                        {formatCurrency(hourRate50).replace('R$', '').trim()}
+                      </td>
                       <td colSpan={5} />
                     </tr>
                     <tr>
                       <td className="closing-rate-label">HORA 100%</td>
                       <td className="closing-rate-currency">R$</td>
-                      <td className="closing-rate-value">{formatCurrency(hourRate100).replace('R$', '').trim()}</td>
+                      <td className="closing-rate-value closing-currency">
+                        {formatCurrency(hourRate100).replace('R$', '').trim()}
+                      </td>
                       <td colSpan={5} />
                     </tr>
                   </tbody>
@@ -383,38 +479,61 @@ export default function FolderClosingPage() {
                       const extra100Value = (item.extra100Minutes / 60) * hourRate100;
                       const totalValue = normalValue + extra50Value + extra100Value;
                       return (
-                        <tr key={item.id}>
-                          <td>{item.name}</td>
-                          <td>{formatMinutes(item.normalMinutes)}</td>
-                          <td>{formatCurrency(normalValue)}</td>
-                          <td>{formatMinutes(item.extra50Minutes)}</td>
-                          <td>{formatCurrency(extra50Value)}</td>
-                          <td>{formatMinutes(item.extra100Minutes)}</td>
-                          <td>{formatCurrency(extra100Value)}</td>
-                          <td>{formatCurrency(totalValue)}</td>
-                        </tr>
-                      );
-                    })}
-                    <tr className="closing-total-row">
-                      <td>SOMA DE HORAS/VALORES</td>
-                      <td>{formatMinutes(employeeTotals.normalMinutes)}</td>
-                      <td>{formatCurrency((employeeTotals.normalMinutes / 60) * hourRate)}</td>
-                      <td>{formatMinutes(employeeTotals.extra50Minutes)}</td>
-                      <td>{formatCurrency((employeeTotals.extra50Minutes / 60) * hourRate50)}</td>
-                      <td>{formatMinutes(employeeTotals.extra100Minutes)}</td>
-                      <td>{formatCurrency((employeeTotals.extra100Minutes / 60) * hourRate100)}</td>
-                      <td>
-                        {formatCurrency(
-                          (employeeTotals.normalMinutes / 60) * hourRate +
-                            (employeeTotals.extra50Minutes / 60) * hourRate50 +
-                            (employeeTotals.extra100Minutes / 60) * hourRate100
-                        )}
-                      </td>
+                          <tr key={item.id}>
+                            <td>{item.name}</td>
+                            <td>{formatMinutes(item.normalMinutes)}</td>
+                            <td className="closing-currency">{formatCurrency(normalValue)}</td>
+                            <td>{formatMinutes(item.extra50Minutes)}</td>
+                            <td className="closing-currency">{formatCurrency(extra50Value)}</td>
+                            <td>{formatMinutes(item.extra100Minutes)}</td>
+                            <td className="closing-currency">{formatCurrency(extra100Value)}</td>
+                            <td className="closing-currency">{formatCurrency(totalValue)}</td>
+                          </tr>
+                        );
+                      })}
+                      <tr className="closing-total-row">
+                        <td>SOMA DE HORAS/VALORES</td>
+                        <td>{formatMinutes(employeeTotals.normalMinutes)}</td>
+                        <td className="closing-currency">
+                          {formatCurrency((employeeTotals.normalMinutes / 60) * hourRate)}
+                        </td>
+                        <td>{formatMinutes(employeeTotals.extra50Minutes)}</td>
+                        <td className="closing-currency">
+                          {formatCurrency((employeeTotals.extra50Minutes / 60) * hourRate50)}
+                        </td>
+                        <td>{formatMinutes(employeeTotals.extra100Minutes)}</td>
+                        <td className="closing-currency">
+                          {formatCurrency((employeeTotals.extra100Minutes / 60) * hourRate100)}
+                        </td>
+                        <td className="closing-currency">
+                          {formatCurrency(
+                            (employeeTotals.normalMinutes / 60) * hourRate +
+                              (employeeTotals.extra50Minutes / 60) * hourRate50 +
+                              (employeeTotals.extra100Minutes / 60) * hourRate100
+                          )}
+                        </td>
                     </tr>
                   </tbody>
                 </table>
                 <div className="closing-total-footer">
                   <span>{formatCurrency(totalAmount)}</span>
+                </div>
+                <div className="closing-signatures">
+                  <div className="closing-signature">
+                    <div className="closing-signature-line" />
+                    <div className="closing-signature-name">Assinatura 1</div>
+                    <div className="closing-signature-role">Cargo</div>
+                  </div>
+                  <div className="closing-signature">
+                    <div className="closing-signature-line" />
+                    <div className="closing-signature-name">Assinatura 2</div>
+                    <div className="closing-signature-role">Cargo</div>
+                  </div>
+                  <div className="closing-signature">
+                    <div className="closing-signature-line" />
+                    <div className="closing-signature-name">Assinatura 3</div>
+                    <div className="closing-signature-role">Cargo</div>
+                  </div>
                 </div>
               </article>
 
@@ -431,21 +550,20 @@ export default function FolderClosingPage() {
                   </thead>
                   <tbody>
                     {osSummaries.map((item) => {
-                      const cost = (item.totalMinutes / 60) * hourRate;
                       return (
                         <tr key={item.osId}>
                           <td>{item.osCode}</td>
                           <td>{item.title}</td>
                           <td>{item.description}</td>
                           <td>{formatMinutes(item.totalMinutes)}</td>
-                          <td>{formatCurrency(cost)}</td>
+                          <td className="closing-currency">{formatCurrency(item.totalCost)}</td>
                         </tr>
                       );
                     })}
                     <tr className="closing-total-row">
                       <td colSpan={3}>Total</td>
                       <td>{formatMinutes(osTotals)}</td>
-                      <td>{formatCurrency((osTotals / 60) * hourRate)}</td>
+                      <td className="closing-currency">{formatCurrency(osTotalCost)}</td>
                     </tr>
                   </tbody>
                 </table>

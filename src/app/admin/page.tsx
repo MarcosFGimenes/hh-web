@@ -266,6 +266,11 @@ export default function AdminDashboardPlaceholder() {
               Gerenciar O.S.
             </Button>
           </Link>
+          <Link href={`/admin/pastas/${folder.id}/fechamento`}>
+            <Button type="button" variant="secondary">
+              Fechamento
+            </Button>
+          </Link>
           <Button type="button" variant="primary" onClick={() => handleCopyLink(folder.id)}>
             Copiar link
           </Button>
