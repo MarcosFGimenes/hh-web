@@ -232,6 +232,7 @@ export async function GET(_request: Request, { params }: Params) {
         hourRate50: (folderData as { hourRate50?: number | null }).hourRate50 ?? null,
         hourRate100: (folderData as { hourRate100?: number | null }).hourRate100 ?? null,
         normalHoursPerDay: (folderData as { normalHoursPerDay?: number | null }).normalHoursPerDay ?? null,
+        signatures: (folderData as { signatures?: Array<{ name: string; role: string }> | null }).signatures ?? null,
       },
       entries,
     });
