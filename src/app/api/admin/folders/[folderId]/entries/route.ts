@@ -182,7 +182,7 @@ export async function GET(_request: Request, { params }: Params) {
           .slice()
           .sort((a, b) => a.startTime.localeCompare(b.startTime))
           .map((log) => ({ startTime: log.startTime, endTime: log.endTime }));
-        const totalMinutes = sortedIntervals.length ? computeIntervalsMinutes(sortedIntervals) : null;
+        const totalMinutes = sortedIntervals.length ? computeIntervalsMinutes(sortedIntervals) : 0;
         return {
           id: `${maintainer.id}-${osId}`,
           osId,
