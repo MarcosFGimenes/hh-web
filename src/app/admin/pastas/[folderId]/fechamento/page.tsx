@@ -204,6 +204,8 @@ export default function FolderClosingPage() {
     });
   };
 
+  const normalizeEmployeeName = (value: string) => value.trim().replace(/\s+/g, ' ').toLowerCase();
+
   const employeeSummaries = useMemo<EmployeeSummary[]>(() => {
     const map = new Map<string, EmployeeSummary>();
     filteredEntries.forEach((entry) => {
@@ -211,16 +213,17 @@ export default function FolderClosingPage() {
       entry.employees.forEach((employee) => {
         const totalMinutes = employee.services.reduce((sum, service) => sum + computeIntervalsMinutes(service), 0);
         const split = splitMinutes(totalMinutes, normalLimitMinutes, isHoliday);
-        if (!map.has(employee.id)) {
-          map.set(employee.id, {
-            id: employee.id,
-            name: employee.name,
+        const normalizedName = normalizeEmployeeName(employee.name);
+        if (!map.has(normalizedName)) {
+          map.set(normalizedName, {
+            id: normalizedName,
+            name: employee.name.trim().replace(/\s+/g, ' '),
             normalMinutes: 0,
             extra50Minutes: 0,
             extra100Minutes: 0,
           });
         }
-        const item = map.get(employee.id)!;
+        const item = map.get(normalizedName)!;
         item.normalMinutes += split.normalMinutes;
         item.extra50Minutes += split.extra50Minutes;
         item.extra100Minutes += split.extra100Minutes;
@@ -447,13 +450,17 @@ export default function FolderClosingPage() {
                         Mês: <strong>{monthLabel || '—'}</strong>
                       </td>
                     </tr>
+                  </tbody>
+                </table>
+
+                <table className="closing-rate-table">
+                  <tbody>
                     <tr>
                       <td className="closing-rate-label">HORA NORMAL</td>
                       <td className="closing-rate-currency">R$</td>
                       <td className="closing-rate-value closing-currency">
                         {formatCurrency(hourRate).replace('R$', '').trim()}
                       </td>
-                      <td colSpan={5} className="closing-rate-empty" />
                     </tr>
                     <tr>
                       <td className="closing-rate-label">HORA 50%</td>
@@ -461,7 +468,6 @@ export default function FolderClosingPage() {
                       <td className="closing-rate-value closing-currency">
                         {formatCurrency(hourRate50).replace('R$', '').trim()}
                       </td>
-                      <td colSpan={5} className="closing-rate-empty" />
                     </tr>
                     <tr>
                       <td className="closing-rate-label">HORA 100%</td>
@@ -469,7 +475,6 @@ export default function FolderClosingPage() {
                       <td className="closing-rate-value closing-currency">
                         {formatCurrency(hourRate100).replace('R$', '').trim()}
                       </td>
-                      <td colSpan={5} className="closing-rate-empty" />
                     </tr>
                   </tbody>
                 </table>

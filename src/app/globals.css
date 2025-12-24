@@ -2515,6 +2515,18 @@ main {
   white-space: nowrap;
 }
 
+.closing-rate-table {
+  border-collapse: collapse;
+  display: inline-table;
+  margin: 0 0 8px;
+  width: auto;
+}
+
+.closing-rate-table td {
+  border: 1px solid #000;
+  padding: 6px 8px;
+}
+
 .closing-table {
   width: 100%;
   border-collapse: collapse;
@@ -2604,11 +2616,6 @@ main {
   background: #fff;
 }
 
-.closing-rate-empty {
-  border: none;
-  background: #fff;
-}
-
 @media print {
   @page {
     margin: 0;
@@ -2656,6 +2663,7 @@ main {
   .closing-header-table,
   .closing-table,
   .closing-green-band,
+  .closing-rate-table,
   .closing-total-row td,
   .closing-table thead th,
   .closing-table tbody tr:nth-child(even),
