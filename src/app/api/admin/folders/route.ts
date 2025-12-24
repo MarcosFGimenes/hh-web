@@ -38,9 +38,22 @@ export async function POST(request: Request) {
     const body = await request.json();
     const name = typeof body?.name === 'string' ? body.name.trim() : '';
     const company = typeof body?.company === 'string' ? body.company.trim() : '';
+    const rawHourRate = body?.hourRate;
+    let hourRate: number | null = null;
 
-    if (!name || !company) {
-      return NextResponse.json({ error: 'Nome da pasta e empresa responsável são obrigatórios.' }, { status: 400 });
+    if (rawHourRate !== undefined && rawHourRate !== null && rawHourRate !== '') {
+      const parsed = typeof rawHourRate === 'number' ? rawHourRate : Number(rawHourRate);
+      if (!Number.isFinite(parsed) || parsed < 0) {
+        return NextResponse.json({ error: 'Valor da hora homem inválido.' }, { status: 400 });
+      }
+      hourRate = parsed;
+    }
+
+    if (!name || !company || hourRate === null) {
+      return NextResponse.json(
+        { error: 'Nome da pasta, empresa responsável e valor da hora homem são obrigatórios.' },
+        { status: 400 }
+      );
     }
 
     const linkKey = crypto.randomBytes(24).toString('hex');
@@ -51,6 +64,7 @@ export async function POST(request: Request) {
     const docRef = await adminDb.collection(COLLECTION).add({
       name,
       company,
+      hourRate,
       linkKeyHash,
       createdAt: now,
       updatedAt: now,
@@ -60,6 +74,7 @@ export async function POST(request: Request) {
       id: docRef.id,
       name,
       company,
+      hourRate,
       linkKeyHash,
       createdAt: now,
       updatedAt: now,
