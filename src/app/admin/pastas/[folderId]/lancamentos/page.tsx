@@ -21,6 +21,7 @@ type EntryService = Service & {
 
 type EntryEmployee = Employee & {
   services: EntryService[];
+  shifts?: Array<{ id: string; startTime: string; endTime: string }>;
 };
 
 type EntryDay = {
@@ -237,6 +238,19 @@ export default function FolderEntriesPage() {
                                 </p>
                               </div>
                             </div>
+                            {employee.shifts ? (
+                              <div className="entry-intervals">
+                                {employee.shifts.length ? (
+                                  employee.shifts.map((shift, index) => (
+                                    <span key={`${employee.id}-shift-${shift.id ?? index}`} className="interval-chip">
+                                      {shift.startTime} - {shift.endTime}
+                                    </span>
+                                  ))
+                                ) : (
+                                  <span className="interval-chip">Sem horário definido</span>
+                                )}
+                              </div>
+                            ) : null}
 
                             {employee.services.length ? (
                               <div className="entry-services">
