@@ -2445,10 +2445,11 @@ main {
   text-align: center;
 }
 
-.closing-logo-text {
-  font-size: 22px;
-  font-weight: 700;
-  color: #444;
+.closing-logo-image {
+  display: block;
+  width: 70px;
+  height: auto;
+  margin: 0 auto;
 }
 
 .closing-title-cell {
@@ -2604,8 +2605,15 @@ main {
 }
 
 @media print {
+  @page {
+    margin: 0;
+  }
+
   body {
     background: white;
+    margin: 0;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
   .print-hidden {
@@ -2616,6 +2624,20 @@ main {
     padding: 0;
   }
 
+  .closing-container {
+    width: 100%;
+    max-width: none;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    box-shadow: none;
+    border-radius: 0;
+  }
+
+  .closing-print-area {
+    gap: 0;
+  }
+
   .closing-controls {
     display: none;
   }
@@ -2623,5 +2645,23 @@ main {
   .closing-sheet {
     box-shadow: none;
     page-break-inside: avoid;
+    width: 100%;
+  }
+
+  .closing-header-table,
+  .closing-table,
+  .closing-green-band,
+  .closing-total-row td,
+  .closing-table thead th,
+  .closing-table tbody tr:nth-child(even),
+  .closing-os-table td:nth-last-child(2),
+  .closing-os-table td:last-child,
+  .closing-main-table td:nth-last-child(1),
+  .closing-main-table td:nth-last-child(2),
+  .closing-schedule-table td:nth-last-child(1),
+  .closing-schedule-table td:nth-last-child(2),
+  .closing-schedule-table td:nth-last-child(3) {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 }

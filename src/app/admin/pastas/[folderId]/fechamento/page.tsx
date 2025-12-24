@@ -419,7 +419,7 @@ export default function FolderClosingPage() {
                   <tbody>
                     <tr>
                       <td className="closing-logo-cell">
-                        <span className="closing-logo-text">Lar</span>
+                        <img className="closing-logo-image" src="/lar-logo.svg" alt="Lar" />
                       </td>
                       <td className="closing-title-cell" colSpan={5}>
                         FECHAMENTO DE SERVIÇOS TERCEIROS HORA HOMEM
