@@ -2379,6 +2379,15 @@ main {
   flex-wrap: wrap;
 }
 
+.closing-toolbar .ui-field {
+  width: auto;
+  min-width: 220px;
+}
+
+.closing-date-input {
+  width: 190px;
+}
+
 .closing-controls {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));

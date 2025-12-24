@@ -375,6 +375,7 @@ export default function FolderClosingPage() {
               label="Filtrar por data"
               value={selectedDate}
               onChange={(event) => setSelectedDate(event.target.value)}
+              className="closing-date-input"
             />
             <Button type="button" variant="secondary" onClick={load} disabled={loading}>
               {loading ? 'Atualizando...' : 'Atualizar'}
