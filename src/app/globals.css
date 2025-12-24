@@ -2367,95 +2367,161 @@ main {
   flex-wrap: wrap;
 }
 
-.closing-sections {
+.closing-print-area {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 28px;
 }
 
-.closing-section {
-  background: var(--color-surface);
-  border-radius: 16px;
-  padding: 20px;
-  border: 1px solid var(--color-border);
+.closing-sheet {
+  border: 1px solid #cfd6c7;
+  background: white;
+  padding: 0;
   box-shadow: var(--shadow-soft);
 }
 
-.closing-section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
+.closing-header-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
 }
 
-.closing-section-header h2 {
-  font-size: 20px;
-  margin: 0;
+.closing-header-table td {
+  border: 1px solid #cfd6c7;
+  padding: 6px 8px;
 }
 
-.closing-section-header p {
-  margin: 6px 0 0;
-  color: var(--color-text-muted);
+.closing-logo-cell {
+  width: 90px;
+  text-align: center;
 }
 
-.closing-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  color: var(--color-text-muted);
+.closing-logo-text {
+  font-size: 22px;
+  font-weight: 700;
+  color: #444;
 }
 
-.closing-rate-grid {
+.closing-title-cell {
+  text-align: center;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.closing-doc-cell {
+  width: 230px;
+  padding: 0;
+}
+
+.closing-doc-code {
+  border-bottom: 1px solid #cfd6c7;
+  padding: 6px 8px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.closing-doc-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 12px;
-  margin-bottom: 16px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  font-size: 11px;
+  text-align: center;
 }
 
-.closing-rate-grid > div {
-  background: var(--color-surface-muted);
-  border-radius: 12px;
-  padding: 12px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+.closing-doc-grid div {
+  border-right: 1px solid #cfd6c7;
+  border-bottom: 1px solid #cfd6c7;
+  padding: 4px 2px;
 }
 
-.closing-table-wrapper {
-  overflow-x: auto;
-  border-radius: 12px;
-  border: 1px solid var(--color-border);
+.closing-doc-grid div:nth-child(3n) {
+  border-right: none;
+}
+
+.closing-green-band {
+  background: #9ad25a;
+  height: 18px;
+  border: none !important;
+  padding: 0 !important;
+}
+
+.closing-company-cell,
+.closing-month-cell {
+  font-weight: 600;
+}
+
+.closing-rate-label {
+  font-weight: 600;
+}
+
+.closing-rate-currency {
+  width: 32px;
+  text-align: center;
+}
+
+.closing-rate-value {
+  width: 90px;
+  text-align: right;
 }
 
 .closing-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
-  min-width: 860px;
+  font-size: 13px;
 }
 
 .closing-table th,
 .closing-table td {
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--color-border);
+  border: 1px solid #cfd6c7;
+  padding: 6px 8px;
   text-align: left;
+  vertical-align: middle;
 }
 
 .closing-table thead th {
   background: #9ad25a;
   color: #13320f;
-  font-weight: 600;
+  text-transform: uppercase;
+  font-weight: 700;
 }
 
 .closing-table tbody tr:nth-child(even) {
-  background: rgba(154, 210, 90, 0.08);
+  background: #eaf4dd;
 }
 
 .closing-total-row td {
-  font-weight: 600;
-  background: rgba(154, 210, 90, 0.18);
+  font-weight: 700;
+  background: #d8edc2;
+}
+
+.closing-total-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px 12px;
+  font-weight: 700;
+  border-top: 1px solid #cfd6c7;
+}
+
+.closing-month-title {
+  text-align: center;
+  padding: 8px;
+  font-weight: 700;
+  border-bottom: 1px solid #cfd6c7;
+  text-transform: uppercase;
+  background: #fff;
+}
+
+.closing-os-table td:nth-last-child(2),
+.closing-os-table td:last-child,
+.closing-main-table td:nth-last-child(1),
+.closing-main-table td:nth-last-child(2) {
+  background: #eaf4dd;
+}
+
+.closing-schedule-table td:nth-last-child(1),
+.closing-schedule-table td:nth-last-child(2),
+.closing-schedule-table td:nth-last-child(3) {
+  background: #eaf4dd;
 }
 
 @media print {
@@ -2467,8 +2533,12 @@ main {
     display: none !important;
   }
 
-  .closing-section {
+  .closing-page {
+    padding: 0;
+  }
+
+  .closing-sheet {
     box-shadow: none;
-    border: 1px solid #cbd3c1;
+    page-break-inside: avoid;
   }
 }

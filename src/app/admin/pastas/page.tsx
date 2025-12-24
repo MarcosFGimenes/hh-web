@@ -23,6 +23,8 @@ export default function AdminFoldersPage() {
   const [creatingName, setCreatingName] = useState('');
   const [creatingCompany, setCreatingCompany] = useState('');
   const [creatingHourRate, setCreatingHourRate] = useState('');
+  const [creatingHourRate50, setCreatingHourRate50] = useState('');
+  const [creatingHourRate100, setCreatingHourRate100] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
 
@@ -91,10 +93,14 @@ export default function AdminFoldersPage() {
 
     try {
       const normalizedRate = creatingHourRate.trim().replace(',', '.');
+      const normalizedRate50 = creatingHourRate50.trim().replace(',', '.');
+      const normalizedRate100 = creatingHourRate100.trim().replace(',', '.');
       const hourRate = normalizedRate ? Number(normalizedRate) : null;
+      const hourRate50 = normalizedRate50 ? Number(normalizedRate50) : null;
+      const hourRate100 = normalizedRate100 ? Number(normalizedRate100) : null;
       const response = await adminFetch('/api/admin/folders', {
         method: 'POST',
-        body: JSON.stringify({ name: creatingName, company: creatingCompany, hourRate }),
+        body: JSON.stringify({ name: creatingName, company: creatingCompany, hourRate, hourRate50, hourRate100 }),
       });
       const data = await response.json();
 
@@ -108,6 +114,8 @@ export default function AdminFoldersPage() {
       setCreatingName('');
       setCreatingCompany('');
       setCreatingHourRate('');
+      setCreatingHourRate50('');
+      setCreatingHourRate100('');
       await copyLink(link);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao criar a pasta.';
@@ -284,10 +292,34 @@ export default function AdminFoldersPage() {
                 step="0.01"
                 required
               />
+              <Input
+                type="number"
+                label="Valor hora 50% (R$)"
+                value={creatingHourRate50}
+                onChange={(event) => setCreatingHourRate50(event.target.value)}
+                min="0"
+                step="0.01"
+                required
+              />
+              <Input
+                type="number"
+                label="Valor hora 100% (R$)"
+                value={creatingHourRate100}
+                onChange={(event) => setCreatingHourRate100(event.target.value)}
+                min="0"
+                step="0.01"
+                required
+              />
               <div className="admin-folders-actions">
                 <Button
                   type="submit"
-                  disabled={!creatingName.trim() || !creatingCompany.trim() || !creatingHourRate.trim()}
+                  disabled={
+                    !creatingName.trim() ||
+                    !creatingCompany.trim() ||
+                    !creatingHourRate.trim() ||
+                    !creatingHourRate50.trim() ||
+                    !creatingHourRate100.trim()
+                  }
                   className="ui-button-compact"
                 >
                   Criar pasta e gerar link

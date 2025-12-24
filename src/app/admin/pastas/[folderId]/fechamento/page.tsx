@@ -29,7 +29,14 @@ type EntryDay = {
 };
 
 type EntriesResponse = {
-  folder: { id: string; name: string; company: string | null; hourRate: number | null };
+  folder: {
+    id: string;
+    name: string;
+    company: string | null;
+    hourRate: number | null;
+    hourRate50: number | null;
+    hourRate100: number | null;
+  };
   entries: EntryDay[];
 };
 
@@ -142,8 +149,8 @@ export default function FolderClosingPage() {
   }, [data, selectedDate]);
 
   const hourRate = data?.folder.hourRate ?? 0;
-  const hourRate50 = hourRate * 1.5;
-  const hourRate100 = hourRate * 2;
+  const hourRate50 = data?.folder.hourRate50 ?? 0;
+  const hourRate100 = data?.folder.hourRate100 ?? 0;
 
   const employeeSummaries = useMemo<EmployeeSummary[]>(() => {
     const map = new Map<string, EmployeeSummary>();
@@ -212,6 +219,14 @@ export default function FolderClosingPage() {
     [osSummaries]
   );
 
+  const totalAmount = useMemo(() => {
+    return (
+      (employeeTotals.normalMinutes / 60) * hourRate +
+      (employeeTotals.extra50Minutes / 60) * hourRate50 +
+      (employeeTotals.extra100Minutes / 60) * hourRate100
+    );
+  }, [employeeTotals, hourRate, hourRate50, hourRate100]);
+
   const scheduleRows = useMemo<ScheduleRow[]>(() => {
     const rows: ScheduleRow[] = [];
     filteredEntries.forEach((entry) => {
@@ -256,13 +271,13 @@ export default function FolderClosingPage() {
     <AdminGuard>
       <main className="closing-page">
         <div className="container closing-container">
-          <header className="closing-header">
+          <header className="closing-header print-hidden">
             <div>
               <p className="ui-badge ui-badge-info">Fechamento</p>
               <h1 className="closing-title">Fechamento de serviços terceiros</h1>
               <p className="closing-subtitle">{data?.folder.name || 'Carregando...'}</p>
             </div>
-            <div className="closing-actions print-hidden">
+            <div className="closing-actions">
               <Button type="button" variant="secondary" onClick={handleExport} disabled={!data}>
                 Exportar PDF
               </Button>
@@ -274,7 +289,7 @@ export default function FolderClosingPage() {
             </div>
           </header>
 
-          <section className="closing-toolbar">
+          <section className="closing-toolbar print-hidden">
             <Input
               type="date"
               label="Filtrar por data"
@@ -287,175 +302,203 @@ export default function FolderClosingPage() {
           </section>
 
           {loading && !data ? (
-            <Card title="Carregando fechamento">
+            <Card title="Carregando fechamento" className="print-hidden">
               <p className="footer-note">Aguarde, preparando o fechamento...</p>
             </Card>
           ) : null}
 
           {data ? (
-            <section className="closing-sections">
-              <article className="closing-section">
-                <header className="closing-section-header">
-                  <h2>Fechamento terceiro</h2>
-                  <div className="closing-meta">
-                    <span>Empresa terceira: {data.folder.company || '—'}</span>
-                    <span>Mês: {monthLabel || '—'}</span>
-                  </div>
-                </header>
+            <section className="closing-print-area">
+              <article className="closing-sheet">
+                <table className="closing-header-table">
+                  <tbody>
+                    <tr>
+                      <td className="closing-logo-cell">
+                        <span className="closing-logo-text">Lar</span>
+                      </td>
+                      <td className="closing-title-cell" colSpan={5}>
+                        FECHAMENTO DE SERVIÇOS TERCEIROS HORA HOMEM
+                      </td>
+                      <td className="closing-doc-cell" colSpan={2}>
+                        <div className="closing-doc-code">FO 012-050-0054</div>
+                        <div className="closing-doc-grid">
+                          <div>EMISSÃO</div>
+                          <div>REVISÃO</div>
+                          <div>N°</div>
+                          <div>{new Date().toLocaleDateString('pt-BR')}</div>
+                          <div>{new Date().toLocaleDateString('pt-BR')}</div>
+                          <div>1</div>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td colSpan={8} className="closing-green-band" />
+                    </tr>
+                    <tr>
+                      <td colSpan={6} className="closing-company-cell">
+                        Empresa Terceira: <strong>{data.folder.company || '—'}</strong>
+                      </td>
+                      <td colSpan={2} className="closing-month-cell">
+                        Mês: <strong>{monthLabel || '—'}</strong>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="closing-rate-label">HORA NORMAL</td>
+                      <td className="closing-rate-currency">R$</td>
+                      <td className="closing-rate-value">{formatCurrency(hourRate).replace('R$', '').trim()}</td>
+                      <td colSpan={5} />
+                    </tr>
+                    <tr>
+                      <td className="closing-rate-label">HORA 50%</td>
+                      <td className="closing-rate-currency">R$</td>
+                      <td className="closing-rate-value">{formatCurrency(hourRate50).replace('R$', '').trim()}</td>
+                      <td colSpan={5} />
+                    </tr>
+                    <tr>
+                      <td className="closing-rate-label">HORA 100%</td>
+                      <td className="closing-rate-currency">R$</td>
+                      <td className="closing-rate-value">{formatCurrency(hourRate100).replace('R$', '').trim()}</td>
+                      <td colSpan={5} />
+                    </tr>
+                  </tbody>
+                </table>
 
-                <div className="closing-rate-grid">
-                  <div>
-                    <span>Hora normal</span>
-                    <strong>{formatCurrency(hourRate)}</strong>
-                  </div>
-                  <div>
-                    <span>Hora 50%</span>
-                    <strong>{formatCurrency(hourRate50)}</strong>
-                  </div>
-                  <div>
-                    <span>Hora 100%</span>
-                    <strong>{formatCurrency(hourRate100)}</strong>
-                  </div>
-                </div>
-
-                <div className="closing-table-wrapper">
-                  <table className="closing-table">
-                    <thead>
-                      <tr>
-                        <th>Nome fun. terceiro</th>
-                        <th>Horas normais</th>
-                        <th>Valor horas normais</th>
-                        <th>Horas 50%</th>
-                        <th>Valor horas 50%</th>
-                        <th>Horas 100%</th>
-                        <th>Valor horas 100%</th>
-                        <th>Total (R$)</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {employeeSummaries.map((item) => {
-                        const normalValue = (item.normalMinutes / 60) * hourRate;
-                        const extra50Value = (item.extra50Minutes / 60) * hourRate50;
-                        const extra100Value = (item.extra100Minutes / 60) * hourRate100;
-                        const totalValue = normalValue + extra50Value + extra100Value;
-                        return (
-                          <tr key={item.id}>
-                            <td>{item.name}</td>
-                            <td>{formatMinutes(item.normalMinutes)}</td>
-                            <td>{formatCurrency(normalValue)}</td>
-                            <td>{formatMinutes(item.extra50Minutes)}</td>
-                            <td>{formatCurrency(extra50Value)}</td>
-                            <td>{formatMinutes(item.extra100Minutes)}</td>
-                            <td>{formatCurrency(extra100Value)}</td>
-                            <td>{formatCurrency(totalValue)}</td>
-                          </tr>
-                        );
-                      })}
-                      <tr className="closing-total-row">
-                        <td>Soma de horas/valores</td>
-                        <td>{formatMinutes(employeeTotals.normalMinutes)}</td>
-                        <td>{formatCurrency((employeeTotals.normalMinutes / 60) * hourRate)}</td>
-                        <td>{formatMinutes(employeeTotals.extra50Minutes)}</td>
-                        <td>{formatCurrency((employeeTotals.extra50Minutes / 60) * hourRate50)}</td>
-                        <td>{formatMinutes(employeeTotals.extra100Minutes)}</td>
-                        <td>{formatCurrency((employeeTotals.extra100Minutes / 60) * hourRate100)}</td>
-                        <td>
-                          {formatCurrency(
-                            (employeeTotals.normalMinutes / 60) * hourRate +
-                              (employeeTotals.extra50Minutes / 60) * hourRate50 +
-                              (employeeTotals.extra100Minutes / 60) * hourRate100
-                          )}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </article>
-
-              <article className="closing-section">
-                <header className="closing-section-header">
-                  <h2>Fechamento por O.S.</h2>
-                  <p>Distribuição do valor por ordem de serviço.</p>
-                </header>
-                <div className="closing-table-wrapper">
-                  <table className="closing-table">
-                    <thead>
-                      <tr>
-                        <th>O.S.</th>
-                        <th>O.S. aberta</th>
-                        <th>Descrição</th>
-                        <th>Total de horas</th>
-                        <th>Custos</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {osSummaries.map((item) => {
-                        const cost = (item.totalMinutes / 60) * hourRate;
-                        return (
-                          <tr key={item.osId}>
-                            <td>{item.osCode}</td>
-                            <td>{item.title}</td>
-                            <td>{item.description}</td>
-                            <td>{formatMinutes(item.totalMinutes)}</td>
-                            <td>{formatCurrency(cost)}</td>
-                          </tr>
-                        );
-                      })}
-                      <tr className="closing-total-row">
-                        <td colSpan={3}>Total</td>
-                        <td>{formatMinutes(osTotals)}</td>
-                        <td>{formatCurrency((osTotals / 60) * hourRate)}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </article>
-
-              <article className="closing-section">
-                <header className="closing-section-header">
-                  <h2>Segundo fechamento</h2>
-                  <p>Horários detalhados de todos os dias.</p>
-                </header>
-                <div className="closing-table-wrapper">
-                  <table className="closing-table">
-                    <thead>
-                      <tr>
-                        <th>Data</th>
-                        <th>Dia</th>
-                        <th>Funcionário</th>
-                        <th>Hora início manhã</th>
-                        <th>Hora final manhã</th>
-                        <th>Hora início tarde</th>
-                        <th>Hora final tarde</th>
-                        <th>Total de horas</th>
-                        <th>Total de horas 50%</th>
-                        <th>Total de horas 100%</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {scheduleRows.map((row) => (
-                        <tr key={row.id}>
-                          <td>{formatDate(row.date)}</td>
-                          <td>{row.dayLabel}</td>
-                          <td>{row.employeeName}</td>
-                          <td>{row.morningStart}</td>
-                          <td>{row.morningEnd}</td>
-                          <td>{row.afternoonStart}</td>
-                          <td>{row.afternoonEnd}</td>
-                          <td>{formatMinutes(row.totalMinutes)}</td>
-                          <td>{formatMinutes(row.extra50Minutes)}</td>
-                          <td>{formatMinutes(row.extra100Minutes)}</td>
+                <table className="closing-table closing-main-table">
+                  <thead>
+                    <tr>
+                      <th>Nome fun. terceiro</th>
+                      <th>Horas normais</th>
+                      <th>Valor horas normais</th>
+                      <th>Horas 50%</th>
+                      <th>Valor horas 50%</th>
+                      <th>Horas 100%</th>
+                      <th>Valor horas 100%</th>
+                      <th>Total (R$) (C.P)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {employeeSummaries.map((item) => {
+                      const normalValue = (item.normalMinutes / 60) * hourRate;
+                      const extra50Value = (item.extra50Minutes / 60) * hourRate50;
+                      const extra100Value = (item.extra100Minutes / 60) * hourRate100;
+                      const totalValue = normalValue + extra50Value + extra100Value;
+                      return (
+                        <tr key={item.id}>
+                          <td>{item.name}</td>
+                          <td>{formatMinutes(item.normalMinutes)}</td>
+                          <td>{formatCurrency(normalValue)}</td>
+                          <td>{formatMinutes(item.extra50Minutes)}</td>
+                          <td>{formatCurrency(extra50Value)}</td>
+                          <td>{formatMinutes(item.extra100Minutes)}</td>
+                          <td>{formatCurrency(extra100Value)}</td>
+                          <td>{formatCurrency(totalValue)}</td>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      );
+                    })}
+                    <tr className="closing-total-row">
+                      <td>SOMA DE HORAS/VALORES</td>
+                      <td>{formatMinutes(employeeTotals.normalMinutes)}</td>
+                      <td>{formatCurrency((employeeTotals.normalMinutes / 60) * hourRate)}</td>
+                      <td>{formatMinutes(employeeTotals.extra50Minutes)}</td>
+                      <td>{formatCurrency((employeeTotals.extra50Minutes / 60) * hourRate50)}</td>
+                      <td>{formatMinutes(employeeTotals.extra100Minutes)}</td>
+                      <td>{formatCurrency((employeeTotals.extra100Minutes / 60) * hourRate100)}</td>
+                      <td>
+                        {formatCurrency(
+                          (employeeTotals.normalMinutes / 60) * hourRate +
+                            (employeeTotals.extra50Minutes / 60) * hourRate50 +
+                            (employeeTotals.extra100Minutes / 60) * hourRate100
+                        )}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div className="closing-total-footer">
+                  <span>{formatCurrency(totalAmount)}</span>
                 </div>
+              </article>
+
+              <article className="closing-sheet">
+                <table className="closing-table closing-os-table">
+                  <thead>
+                    <tr>
+                      <th>OS</th>
+                      <th>O.S ABERTA</th>
+                      <th>DESCRIÇÃO</th>
+                      <th>TOTAL DE HORAS</th>
+                      <th>CUSTOS</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {osSummaries.map((item) => {
+                      const cost = (item.totalMinutes / 60) * hourRate;
+                      return (
+                        <tr key={item.osId}>
+                          <td>{item.osCode}</td>
+                          <td>{item.title}</td>
+                          <td>{item.description}</td>
+                          <td>{formatMinutes(item.totalMinutes)}</td>
+                          <td>{formatCurrency(cost)}</td>
+                        </tr>
+                      );
+                    })}
+                    <tr className="closing-total-row">
+                      <td colSpan={3}>Total</td>
+                      <td>{formatMinutes(osTotals)}</td>
+                      <td>{formatCurrency((osTotals / 60) * hourRate)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </article>
+
+              <article className="closing-sheet">
+                <div className="closing-month-title">MÊS: {monthLabel || '—'}</div>
+                <table className="closing-table closing-schedule-table">
+                  <thead>
+                    <tr>
+                      <th>DATA</th>
+                      <th>DIA</th>
+                      <th>FUNCIONÁRIO</th>
+                      <th>HORA INICIO MANHÃ</th>
+                      <th>HORA FINAL MANHÃ</th>
+                      <th>HORA INICIO TARDE</th>
+                      <th>HORA FINAL TARDE</th>
+                      <th>TOTAL DE HORAS</th>
+                      <th>TOTAL DE HORAS 50%</th>
+                      <th>TOTAL DE HORAS 100%</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {scheduleRows.map((row) => (
+                      <tr key={row.id}>
+                        <td>{formatDate(row.date)}</td>
+                        <td>{row.dayLabel}</td>
+                        <td>{row.employeeName}</td>
+                        <td>{row.morningStart}</td>
+                        <td>{row.morningEnd}</td>
+                        <td>{row.afternoonStart}</td>
+                        <td>{row.afternoonEnd}</td>
+                        <td>{formatMinutes(row.totalMinutes)}</td>
+                        <td>{formatMinutes(row.extra50Minutes)}</td>
+                        <td>{formatMinutes(row.extra100Minutes)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </article>
             </section>
           ) : null}
 
-          {error ? <Toast type="error" message={error} /> : null}
-          {success ? <Toast type="success" message={success} /> : null}
+          {error ? (
+            <div className="print-hidden">
+              <Toast type="error" message={error} />
+            </div>
+          ) : null}
+          {success ? (
+            <div className="print-hidden">
+              <Toast type="success" message={success} />
+            </div>
+          ) : null}
         </div>
       </main>
     </AdminGuard>
