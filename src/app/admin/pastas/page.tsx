@@ -22,6 +22,7 @@ export default function AdminFoldersPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [creatingName, setCreatingName] = useState('');
   const [creatingCompany, setCreatingCompany] = useState('');
+  const [creatingHourRate, setCreatingHourRate] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
 
@@ -89,9 +90,10 @@ export default function AdminFoldersPage() {
     if (!creatingName.trim()) return;
 
     try {
+      const hourRate = creatingHourRate.trim() ? Number(creatingHourRate) : null;
       const response = await adminFetch('/api/admin/folders', {
         method: 'POST',
-        body: JSON.stringify({ name: creatingName, company: creatingCompany }),
+        body: JSON.stringify({ name: creatingName, company: creatingCompany, hourRate }),
       });
       const data = await response.json();
 
@@ -104,6 +106,7 @@ export default function AdminFoldersPage() {
       setSuccess('Pasta criada e link privado gerado.');
       setCreatingName('');
       setCreatingCompany('');
+      setCreatingHourRate('');
       await copyLink(link);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao criar a pasta.';
@@ -269,9 +272,23 @@ export default function AdminFoldersPage() {
                 label="Empresa responsável"
                 value={creatingCompany}
                 onChange={(event) => setCreatingCompany(event.target.value)}
+                required
+              />
+              <Input
+                type="number"
+                label="Valor hora homem (R$)"
+                value={creatingHourRate}
+                onChange={(event) => setCreatingHourRate(event.target.value)}
+                min="0"
+                step="0.01"
+                required
               />
               <div className="admin-folders-actions">
-                <Button type="submit" disabled={!creatingName.trim()} className="ui-button-compact">
+                <Button
+                  type="submit"
+                  disabled={!creatingName.trim() || !creatingCompany.trim() || !creatingHourRate.trim()}
+                  className="ui-button-compact"
+                >
                   Criar pasta e gerar link
                 </Button>
               </div>
