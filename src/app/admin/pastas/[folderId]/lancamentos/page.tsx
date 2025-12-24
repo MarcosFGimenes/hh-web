@@ -16,6 +16,7 @@ type EntryService = Service & {
   osCode: string;
   tag: string;
   machineName: string;
+  intervals?: Array<{ startTime: string; endTime: string }>;
 };
 
 type EntryEmployee = Employee & {
@@ -248,8 +249,29 @@ export default function FolderEntriesPage() {
                                     <p className="entry-service-machine">{service.machineName}</p>
                                     <p className="entry-service-description">{service.description}</p>
                                     <div className="entry-intervals">
-                                      <span className="interval-chip">T1: {service.t1In} - {service.t1Out}</span>
-                                      <span className="interval-chip">T2: {service.t2In} - {service.t2Out}</span>
+                                      {(() => {
+                                        const intervals =
+                                          service.intervals?.length
+                                            ? service.intervals
+                                            : [
+                                                ...(service.t1In && service.t1Out
+                                                  ? [{ startTime: service.t1In, endTime: service.t1Out }]
+                                                  : []),
+                                                ...(service.t2In && service.t2Out
+                                                  ? [{ startTime: service.t2In, endTime: service.t2Out }]
+                                                  : []),
+                                              ];
+
+                                        if (!intervals.length) {
+                                          return <span className="interval-chip">Nenhum horário registrado</span>;
+                                        }
+
+                                        return intervals.map((interval, index) => (
+                                          <span key={`${service.id}-interval-${index}`} className="interval-chip">
+                                            T{index + 1}: {interval.startTime} - {interval.endTime}
+                                          </span>
+                                        ));
+                                      })()}
                                       <span className="interval-chip strong">
                                         Total:{' '}
                                         {service.totalMinutes !== undefined && service.totalMinutes !== null
