@@ -90,7 +90,8 @@ export default function AdminFoldersPage() {
     if (!creatingName.trim()) return;
 
     try {
-      const hourRate = creatingHourRate.trim() ? Number(creatingHourRate) : null;
+      const normalizedRate = creatingHourRate.trim().replace(',', '.');
+      const hourRate = normalizedRate ? Number(normalizedRate) : null;
       const response = await adminFetch('/api/admin/folders', {
         method: 'POST',
         body: JSON.stringify({ name: creatingName, company: creatingCompany, hourRate }),
@@ -334,8 +335,15 @@ export default function AdminFoldersPage() {
                             Renomear
                           </Button>
                           <Link href={`/admin/pastas/${folder.id}/os`}>
-                          <Button type="button" variant="secondary">Gerenciar O.S.</Button>
-                        </Link>
+                            <Button type="button" variant="secondary">
+                              Gerenciar O.S.
+                            </Button>
+                          </Link>
+                          <Link href={`/admin/pastas/${folder.id}/fechamento`}>
+                            <Button type="button" variant="secondary">
+                              Fechamento
+                            </Button>
+                          </Link>
                           <Button type="button" variant="primary" onClick={() => handleCopyLink(folder.id)}>
                             Copiar link
                           </Button>
