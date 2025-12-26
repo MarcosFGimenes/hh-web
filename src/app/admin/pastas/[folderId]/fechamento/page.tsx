@@ -434,8 +434,8 @@ export default function FolderClosingPage() {
                           <div>EMISSÃO</div>
                           <div>REVISÃO</div>
                           <div>N°</div>
-                          <div>{new Date().toLocaleDateString('pt-BR')}</div>
-                          <div>{new Date().toLocaleDateString('pt-BR')}</div>
+                          <div>12/5/23</div>
+                          <div>17/12/25</div>
                           <div>1</div>
                         </div>
                       </td>
