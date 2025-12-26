@@ -400,9 +400,7 @@ export default function PublicFolderPage({ params }: PageProps) {
                     </div>
                   </div>
                 </div>
-              ) : (
-                <p className="public-date-fo-empty">FO não informado</p>
-              )}
+              ) : null}
             </Card>
 
               <MaintainerSection
