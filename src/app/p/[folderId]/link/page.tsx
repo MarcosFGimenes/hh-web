@@ -127,8 +127,14 @@ export default function PublicFolderPage({ params }: PageProps) {
   const [orders, setOrders] = useState<ServiceOrder[]>([]);
   const [savingOsLog, setSavingOsLog] = useState(false);
   const [addMaintainerTrigger, setAddMaintainerTrigger] = useState(0);
-  const formatFoValue = (value: string | number | null | undefined) =>
-    value === null || value === undefined || value === '' ? '—' : String(value);
+  const foDefaults = {
+    code: '012-050-0054',
+    emission: '12/5/23',
+    revision: '17/12/25',
+    number: '1',
+  };
+  const formatFoValue = (value: string | number | null | undefined, fallback?: string) =>
+    value === null || value === undefined || value === '' ? fallback ?? '—' : String(value);
 
   const linkKey = useMemo(() => searchParams.get('k') || '', [searchParams]);
   const canManageMaintainers = true;
@@ -355,27 +361,50 @@ export default function PublicFolderPage({ params }: PageProps) {
                   <p className="public-date-title">Data do apontamento</p>
                   <p className="public-date-hint">Selecione a data do lançamento.</p>
                 </div>
-                <div className="public-date-input">
-                  <Input
-                    type="date"
-                    required
-                    value={selectedDate}
-                    className="ui-input-compact"
-                    onChange={(event) => {
-                      if (!event.target.value) return;
-                      setSelectedDate(event.target.value);
-                    }}
-                  />
+                <div className="public-date-controls">
+                  <div className="public-date-input">
+                    <Input
+                      type="date"
+                      required
+                      value={selectedDate}
+                      className="ui-input-compact"
+                      onChange={(event) => {
+                        if (!event.target.value) return;
+                        setSelectedDate(event.target.value);
+                      }}
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    className="ui-button-compact public-date-add-button"
+                    onClick={() => setAddMaintainerTrigger((value) => value + 1)}
+                  >
+                    + Adicionar mantenedor
+                  </Button>
                 </div>
               </div>
-              <div className="public-date-center">
-                <Button
-                  type="button"
-                  className="ui-button-compact public-date-add-button"
-                  onClick={() => setAddMaintainerTrigger((value) => value + 1)}
-                >
-                  + Adicionar mantenedor
-                </Button>
+              <div className="public-date-fo-card">
+                <div className="public-date-fo-title">FO {formatFoValue(data?.folder.foCode, foDefaults.code)}</div>
+                <div className="public-date-fo-grid">
+                  <div>
+                    <span className="public-date-fo-label">Emissão</span>
+                    <span className="public-date-fo-value">
+                      {formatFoValue(data?.folder.foEmission, foDefaults.emission)}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="public-date-fo-label">Revisão</span>
+                    <span className="public-date-fo-value">
+                      {formatFoValue(data?.folder.foRevision, foDefaults.revision)}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="public-date-fo-label">Nº</span>
+                    <span className="public-date-fo-value">
+                      {formatFoValue(data?.folder.foNumber, foDefaults.number)}
+                    </span>
+                  </div>
+                </div>
               </div>
               <div className="public-date-fo-card">
                 <div className="public-date-fo-title">FO {formatFoValue(data?.folder.foCode)}</div>
