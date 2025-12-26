@@ -367,6 +367,13 @@ main {
   color: var(--color-text-title);
 }
 
+.public-date-fo-empty {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  justify-self: end;
+}
+
 .public-date-add-button {
   white-space: nowrap;
   min-height: 2.65rem;
