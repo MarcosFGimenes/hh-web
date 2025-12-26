@@ -130,10 +130,9 @@ export default function PublicFolderPage({ params }: PageProps) {
   const formatFoValue = (value: string | number) => String(value);
   const isFoValuePresent = (value: string | number | null | undefined) =>
     value !== null && value !== undefined && value !== '';
-  const hasFoData = Boolean(
-    data &&
-      [data.folder.foCode, data.folder.foEmission, data.folder.foRevision, data.folder.foNumber].every(isFoValuePresent)
-  );
+  const hasFoData = Boolean(data?.folder.foCode && isFoValuePresent(data.folder.foCode));
+  const formatFoDisplay = (value: string | number | null | undefined) =>
+    isFoValuePresent(value) ? formatFoValue(value) : '—';
 
   const linkKey = useMemo(() => searchParams.get('k') || '', [searchParams]);
   const canManageMaintainers = true;
@@ -388,15 +387,15 @@ export default function PublicFolderPage({ params }: PageProps) {
                   <div className="public-date-fo-grid">
                     <div>
                       <span className="public-date-fo-label">Emissão</span>
-                      <span className="public-date-fo-value">{formatFoValue(data.folder.foEmission!)}</span>
+                      <span className="public-date-fo-value">{formatFoDisplay(data.folder.foEmission)}</span>
                     </div>
                     <div>
                       <span className="public-date-fo-label">Revisão</span>
-                      <span className="public-date-fo-value">{formatFoValue(data.folder.foRevision!)}</span>
+                      <span className="public-date-fo-value">{formatFoDisplay(data.folder.foRevision)}</span>
                     </div>
                     <div>
                       <span className="public-date-fo-label">Nº</span>
-                      <span className="public-date-fo-value">{formatFoValue(data.folder.foNumber!)}</span>
+                      <span className="public-date-fo-value">{formatFoDisplay(data.folder.foNumber)}</span>
                     </div>
                   </div>
                 </div>
