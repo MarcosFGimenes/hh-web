@@ -234,9 +234,25 @@ export default function AdminDashboardPlaceholder() {
       setSuccess('Link copiado para a área de transferência.');
     } catch (err) {
       // Evita quebrar o carregamento quando o navegador bloqueia acesso à área de transferência.
-      // O usuário ainda pode clicar em \"Gerenciar pastas\" para copiar o link manualmente.
+      // O usuário ainda pode clicar em \"Gerenciar Pastas\" para copiar o link manualmente.
       console.warn('Não foi possível copiar para a área de transferência:', err);
       setError('Não foi possível copiar o link.');
+    }
+  };
+
+  const openLink = (link: string) => {
+    const url = link.startsWith('http') ? link : `${window.location.origin}${link}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleOpenLink = async (folderId: string) => {
+    try {
+      const link = lastLinks[folderId] ?? (await generateLink(folderId));
+      openLink(link);
+      setSuccess('Link aberto em nova aba.');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro ao abrir link.';
+      setError(message);
     }
   };
 
@@ -274,6 +290,9 @@ export default function AdminDashboardPlaceholder() {
           <Button type="button" variant="primary" onClick={() => handleCopyLink(folder.id)}>
             Copiar link
           </Button>
+          <Button type="button" variant="secondary" onClick={() => handleOpenLink(folder.id)}>
+            Abrir link
+          </Button>
         </div>
       ) : null}
     </div>
@@ -295,7 +314,12 @@ export default function AdminDashboardPlaceholder() {
                 <div className="dashboard-actions-row">
                   <Link href="/admin/pastas">
                     <Button variant="primary" type="button">
-                      Gerenciar pastas
+                      Gerenciar Pastas
+                    </Button>
+                  </Link>
+                  <Link href="/admin/fechamentos">
+                    <Button variant="secondary" type="button">
+                      Gerenciar Fechamentos
                     </Button>
                   </Link>
                   <Link href="/admin/os">
