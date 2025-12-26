@@ -46,6 +46,11 @@ type LaunchRecord = {
 };
 
 const formatDate = (value: string) => value.split('-').reverse().join('/');
+const formatDuration = (totalMinutes: number) => {
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${hours}h ${minutes}min`;
+};
 
 export default function ManageEntriesPage() {
   const { idToken } = useAdminAuth();
@@ -280,7 +285,7 @@ export default function ManageEntriesPage() {
                 <p className="launch-meta">
                   {launch.machineName ? `${launch.machineName} • ` : ''}
                   {launch.tag ? `TAG ${launch.tag}` : 'Sem TAG'}
-                  {launch.totalMinutes != null ? ` • ${launch.totalMinutes} min` : ''}
+                  {launch.totalMinutes != null ? ` • ${formatDuration(launch.totalMinutes)}` : ''}
                 </p>
                 <p className="launch-description">{launch.description || 'Sem observações.'}</p>
                 <div className="launch-actions">
