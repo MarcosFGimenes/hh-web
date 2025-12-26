@@ -7,6 +7,10 @@ export type Folder = {
   hourRate100?: number | null;
   normalHoursPerDay?: number | null;
   signatures?: Array<{ name: string; role: string }> | null;
+  foCode?: string | null;
+  foEmission?: string | null;
+  foRevision?: string | null;
+  foNumber?: string | number | null;
   linkKeyHash: string;
   createdAt: number;
   updatedAt: number;
