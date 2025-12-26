@@ -310,30 +310,30 @@ export default function AdminDashboardPlaceholder() {
                 Consolide pastas de serviço e acompanhe o fluxo em um painel visual.
               </p>
             </div>
-              <div className="dashboard-actions">
-                <div className="dashboard-actions-row">
-                  <Link href="/admin/pastas">
-                    <Button variant="primary" type="button">
-                      Gerenciar Pastas
-                    </Button>
-                  </Link>
-                  <Link href="/admin/fechamentos">
-                    <Button variant="secondary" type="button">
-                      Gerenciar Fechamentos
-                    </Button>
-                  </Link>
-                  <Link href="/admin/os">
-                    <Button variant="secondary" type="button">
-                      Gerenciar O.S.
-                    </Button>
-                  </Link>
-                  <Link href="/admin/lancamentos">
-                    <Button variant="secondary" type="button">
-                      Gerenciar Lançamentos
-                    </Button>
-                  </Link>
-                  {user ? (
-                  <Button variant="danger" type="button" onClick={signOut}>
+            <div className="dashboard-actions">
+              <div className="dashboard-actions-row">
+                <Link href="/admin/pastas">
+                  <Button variant="primary" type="button" className="dashboard-action-button">
+                    Gerenciar Pastas
+                  </Button>
+                </Link>
+                <Link href="/admin/fechamentos">
+                  <Button variant="secondary" type="button" className="dashboard-action-button">
+                    Gerenciar Fechamentos
+                  </Button>
+                </Link>
+                <Link href="/admin/os">
+                  <Button variant="secondary" type="button" className="dashboard-action-button">
+                    Gerenciar O.S.
+                  </Button>
+                </Link>
+                <Link href="/admin/lancamentos">
+                  <Button variant="secondary" type="button" className="dashboard-action-button">
+                    Gerenciar Lançamentos
+                  </Button>
+                </Link>
+                {user ? (
+                  <Button variant="danger" type="button" onClick={signOut} className="dashboard-action-button">
                     Sair
                   </Button>
                 ) : null}
