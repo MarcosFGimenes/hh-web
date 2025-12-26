@@ -406,6 +406,23 @@ export default function PublicFolderPage({ params }: PageProps) {
                   </div>
                 </div>
               </div>
+              <div className="public-date-fo-card">
+                <div className="public-date-fo-title">FO {formatFoValue(data?.folder.foCode)}</div>
+                <div className="public-date-fo-grid">
+                  <div>
+                    <span className="public-date-fo-label">Emissão</span>
+                    <span className="public-date-fo-value">{formatFoValue(data?.folder.foEmission)}</span>
+                  </div>
+                  <div>
+                    <span className="public-date-fo-label">Revisão</span>
+                    <span className="public-date-fo-value">{formatFoValue(data?.folder.foRevision)}</span>
+                  </div>
+                  <div>
+                    <span className="public-date-fo-label">Nº</span>
+                    <span className="public-date-fo-value">{formatFoValue(data?.folder.foNumber)}</span>
+                  </div>
+                </div>
+              </div>
             </Card>
 
               <MaintainerSection
