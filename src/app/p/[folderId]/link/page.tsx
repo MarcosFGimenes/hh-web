@@ -127,14 +127,13 @@ export default function PublicFolderPage({ params }: PageProps) {
   const [orders, setOrders] = useState<ServiceOrder[]>([]);
   const [savingOsLog, setSavingOsLog] = useState(false);
   const [addMaintainerTrigger, setAddMaintainerTrigger] = useState(0);
-  const foDefaults = {
-    code: '012-050-0054',
-    emission: '12/5/23',
-    revision: '17/12/25',
-    number: '1',
-  };
-  const formatFoValue = (value: string | number | null | undefined, fallback?: string) =>
-    value === null || value === undefined || value === '' ? fallback ?? '—' : String(value);
+  const formatFoValue = (value: string | number) => String(value);
+  const isFoValuePresent = (value: string | number | null | undefined) =>
+    value !== null && value !== undefined && value !== '';
+  const hasFoData = Boolean(
+    data &&
+      [data.folder.foCode, data.folder.foEmission, data.folder.foRevision, data.folder.foNumber].every(isFoValuePresent)
+  );
 
   const linkKey = useMemo(() => searchParams.get('k') || '', [searchParams]);
   const canManageMaintainers = true;
@@ -383,46 +382,25 @@ export default function PublicFolderPage({ params }: PageProps) {
                   </Button>
                 </div>
               </div>
-              <div className="public-date-fo-card">
-                <div className="public-date-fo-title">FO {formatFoValue(data?.folder.foCode, foDefaults.code)}</div>
-                <div className="public-date-fo-grid">
-                  <div>
-                    <span className="public-date-fo-label">Emissão</span>
-                    <span className="public-date-fo-value">
-                      {formatFoValue(data?.folder.foEmission, foDefaults.emission)}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="public-date-fo-label">Revisão</span>
-                    <span className="public-date-fo-value">
-                      {formatFoValue(data?.folder.foRevision, foDefaults.revision)}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="public-date-fo-label">Nº</span>
-                    <span className="public-date-fo-value">
-                      {formatFoValue(data?.folder.foNumber, foDefaults.number)}
-                    </span>
+              {hasFoData && data ? (
+                <div className="public-date-fo-card">
+                  <div className="public-date-fo-title">FO {formatFoValue(data.folder.foCode!)}</div>
+                  <div className="public-date-fo-grid">
+                    <div>
+                      <span className="public-date-fo-label">Emissão</span>
+                      <span className="public-date-fo-value">{formatFoValue(data.folder.foEmission!)}</span>
+                    </div>
+                    <div>
+                      <span className="public-date-fo-label">Revisão</span>
+                      <span className="public-date-fo-value">{formatFoValue(data.folder.foRevision!)}</span>
+                    </div>
+                    <div>
+                      <span className="public-date-fo-label">Nº</span>
+                      <span className="public-date-fo-value">{formatFoValue(data.folder.foNumber!)}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="public-date-fo-card">
-                <div className="public-date-fo-title">FO {formatFoValue(data?.folder.foCode)}</div>
-                <div className="public-date-fo-grid">
-                  <div>
-                    <span className="public-date-fo-label">Emissão</span>
-                    <span className="public-date-fo-value">{formatFoValue(data?.folder.foEmission)}</span>
-                  </div>
-                  <div>
-                    <span className="public-date-fo-label">Revisão</span>
-                    <span className="public-date-fo-value">{formatFoValue(data?.folder.foRevision)}</span>
-                  </div>
-                  <div>
-                    <span className="public-date-fo-label">Nº</span>
-                    <span className="public-date-fo-value">{formatFoValue(data?.folder.foNumber)}</span>
-                  </div>
-                </div>
-              </div>
+              ) : null}
             </Card>
 
               <MaintainerSection

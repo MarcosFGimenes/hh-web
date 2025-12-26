@@ -38,6 +38,11 @@ type EntriesResponse = {
 };
 
 const formatDate = (value: string) => value.split('-').reverse().join('/');
+const formatMinutes = (totalMinutes: number) => {
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${hours}h ${String(minutes).padStart(2, '0')}min`;
+};
 
 export default function FolderEntriesPage() {
   const params = useParams<{ folderId: string }>();
@@ -234,7 +239,7 @@ export default function FolderEntriesPage() {
                               <div>
                                 <p className="entry-employee-name">{employee.name}</p>
                                 <p className="entry-employee-meta">
-                                  Total: {employee.totalMinutes != null ? `${employee.totalMinutes} min` : '—'}
+                                  Total: {employee.totalMinutes != null ? formatMinutes(employee.totalMinutes) : '—'}
                                 </p>
                               </div>
                             </div>
@@ -289,7 +294,7 @@ export default function FolderEntriesPage() {
                                       <span className="interval-chip strong">
                                         Total:{' '}
                                         {service.totalMinutes !== undefined && service.totalMinutes !== null
-                                          ? `${service.totalMinutes} min`
+                                          ? formatMinutes(service.totalMinutes)
                                           : '—'}
                                       </span>
                                     </div>

@@ -322,7 +322,7 @@ main {
 
 .public-date-fo-card {
   display: grid;
-  gap: 0.4rem;
+  gap: 0.35rem;
   padding: 0.6rem 0.75rem;
   border-radius: 12px;
   border: 1px solid rgba(148, 163, 184, 0.5);
@@ -333,13 +333,24 @@ main {
 .public-date-fo-title {
   font-weight: 700;
   color: var(--color-text-title);
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.45);
 }
 
 .public-date-fo-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.5rem;
+  gap: 0;
   font-size: 0.8rem;
+}
+
+.public-date-fo-grid > div {
+  padding: 0 0.45rem;
+  text-align: center;
+}
+
+.public-date-fo-grid > div + div {
+  border-left: 1px solid rgba(148, 163, 184, 0.45);
 }
 
 .public-date-fo-label {
