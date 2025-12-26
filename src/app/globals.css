@@ -1121,6 +1121,7 @@ main {
 .os-header-action {
   display: inline-flex;
   align-items: center;
+  gap: 0.5rem;
 }
 
 .os-card {

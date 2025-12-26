@@ -209,11 +209,18 @@ export default function FolderServiceOrdersPage() {
             <h1>Ordens de Serviço</h1>
             <p className="dashboard-subtitle">Cadastre, edite e acompanhe as O.S. desta pasta.</p>
           </div>
-          <Link href="/admin/pastas" className="os-header-action os-header-link">
-            <Button variant="outline" type="button" aria-label="Voltar para pastas">
-              Voltar
-            </Button>
-          </Link>
+          <div className="os-header-action">
+            <Link href="/admin" className="os-header-link">
+              <Button variant="outline" type="button" aria-label="Voltar para o dashboard">
+                Voltar
+              </Button>
+            </Link>
+            <Link href="/admin/pastas" className="os-header-link">
+              <Button variant="secondary" type="button" aria-label="Ir para pastas">
+                Pastas
+              </Button>
+            </Link>
+          </div>
         </div>
 
         <Card
