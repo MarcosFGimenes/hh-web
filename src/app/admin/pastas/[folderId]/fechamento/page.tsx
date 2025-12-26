@@ -12,6 +12,8 @@ import { useAdminAuth } from '@/hooks/useAdminAuth';
 import type { Employee } from '@/types/employee';
 import type { Service } from '@/types/service';
 
+const LOGO_PATH = '/logo 2.png';
+
 type EntryService = Service & {
   osCode: string;
   tag: string;
@@ -423,7 +425,7 @@ export default function FolderClosingPage() {
                   <tbody>
                     <tr>
                       <td className="closing-logo-cell">
-                        <img className="closing-logo-image" src="/lar-logo.svg" alt="Lar" />
+                        <img className="closing-logo-image" src={LOGO_PATH} alt="Logo" />
                       </td>
                       <td className="closing-title-cell" colSpan={5}>
                         FECHAMENTO DE SERVIÇOS TERCEIROS HORA HOMEM
