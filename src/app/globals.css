@@ -2519,15 +2519,19 @@ main {
 }
 
 .closing-logo-cell {
-  width: 90px;
+  width: 120px;
   text-align: center;
+  vertical-align: middle;
 }
 
 .closing-logo-image {
   display: block;
-  width: 70px;
+  width: 100%;
+  max-width: 110px;
+  max-height: 60px;
   height: auto;
   margin: 0 auto;
+  object-fit: contain;
 }
 
 .closing-title-cell {
