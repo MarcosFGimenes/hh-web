@@ -357,6 +357,10 @@ export default function PublicFolderPage({ params }: PageProps) {
                     }}
                   />
                 </div>
+                <div className="public-date-fo">
+                  <span className="public-date-fo-label">FO</span>
+                  <span>012-050-0054</span>
+                </div>
                 <Button
                   type="button"
                   className="ui-button-compact public-date-add-button"
