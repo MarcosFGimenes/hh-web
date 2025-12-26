@@ -46,6 +46,11 @@ type LaunchRecord = {
 };
 
 const formatDate = (value: string) => value.split('-').reverse().join('/');
+const formatDuration = (totalMinutes: number) => {
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${hours}h ${minutes}min`;
+};
 
 export default function ManageEntriesPage() {
   const { idToken } = useAdminAuth();
@@ -187,6 +192,8 @@ export default function ManageEntriesPage() {
     });
   }, [launches, searchTerm, selectedDate, selectedFolder]);
 
+  const skeletonCards = useMemo(() => Array.from({ length: 8 }, (_, index) => index), []);
+
   return (
     <AdminGuard>
       <main className="entries-main">
@@ -250,30 +257,35 @@ export default function ManageEntriesPage() {
             </div>
           </section>
 
-          {loading && !launches.length ? (
-            <article className="entry-card">
-              <p className="entry-signature">Buscando lançamentos consolidados...</p>
-            </article>
-          ) : null}
-
           <section className="launches-grid">
+            {loading && !launches.length
+              ? skeletonCards.map((index) => (
+                  <article key={`skeleton-${index}`} className="launch-card skeleton" aria-hidden="true">
+                    <div className="skeleton-line skeleton-line--sm" />
+                    <div className="skeleton-line" />
+                    <div className="skeleton-line skeleton-line--lg" />
+                    <div className="skeleton-line skeleton-line--md" />
+                    <div className="skeleton-line skeleton-line--button" />
+                  </article>
+                ))
+              : null}
             {filteredLaunches.map((launch) => (
               <article key={launch.id} className="launch-card">
                 <header className="launch-card-head">
-                  <div>
-                    <span className="entries-chip strong">{launch.folderName}</span>
+                  <div className="launch-card-title">
+                    <span className="entries-chip launch-folder-chip">{launch.folderName}</span>
                     <p className="launch-folder-meta">{launch.company || 'Responsável não informado'}</p>
                   </div>
                   <div className="launch-badges">
-                    <span className="entries-chip subtle">{formatDate(launch.date)}</span>
-                    <span className="entries-chip">{launch.osCode}</span>
+                    <span className="entries-chip launch-chip subtle">{formatDate(launch.date)}</span>
+                    <span className="entries-chip launch-chip">{launch.osCode}</span>
                   </div>
                 </header>
                 <p className="launch-title">{launch.employeeName}</p>
                 <p className="launch-meta">
                   {launch.machineName ? `${launch.machineName} • ` : ''}
                   {launch.tag ? `TAG ${launch.tag}` : 'Sem TAG'}
-                  {launch.totalMinutes != null ? ` • ${launch.totalMinutes} min` : ''}
+                  {launch.totalMinutes != null ? ` • ${formatDuration(launch.totalMinutes)}` : ''}
                 </p>
                 <p className="launch-description">{launch.description || 'Sem observações.'}</p>
                 <div className="launch-actions">
