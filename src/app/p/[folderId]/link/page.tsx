@@ -341,7 +341,28 @@ export default function PublicFolderPage({ params }: PageProps) {
             <Card className="public-header-card" bodyClassName="public-header-body">
               <div className="public-header-text">
                 <p className="ui-badge ui-badge-info public-header-chip">Link do serviço</p>
-                <h1 className="public-title">{data.folder.name}</h1>
+                <div className="public-header-title-row">
+                  <h1 className="public-title">{data.folder.name}</h1>
+                  {hasFoData && data ? (
+                    <div className="public-date-fo-card public-header-fo-card">
+                      <div className="public-date-fo-title">FO {formatFoValue(data.folder.foCode!)}</div>
+                      <div className="public-date-fo-grid">
+                        <div>
+                          <span className="public-date-fo-label">Emissão</span>
+                          <span className="public-date-fo-value">{formatFoValue(data.folder.foEmission!)}</span>
+                        </div>
+                        <div>
+                          <span className="public-date-fo-label">Revisão</span>
+                          <span className="public-date-fo-value">{formatFoValue(data.folder.foRevision!)}</span>
+                        </div>
+                        <div>
+                          <span className="public-date-fo-label">Nº</span>
+                          <span className="public-date-fo-value">{formatFoValue(data.folder.foNumber!)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
                 <p className="dashboard-subtitle">
                   Acesso público protegido • mantenedores e apontamentos.
                 </p>
@@ -382,25 +403,6 @@ export default function PublicFolderPage({ params }: PageProps) {
                   </Button>
                 </div>
               </div>
-              {hasFoData && data ? (
-                <div className="public-date-fo-card">
-                  <div className="public-date-fo-title">FO {formatFoValue(data.folder.foCode!)}</div>
-                  <div className="public-date-fo-grid">
-                    <div>
-                      <span className="public-date-fo-label">Emissão</span>
-                      <span className="public-date-fo-value">{formatFoValue(data.folder.foEmission!)}</span>
-                    </div>
-                    <div>
-                      <span className="public-date-fo-label">Revisão</span>
-                      <span className="public-date-fo-value">{formatFoValue(data.folder.foRevision!)}</span>
-                    </div>
-                    <div>
-                      <span className="public-date-fo-label">Nº</span>
-                      <span className="public-date-fo-value">{formatFoValue(data.folder.foNumber!)}</span>
-                    </div>
-                  </div>
-                </div>
-              ) : null}
             </Card>
 
               <MaintainerSection
