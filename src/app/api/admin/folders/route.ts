@@ -17,24 +17,13 @@ function mapFolder(doc: FirebaseFirestore.QueryDocumentSnapshot): Folder {
 
 export async function GET() {
   try {
-    const { companyId } = await getAdminFromRequest();
+    await getAdminFromRequest();
 
     const adminDb = getAdminDb();
-    const snapshot = await adminDb
-      .collection(COLLECTION)
-      .where('companyId', '==', companyId)
-      .orderBy('createdAt', 'desc')
-      .get();
+    const snapshot = await adminDb.collection(COLLECTION).orderBy('createdAt', 'desc').get();
     const folders = snapshot.docs.map(mapFolder);
 
-    return NextResponse.json(
-      { folders },
-      {
-        headers: {
-          'Cache-Control': 'no-store',
-        },
-      }
-    );
+    return NextResponse.json({ folders });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Erro ao listar pastas.';
     const status = message.toLowerCase().includes('token') ? 401 : 500;
@@ -44,7 +33,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { companyId } = await getAdminFromRequest();
+    await getAdminFromRequest();
 
     const body = await request.json();
     const name = typeof body?.name === 'string' ? body.name.trim() : '';
@@ -133,9 +122,6 @@ export async function POST(request: Request) {
       normalHoursPerDay,
       signatures,
       linkKeyHash,
-      companyId,
-      statusColumn: 'entrada',
-      position: now,
       createdAt: now,
       updatedAt: now,
     });
@@ -150,9 +136,6 @@ export async function POST(request: Request) {
       normalHoursPerDay,
       signatures,
       linkKeyHash,
-      companyId,
-      statusColumn: 'entrada',
-      position: now,
       createdAt: now,
       updatedAt: now,
     };
