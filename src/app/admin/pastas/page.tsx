@@ -10,6 +10,8 @@ import { AdminGuard } from '@/components/AdminGuard';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import type { Folder } from '@/types/folder';
 
+export const dynamic = 'force-dynamic';
+
 type FolderListItem = Folder & {
   lastLink?: string;
 };
@@ -45,7 +47,7 @@ export default function AdminFoldersPage() {
     headers.set('Authorization', `Bearer ${idToken}`);
     headers.set('Content-Type', 'application/json');
 
-    return fetch(input, { ...init, headers });
+    return fetch(input, { ...init, headers, cache: 'no-store' });
   };
 
   const loadFolders = async () => {

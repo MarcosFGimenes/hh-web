@@ -9,6 +9,8 @@ import { useAdminAuth } from '@/hooks/useAdminAuth';
 import type { Folder } from '@/types/folder';
 import { Toast } from '@/components/Toast';
 
+export const dynamic = 'force-dynamic';
+
 export default function AdminDashboardPlaceholder() {
   const { user, signOut } = useAdminAuth();
   const [folders, setFolders] = useState<Folder[]>([]);
@@ -18,7 +20,6 @@ export default function AdminDashboardPlaceholder() {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [lastLinks, setLastLinks] = useState<Record<string, string>>({});
-  const [layoutHydrated, setLayoutHydrated] = useState(false);
   const [lanes, setLanes] = useState<Record<'backlog' | 'progress' | 'done', Folder[]>>({
     backlog: [],
     progress: [],
@@ -38,7 +39,7 @@ export default function AdminDashboardPlaceholder() {
     headers.set('Authorization', `Bearer ${token}`);
     headers.set('Content-Type', 'application/json');
 
-    return fetch(input, { ...init, headers });
+    return fetch(input, { ...init, headers, cache: 'no-store' });
   };
 
   const buildPrivateLink = (folderId: string, linkKey: string) => {
@@ -48,61 +49,11 @@ export default function AdminDashboardPlaceholder() {
     return `${origin.replace(/\/+$/, '')}/p/${folderId}/link?k=${linkKey}`;
   };
 
-  const persistLayout = (layout: Record<'backlog' | 'progress' | 'done', Folder[]>) => {
-    if (typeof window === 'undefined') return;
-    const payload = {
-      backlog: layout.backlog.map((folder) => folder.id),
-      progress: layout.progress.map((folder) => folder.id),
-      done: layout.done.map((folder) => folder.id),
-    };
-    localStorage.setItem('hh-admin-kanban-layout', JSON.stringify(payload));
-  };
-
-  const applySavedLayout = (items: Folder[]) => {
-    if (typeof window === 'undefined') {
-      return {
-        backlog: items,
-        progress: [],
-        done: [],
-      };
-    }
-
-    const raw = localStorage.getItem('hh-admin-kanban-layout');
-    if (!raw) {
-      return {
-        backlog: items,
-        progress: [],
-        done: [],
-      };
-    }
-
-    try {
-      const saved = JSON.parse(raw) as { backlog?: string[]; progress?: string[]; done?: string[] };
-      const map = new Map(items.map((item) => [item.id, item]));
-
-      const buildLane = (ids: string[] = []) =>
-        ids.map((id) => map.get(id)).filter(Boolean) as Folder[];
-
-      const backlog = buildLane(saved.backlog);
-      const progress = buildLane(saved.progress);
-      const done = buildLane(saved.done);
-
-      const usedIds = new Set([...backlog, ...progress, ...done].map((item) => item.id));
-      const remaining = items.filter((item) => !usedIds.has(item.id));
-
-      return {
-        backlog: [...backlog, ...remaining],
-        progress,
-        done,
-      };
-    } catch {
-      return {
-        backlog: items,
-        progress: [],
-        done: [],
-      };
-    }
-  };
+  const buildLanes = (items: Folder[]) => ({
+    backlog: items.filter((folder) => (folder.status ?? 'backlog') === 'backlog'),
+    progress: items.filter((folder) => folder.status === 'progress'),
+    done: items.filter((folder) => folder.status === 'done'),
+  });
 
   useEffect(() => {
     const load = async () => {
@@ -114,8 +65,7 @@ export default function AdminDashboardPlaceholder() {
         if (!response.ok) throw new Error(data.error || 'Erro ao carregar pastas.');
         const fetched: Folder[] = data.folders ?? [];
         setFolders(fetched);
-        setLanes(applySavedLayout(fetched));
-        setLayoutHydrated(true);
+        setLanes(buildLanes(fetched));
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Erro ao listar pastas.';
         setError(message);
@@ -126,11 +76,6 @@ export default function AdminDashboardPlaceholder() {
 
     load();
   }, [user]);
-
-  useEffect(() => {
-    if (!layoutHydrated) return;
-    persistLayout(lanes);
-  }, [lanes, layoutHydrated]);
 
   useEffect(() => {
     if (!error && !success) return;
@@ -145,7 +90,11 @@ export default function AdminDashboardPlaceholder() {
 
   const onDragEnd = () => setDraggingId(null);
 
-  const moveFolder = (folderId: string, targetLane: keyof typeof lanes) => {
+  const moveFolder = async (folderId: string, targetLane: keyof typeof lanes) => {
+    let movedFolder: Folder | null = null;
+    const previousLanes = lanes;
+    const previousFolders = folders;
+
     setLanes((current) => {
       const next: Record<'backlog' | 'progress' | 'done', Folder[]> = {
         backlog: [],
@@ -165,12 +114,31 @@ export default function AdminDashboardPlaceholder() {
       });
 
       if (moving) {
-        next[targetLane] = [...next[targetLane], moving];
+        movedFolder = moving;
+        next[targetLane] = [...next[targetLane], { ...moving, status: targetLane }];
       }
 
       return next;
     });
     onDragEnd();
+
+    if (!movedFolder) return;
+    setFolders((prev) =>
+      prev.map((folder) => (folder.id === folderId ? { ...folder, status: targetLane } : folder))
+    );
+    try {
+      const response = await adminFetch(`/api/admin/folders/${folderId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: targetLane }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Erro ao atualizar status da pasta.');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro ao atualizar status da pasta.';
+      setError(message);
+      setLanes(previousLanes);
+      setFolders(previousFolders);
+    }
   };
 
   const toggleCardActions = (folderId: string) => {

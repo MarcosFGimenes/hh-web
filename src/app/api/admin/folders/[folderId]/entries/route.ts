@@ -10,7 +10,10 @@ import { parseTimeToMinutes } from '@/lib/time/base';
 
 type Params = { params: { folderId: string } };
 
+export const dynamic = 'force-dynamic';
+
 const folderRef = (folderId: string) => getAdminDb().collection('folders').doc(folderId);
+const noStoreHeaders = { 'Cache-Control': 'no-store' };
 
 type Interval = { startTime: string; endTime: string };
 
@@ -84,7 +87,7 @@ export async function GET(_request: Request, { params }: Params) {
 
     const folderDoc = await folderRef(folderId).get();
     if (!folderDoc.exists) {
-      return NextResponse.json({ error: 'Pasta não encontrada.' }, { status: 404 });
+      return NextResponse.json({ error: 'Pasta não encontrada.' }, { status: 404, headers: noStoreHeaders });
     }
 
     const folderData = folderDoc.data() || {};
@@ -223,22 +226,25 @@ export async function GET(_request: Request, { params }: Params) {
 
     const entries = Array.from(entriesByDate.values()).sort((a, b) => b.date.localeCompare(a.date));
 
-    return NextResponse.json({
-      folder: {
-        id: folderDoc.id,
-        name: (folderData as { name?: string }).name || 'Pasta sem nome',
-        company: (folderData as { company?: string | null }).company || null,
-        hourRate: (folderData as { hourRate?: number | null }).hourRate ?? null,
-        hourRate50: (folderData as { hourRate50?: number | null }).hourRate50 ?? null,
-        hourRate100: (folderData as { hourRate100?: number | null }).hourRate100 ?? null,
-        normalHoursPerDay: (folderData as { normalHoursPerDay?: number | null }).normalHoursPerDay ?? null,
-        signatures: (folderData as { signatures?: Array<{ name: string; role: string }> | null }).signatures ?? null,
+    return NextResponse.json(
+      {
+        folder: {
+          id: folderDoc.id,
+          name: (folderData as { name?: string }).name || 'Pasta sem nome',
+          company: (folderData as { company?: string | null }).company || null,
+          hourRate: (folderData as { hourRate?: number | null }).hourRate ?? null,
+          hourRate50: (folderData as { hourRate50?: number | null }).hourRate50 ?? null,
+          hourRate100: (folderData as { hourRate100?: number | null }).hourRate100 ?? null,
+          normalHoursPerDay: (folderData as { normalHoursPerDay?: number | null }).normalHoursPerDay ?? null,
+          signatures: (folderData as { signatures?: Array<{ name: string; role: string }> | null }).signatures ?? null,
+        },
+        entries,
       },
-      entries,
-    });
+      { headers: noStoreHeaders }
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Erro ao listar lançamentos.';
     const status = message.toLowerCase().includes('token') ? 401 : 500;
-    return NextResponse.json({ error: message }, { status });
+    return NextResponse.json({ error: message }, { status, headers: noStoreHeaders });
   }
 }
