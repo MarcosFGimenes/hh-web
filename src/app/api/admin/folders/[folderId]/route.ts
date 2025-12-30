@@ -4,7 +4,10 @@ import { getAdminFromRequest } from '@/lib/auth/getAdminToken';
 import { getAdminDb } from '@/lib/firebase/admin';
 import type { Folder } from '@/types/folder';
 
+export const dynamic = 'force-dynamic';
+
 const COLLECTION = 'folders';
+const noStoreHeaders = { 'Cache-Control': 'no-store' };
 
 export async function PATCH(
   request: Request,
@@ -35,7 +38,10 @@ export async function PATCH(
         }))
         .filter((entry: { name: string; role: string }) => entry.name && entry.role);
       if (!sanitized.length) {
-        return NextResponse.json({ error: 'Informe ao menos uma assinatura com nome e cargo.' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Informe ao menos uma assinatura com nome e cargo.' },
+        { status: 400, headers: noStoreHeaders }
+      );
       }
       updates.signatures = sanitized;
     }
@@ -46,7 +52,7 @@ export async function PATCH(
     }
 
     if (!Object.keys(updates).length) {
-      return NextResponse.json({ error: 'Nenhuma atualização enviada.' }, { status: 400 });
+      return NextResponse.json({ error: 'Nenhuma atualização enviada.' }, { status: 400, headers: noStoreHeaders });
     }
 
     updates.updatedAt = Date.now();
@@ -59,17 +65,17 @@ export async function PATCH(
     const data = snapshot.data() as Omit<Folder, 'id'> | undefined;
 
     if (!data) {
-      return NextResponse.json({ error: 'Pasta não encontrada após atualização.' }, { status: 404 });
+      return NextResponse.json({ error: 'Pasta não encontrada após atualização.' }, { status: 404, headers: noStoreHeaders });
     }
 
     return NextResponse.json({
       folder: { id: snapshot.id, ...data },
       linkKey,
-    });
+    }, { headers: noStoreHeaders });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Erro ao atualizar pasta.';
     const status = message.toLowerCase().includes('token') ? 401 : 500;
-    return NextResponse.json({ error: message }, { status });
+    return NextResponse.json({ error: message }, { status, headers: noStoreHeaders });
   }
 }
 
@@ -87,15 +93,15 @@ export async function DELETE(
     const snapshot = await docRef.get();
 
     if (!snapshot.exists) {
-      return NextResponse.json({ error: 'Pasta não encontrada.' }, { status: 404 });
+      return NextResponse.json({ error: 'Pasta não encontrada.' }, { status: 404, headers: noStoreHeaders });
     }
 
     await docRef.delete();
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true }, { headers: noStoreHeaders });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Erro ao excluir pasta.';
     const status = message.toLowerCase().includes('token') ? 401 : 500;
-    return NextResponse.json({ error: message }, { status });
+    return NextResponse.json({ error: message }, { status, headers: noStoreHeaders });
   }
 }

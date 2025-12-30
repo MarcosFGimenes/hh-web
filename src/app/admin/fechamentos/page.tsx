@@ -27,7 +27,7 @@ export default function AdminClosingsPage() {
     headers.set('Authorization', `Bearer ${idToken}`);
     headers.set('Content-Type', 'application/json');
 
-    return fetch(input, { ...init, headers });
+    return fetch(input, { ...init, headers, cache: 'no-store' });
   };
 
   const loadFolders = async () => {
