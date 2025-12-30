@@ -62,7 +62,6 @@ export function AddOsModal({
   onSubmit,
   isSubmitting,
 }: AddOsModalProps) {
-  const [search, setSearch] = useState('');
   const [selectedOsId, setSelectedOsId] = useState('');
   const [creatingNew, setCreatingNew] = useState(false);
   const [osForm, setOsForm] = useState({ osCode: '', tag: '', machineName: '', description: '' });
@@ -72,7 +71,6 @@ export function AddOsModal({
 
   useEffect(() => {
     if (open) {
-      setSearch('');
       setSelectedOsId('');
       setCreatingNew(false);
       setOsForm({ osCode: '', tag: '', machineName: '', description: '' });
@@ -82,13 +80,7 @@ export function AddOsModal({
     }
   }, [open]);
 
-  const filteredOrders = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    if (!term) return orders;
-    return orders.filter(
-      (order) => order.osCode.toLowerCase().includes(term) || (order.tag || '').toLowerCase().includes(term)
-    );
-  }, [orders, search]);
+  const filteredOrders = useMemo(() => orders, [orders]);
 
   const validateIntervals = () => {
     const normalized: Array<{ startTime: string; endTime: string }> = [];
@@ -195,15 +187,15 @@ export function AddOsModal({
       <form className="stack os-modal-form" onSubmit={handleSubmit}>
         <div className="stack os-modal-scroll">
           <div className="stack">
-            <div className="ui-field">
-              <span className="ui-field-label">Buscar O.S (código ou tag)</span>
-              <input
-                className="ui-input"
-                type="search"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Digite para filtrar"
-              />
+            <div className="os-new-os-action">
+              <Button
+                type="button"
+                variant="outline"
+                className="ui-button-compact os-new-os-button"
+                onClick={toggleNewOs}
+              >
+                Não encontrei — adicionar nova O.S
+              </Button>
             </div>
 
             <div className="os-select-list">
@@ -231,16 +223,6 @@ export function AddOsModal({
                 );
               })}
 
-              <button
-                type="button"
-                className={`os-select-item os-select-new ${creatingNew ? 'is-selected' : ''}`}
-                onClick={toggleNewOs}
-              >
-                <div className="os-select-head">
-                  <span className="pill pill-strong">Não encontrei — adicionar nova O.S</span>
-                </div>
-                <p className="os-select-sub">Informe código, TAG e equipamento (opcionais) e descreva brevemente.</p>
-              </button>
             </div>
 
             {creatingNew ? (
@@ -299,7 +281,7 @@ export function AddOsModal({
                 <Button
                   type="button"
                   variant="secondary"
-                  className="ui-button-compact"
+                  className="ui-button-compact os-add-interval-button"
                   onClick={() =>
                     setIntervalRows((prev) => [
                       ...prev,

@@ -717,6 +717,16 @@ main {
   justify-content: flex-start;
 }
 
+.os-new-os-action {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.os-new-os-button {
+  min-width: 0;
+  font-size: 0.9rem;
+}
+
 .os-modal-form {
   display: flex;
   flex-direction: column;
@@ -729,6 +739,11 @@ main {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
+}
+
+.os-add-interval-button {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
 }
 
 .os-interval-row {
