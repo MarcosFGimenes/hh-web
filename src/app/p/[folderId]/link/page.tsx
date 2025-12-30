@@ -402,6 +402,23 @@ export default function PublicFolderPage({ params }: PageProps) {
                   >
                     + Adicionar mantenedor
                   </Button>
+                  {data ? (
+                    <div className="public-date-fo-card public-date-fo-inline">
+                      <div className="public-date-fo-title">FO {formatFoField(data.folder.foCode)}</div>
+                      <div className="public-date-fo-table">
+                        <div className="public-date-fo-row public-date-fo-row-labels">
+                          <span>EMISSÃO</span>
+                          <span>REVISÃO</span>
+                          <span>N°</span>
+                        </div>
+                        <div className="public-date-fo-row public-date-fo-row-values">
+                          <span>{formatFoField(data.folder.foEmission)}</span>
+                          <span>{formatFoField(data.folder.foRevision)}</span>
+                          <span>{formatFoField(data.folder.foNumber)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </Card>
