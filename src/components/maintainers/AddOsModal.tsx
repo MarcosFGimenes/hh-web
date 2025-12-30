@@ -190,13 +190,15 @@ export function AddOsModal({
             <div className="os-new-os-action">
               <Button
                 type="button"
-                variant="outline"
+                variant="secondary"
                 className="ui-button-compact os-new-os-button"
                 onClick={toggleNewOs}
               >
                 Não encontrei — adicionar nova O.S
               </Button>
             </div>
+
+            <div className="os-modal-divider" aria-hidden />
 
             <p className="os-section-title">Selecione uma O.S</p>
             <div className="os-select-list">
@@ -216,7 +218,7 @@ export function AddOsModal({
                     <div className="os-select-head">
                       <span className="pill pill-strong">{order.osCode}</span>
                       {order.tag ? <span className="pill pill-soft">{order.tag}</span> : null}
-                      {order.isExternal ? <span className="pill pill-soft">Criada pelo terceiro</span> : null}
+                      {order.isExternal ? <span className="pill pill-soft os-third-party-pill">Criada pelo terceiro</span> : null}
                     </div>
                     <p className="os-select-sub">
                       {[order.machineName, order.description].filter(Boolean).join(' · ') || 'Sem descrição'}
@@ -260,9 +262,11 @@ export function AddOsModal({
           </div>
 
           <div className="stack os-modal-section">
+            <div className="os-modal-divider" aria-hidden />
+
             <div className="stack os-modal-subsection">
               <div className="ui-field">
-                <span className="ui-field-label">Horários já lançados hoje</span>
+                <span className="ui-field-label os-section-title">Horários já lançados hoje</span>
                 <div className="maintainer-intervals-row">
                   {existingIntervals.length ? (
                     existingIntervals.map((interval, index) => (
@@ -277,9 +281,13 @@ export function AddOsModal({
               </div>
             </div>
 
+            <div className="os-modal-divider" aria-hidden />
+
             <div className="stack os-modal-subsection">
               <div className="os-intervals-head">
-                <p className="ui-field-label">Horários trabalhados nesta O.S ({date.split('-').reverse().join('/')})</p>
+                <p className="ui-field-label os-section-title">
+                  Horários trabalhados nesta O.S ({date.split('-').reverse().join('/')})
+                </p>
                 <Button
                   type="button"
                   variant="secondary"
@@ -309,6 +317,7 @@ export function AddOsModal({
                       label={`Entrada ${index + 1}`}
                       value={row.startTime}
                       inputMode="numeric"
+                      className="ui-input-lg os-interval-input"
                       onChange={(event) =>
                         setIntervalRows((prev) =>
                           prev.map((item) =>
@@ -322,6 +331,7 @@ export function AddOsModal({
                       label={`Saída ${index + 1}`}
                       value={row.endTime}
                       inputMode="numeric"
+                      className="ui-input-lg os-interval-input"
                       onChange={(event) =>
                         setIntervalRows((prev) =>
                           prev.map((item) =>
