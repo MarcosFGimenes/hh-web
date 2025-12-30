@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import { NextResponse } from 'next/server';
 import { getAdminFromRequest } from '@/lib/auth/getAdminToken';
-import { getCompanyFolder } from '@/lib/firebase/adminFolders';
+import { getAdminDb } from '@/lib/firebase/admin';
 import type { Folder } from '@/types/folder';
 
 const COLLECTION = 'folders';
@@ -13,7 +13,7 @@ export async function PATCH(
   const { folderId } = params;
 
   try {
-    const { companyId } = await getAdminFromRequest();
+    await getAdminFromRequest();
 
     const body = await request.json();
     const updates: Partial<Folder> = {};
@@ -45,33 +45,14 @@ export async function PATCH(
       updates.linkKeyHash = crypto.createHash('sha256').update(linkKey).digest('hex');
     }
 
-    if (typeof body?.statusColumn === 'string') {
-      const status = body.statusColumn.trim();
-      if (!['entrada', 'andamento', 'concluido'].includes(status)) {
-        return NextResponse.json({ error: 'Status inválido.' }, { status: 400 });
-      }
-      updates.statusColumn = status as Folder['statusColumn'];
-    }
-
-    if (body?.position !== undefined) {
-      const parsed = typeof body.position === 'number' ? body.position : Number(body.position);
-      if (!Number.isFinite(parsed) || parsed < 0) {
-        return NextResponse.json({ error: 'Posição inválida.' }, { status: 400 });
-      }
-      updates.position = parsed;
-    }
-
     if (!Object.keys(updates).length) {
       return NextResponse.json({ error: 'Nenhuma atualização enviada.' }, { status: 400 });
     }
 
     updates.updatedAt = Date.now();
 
-    const folder = await getCompanyFolder(folderId, companyId);
-    if (!folder) {
-      return NextResponse.json({ error: 'Pasta não encontrada.' }, { status: 404 });
-    }
-    const docRef = folder.docRef;
+    const adminDb = getAdminDb();
+    const docRef = adminDb.collection(COLLECTION).doc(folderId);
     await docRef.update(updates);
 
     const snapshot = await docRef.get();
@@ -99,14 +80,17 @@ export async function DELETE(
   const { folderId } = params;
 
   try {
-    const { companyId } = await getAdminFromRequest();
+    await getAdminFromRequest();
 
-    const folder = await getCompanyFolder(folderId, companyId);
-    if (!folder) {
+    const adminDb = getAdminDb();
+    const docRef = adminDb.collection(COLLECTION).doc(folderId);
+    const snapshot = await docRef.get();
+
+    if (!snapshot.exists) {
       return NextResponse.json({ error: 'Pasta não encontrada.' }, { status: 404 });
     }
 
-    await folder.docRef.delete();
+    await docRef.delete();
 
     return NextResponse.json({ success: true });
   } catch (error) {

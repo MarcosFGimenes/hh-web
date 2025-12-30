@@ -1,7 +1,7 @@
 import { FieldPath } from 'firebase-admin/firestore';
 import { NextResponse } from 'next/server';
 import { getAdminFromRequest } from '@/lib/auth/getAdminToken';
-import { getCompanyFolder } from '@/lib/firebase/adminFolders';
+import { getAdminDb } from '@/lib/firebase/admin';
 import type { Service } from '@/types/service';
 import type { Employee } from '@/types/employee';
 import type { ServiceOrder } from '@/types/os';
@@ -20,6 +20,9 @@ type AggregateByOs = { osId: string; osCode: string; tag: string; machineName: s
 
 const isValidDateParam = (date: string) => /^\d{4}-\d{2}-\d{2}$/.test(date);
 
+const dayCollection = (folderId: string) => getAdminDb().collection('folders').doc(folderId).collection('days');
+const osCollection = (folderId: string) => getAdminDb().collection('folders').doc(folderId).collection('os');
+
 const mapOs = (doc: FirebaseFirestore.QueryDocumentSnapshot): ServiceOrder => {
   const data = doc.data() as Omit<ServiceOrder, 'id'>;
   return { id: doc.id, ...data };
@@ -27,7 +30,7 @@ const mapOs = (doc: FirebaseFirestore.QueryDocumentSnapshot): ServiceOrder => {
 
 export async function GET(request: Request, { params }: Params) {
   try {
-    const { companyId } = await getAdminFromRequest();
+    await getAdminFromRequest();
     const url = new URL(request.url);
     const { folderId } = params;
     const from = url.searchParams.get('from') || '';
@@ -37,17 +40,11 @@ export async function GET(request: Request, { params }: Params) {
       return NextResponse.json({ error: 'Parâmetros from/to inválidos. Formato esperado: YYYY-MM-DD' }, { status: 400 });
     }
 
-    const folder = await getCompanyFolder(folderId, companyId);
-    if (!folder) {
-      return NextResponse.json({ error: 'Pasta não encontrada.' }, { status: 404 });
-    }
-
-    const osSnapshot = await folder.docRef.collection('os').get();
+    const osSnapshot = await osCollection(folderId).get();
     const osMap = new Map<string, ServiceOrder>();
     osSnapshot.docs.forEach((doc) => osMap.set(doc.id, mapOs(doc)));
 
-    const daysQuery = await folder.docRef
-      .collection('days')
+    const daysQuery = await dayCollection(folderId)
       .where(FieldPath.documentId(), '>=', from)
       .where(FieldPath.documentId(), '<=', to)
       .get();

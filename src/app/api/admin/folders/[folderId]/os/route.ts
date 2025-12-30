@@ -1,22 +1,16 @@
 import { NextResponse } from 'next/server';
 import { getAdminFromRequest } from '@/lib/auth/getAdminToken';
-import { getCompanyFolder } from '@/lib/firebase/adminFolders';
 import type { ServiceOrder } from '@/types/os';
-import { mapOsDoc } from './helpers';
+import { mapOsDoc, osCollectionRef } from './helpers';
 
 type Params = { params: { folderId: string } };
 
 export async function GET(_request: Request, { params }: Params) {
   try {
-    const { companyId } = await getAdminFromRequest();
+    await getAdminFromRequest();
     const { folderId } = params;
 
-    const folder = await getCompanyFolder(folderId, companyId);
-    if (!folder) {
-      return NextResponse.json({ error: 'Pasta não encontrada.' }, { status: 404 });
-    }
-
-    const snapshot = await folder.docRef.collection('os').orderBy('createdAt', 'desc').get();
+    const snapshot = await osCollectionRef(folderId).orderBy('createdAt', 'desc').get();
     const orders = snapshot.docs.map(mapOsDoc);
 
     return NextResponse.json({ orders });
@@ -42,19 +36,14 @@ export async function POST(request: Request, { params }: Params) {
       return NextResponse.json({ error: 'Todos os campos são obrigatórios.' }, { status: 400 });
     }
 
-    const folder = await getCompanyFolder(folderId, admin.companyId);
-    if (!folder) {
-      return NextResponse.json({ error: 'Pasta não encontrada.' }, { status: 404 });
-    }
-
     const now = Date.now();
-    const docRef = await folder.docRef.collection('os').add({
+    const docRef = await osCollectionRef(folderId).add({
       osCode,
       tag,
       machineName,
       description,
       createdByRole: 'ADMIN',
-      createdByUserId: admin.token.uid || null,
+      createdByUserId: admin?.uid || null,
       isExternal: false,
       createdAt: now,
       updatedAt: now,
@@ -67,7 +56,7 @@ export async function POST(request: Request, { params }: Params) {
       machineName,
       description,
       createdByRole: 'ADMIN',
-      createdByUserId: admin.token.uid || null,
+      createdByUserId: admin?.uid || null,
       isExternal: false,
       createdAt: now,
       updatedAt: now,
