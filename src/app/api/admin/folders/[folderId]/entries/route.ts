@@ -223,7 +223,7 @@ export async function GET(_request: Request, { params }: Params) {
 
     return NextResponse.json({
       folder: {
-        id: folderDoc.id,
+        id: folderDoc.data.id,
         name: (folderData as { name?: string }).name || 'Pasta sem nome',
         company: (folderData as { company?: string | null }).company || null,
         hourRate: (folderData as { hourRate?: number | null }).hourRate ?? null,
