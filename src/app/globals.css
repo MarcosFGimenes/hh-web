@@ -341,11 +341,46 @@ main {
   box-shadow: var(--shadow-sm);
 }
 
+.public-date-fo-inline {
+  min-width: 210px;
+  padding: 0.45rem 0.6rem;
+}
+
 .public-date-fo-title {
   font-weight: 700;
   color: var(--color-text-title);
   padding-bottom: 0.35rem;
   border-bottom: 1px solid rgba(148, 163, 184, 0.45);
+}
+
+.public-date-fo-table {
+  display: grid;
+  gap: 0.2rem;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.public-date-fo-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.public-date-fo-row > span + span {
+  border-left: 1px solid rgba(148, 163, 184, 0.45);
+}
+
+.public-date-fo-row-labels {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.45);
+  padding-bottom: 0.2rem;
+}
+
+.public-date-fo-row-values {
+  font-weight: 600;
+  color: var(--color-text-title);
+  padding-top: 0.1rem;
 }
 
 .public-date-fo-grid {
