@@ -364,21 +364,6 @@ export default function PublicFolderPage({ params }: PageProps) {
                   <p className="public-date-hint">Selecione a data do lançamento.</p>
                 </div>
                 <div className="public-date-controls">
-                  <div className="public-date-fo-card public-date-fo-inline">
-                    <div className="public-date-fo-title">FO 012-050-37</div>
-                    <div className="public-date-fo-table">
-                      <div className="public-date-fo-row public-date-fo-row-labels">
-                        <span>EMISSÃO</span>
-                        <span>REVISÃO</span>
-                        <span>N°</span>
-                      </div>
-                      <div className="public-date-fo-row public-date-fo-row-values">
-                        <span>20/1/20</span>
-                        <span>16/4/21</span>
-                        <span>1</span>
-                      </div>
-                    </div>
-                  </div>
                   <div className="public-date-input">
                     <Input
                       type="date"
@@ -398,6 +383,21 @@ export default function PublicFolderPage({ params }: PageProps) {
                   >
                     + Adicionar mantenedor
                   </Button>
+                  <div className="public-date-fo-card public-date-fo-inline">
+                    <div className="public-date-fo-title">FO 012-050-37</div>
+                    <div className="public-date-fo-table">
+                      <div className="public-date-fo-row public-date-fo-row-labels">
+                        <span>EMISSÃO</span>
+                        <span>REVISÃO</span>
+                        <span>N°</span>
+                      </div>
+                      <div className="public-date-fo-row public-date-fo-row-values">
+                        <span>20/1/20</span>
+                        <span>16/4/21</span>
+                        <span>1</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </Card>
