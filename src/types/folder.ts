@@ -2,6 +2,7 @@ export type Folder = {
   id: string;
   name: string;
   company?: string | null;
+  status?: 'backlog' | 'progress' | 'done';
   hourRate?: number | null;
   hourRate50?: number | null;
   hourRate100?: number | null;

@@ -122,6 +122,7 @@ export async function POST(request: Request) {
     const docRef = await adminDb.collection(COLLECTION).add({
       name,
       company,
+      status: 'backlog',
       hourRate,
       hourRate50,
       hourRate100,
@@ -136,6 +137,7 @@ export async function POST(request: Request) {
       id: docRef.id,
       name,
       company,
+      status: 'backlog',
       hourRate,
       hourRate50,
       hourRate100,

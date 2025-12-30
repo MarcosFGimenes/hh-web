@@ -30,6 +30,14 @@ export async function PATCH(
       updates.company = body.company.trim();
     }
 
+    if (typeof body?.status === 'string') {
+      const status = body.status.trim();
+      if (!['backlog', 'progress', 'done'].includes(status)) {
+        return NextResponse.json({ error: 'Status inválido.' }, { status: 400, headers: noStoreHeaders });
+      }
+      updates.status = status as Folder['status'];
+    }
+
     if (Array.isArray(body?.signatures)) {
       const sanitized = body.signatures
         .map((entry: { name?: string; role?: string }) => ({
