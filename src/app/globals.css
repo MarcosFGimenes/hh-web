@@ -307,10 +307,12 @@ main {
 }
 
 .public-date-controls {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 220px 280px minmax(320px, 1fr);
+  column-gap: 16px;
+  align-items: end;
+  width: 100%;
+  max-width: none;
 }
 
 .public-date-title {
@@ -326,9 +328,8 @@ main {
 }
 
 .public-date-input {
-  min-width: 220px;
   width: 100%;
-  max-width: 260px;
+  max-width: none;
 }
 
 .public-date-fo-card {
@@ -342,7 +343,10 @@ main {
 }
 
 .public-date-fo-inline {
-  min-width: 210px;
+  min-width: 320px;
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
   padding: 0.45rem 0.6rem;
 }
 
@@ -421,6 +425,8 @@ main {
 }
 
 .public-date-add-button {
+  width: 100%;
+  max-width: none;
   white-space: nowrap;
   min-height: 2.65rem;
   padding: 0.6rem 1rem;
@@ -443,10 +449,6 @@ main {
   .public-date-toolbar {
     grid-template-columns: 1fr;
     align-items: stretch;
-  }
-
-  .public-date-fo-card {
-    width: 100%;
   }
 }
 
