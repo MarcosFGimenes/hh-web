@@ -711,6 +711,10 @@ main {
   border-style: dashed;
 }
 
+.os-select-action {
+  width: 100%;
+}
+
 .os-new-actions {
   display: flex;
   align-items: center;
@@ -741,6 +745,11 @@ main {
 .os-remove-button {
   min-width: 0;
   padding: 0.45rem 0.75rem;
+}
+
+.os-interval-add {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.85rem;
 }
 
 .ui-modal.os-modal {
