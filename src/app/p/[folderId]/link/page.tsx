@@ -344,23 +344,6 @@ export default function PublicFolderPage({ params }: PageProps) {
                 <p className="ui-badge ui-badge-info public-header-chip">Link do serviço</p>
                 <div className="public-header-title-row">
                   <h1 className="public-title">{data.folder.name}</h1>
-                  <div className="public-date-fo-card public-header-fo-card">
-                    <div className="public-date-fo-title">FO 012-050-37</div>
-                    <div className="public-date-fo-grid">
-                      <div>
-                        <span className="public-date-fo-label">Emissão</span>
-                        <span className="public-date-fo-value">20/1/20</span>
-                      </div>
-                      <div>
-                        <span className="public-date-fo-label">Revisão</span>
-                        <span className="public-date-fo-value">16/4/21</span>
-                      </div>
-                      <div>
-                        <span className="public-date-fo-label">Nº</span>
-                        <span className="public-date-fo-value">1</span>
-                      </div>
-                    </div>
-                  </div>
                 </div>
                 <p className="dashboard-subtitle">
                   Acesso público protegido • mantenedores e apontamentos.
@@ -381,18 +364,6 @@ export default function PublicFolderPage({ params }: PageProps) {
                   <p className="public-date-hint">Selecione a data do lançamento.</p>
                 </div>
                 <div className="public-date-controls">
-                  <div className="public-date-input">
-                    <Input
-                      type="date"
-                      required
-                      value={selectedDate}
-                      className="ui-input-compact"
-                      onChange={(event) => {
-                        if (!event.target.value) return;
-                        setSelectedDate(event.target.value);
-                      }}
-                    />
-                  </div>
                   <div className="public-date-fo-card public-date-fo-inline">
                     <div className="public-date-fo-title">FO 012-050-37</div>
                     <div className="public-date-fo-table">
@@ -407,6 +378,18 @@ export default function PublicFolderPage({ params }: PageProps) {
                         <span>1</span>
                       </div>
                     </div>
+                  </div>
+                  <div className="public-date-input">
+                    <Input
+                      type="date"
+                      required
+                      value={selectedDate}
+                      className="ui-input-compact"
+                      onChange={(event) => {
+                        if (!event.target.value) return;
+                        setSelectedDate(event.target.value);
+                      }}
+                    />
                   </div>
                   <Button
                     type="button"
