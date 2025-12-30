@@ -344,25 +344,23 @@ export default function PublicFolderPage({ params }: PageProps) {
                 <p className="ui-badge ui-badge-info public-header-chip">Link do serviço</p>
                 <div className="public-header-title-row">
                   <h1 className="public-title">{data.folder.name}</h1>
-                  {hasFoData && data ? (
-                    <div className="public-date-fo-card public-header-fo-card">
-                      <div className="public-date-fo-title">FO {formatFoField(data.folder.foCode)}</div>
-                      <div className="public-date-fo-grid">
-                        <div>
-                          <span className="public-date-fo-label">Emissão</span>
-                          <span className="public-date-fo-value">{formatFoField(data.folder.foEmission)}</span>
-                        </div>
-                        <div>
-                          <span className="public-date-fo-label">Revisão</span>
-                          <span className="public-date-fo-value">{formatFoField(data.folder.foRevision)}</span>
-                        </div>
-                        <div>
-                          <span className="public-date-fo-label">Nº</span>
-                          <span className="public-date-fo-value">{formatFoField(data.folder.foNumber)}</span>
-                        </div>
+                  <div className="public-date-fo-card public-header-fo-card">
+                    <div className="public-date-fo-title">FO 012-050-37</div>
+                    <div className="public-date-fo-grid">
+                      <div>
+                        <span className="public-date-fo-label">Emissão</span>
+                        <span className="public-date-fo-value">20/1/20</span>
+                      </div>
+                      <div>
+                        <span className="public-date-fo-label">Revisão</span>
+                        <span className="public-date-fo-value">16/4/21</span>
+                      </div>
+                      <div>
+                        <span className="public-date-fo-label">Nº</span>
+                        <span className="public-date-fo-value">1</span>
                       </div>
                     </div>
-                  ) : null}
+                  </div>
                 </div>
                 <p className="dashboard-subtitle">
                   Acesso público protegido • mantenedores e apontamentos.
@@ -395,6 +393,21 @@ export default function PublicFolderPage({ params }: PageProps) {
                       }}
                     />
                   </div>
+                  <div className="public-date-fo-card public-date-fo-inline">
+                    <div className="public-date-fo-title">FO 012-050-37</div>
+                    <div className="public-date-fo-table">
+                      <div className="public-date-fo-row public-date-fo-row-labels">
+                        <span>EMISSÃO</span>
+                        <span>REVISÃO</span>
+                        <span>N°</span>
+                      </div>
+                      <div className="public-date-fo-row public-date-fo-row-values">
+                        <span>20/1/20</span>
+                        <span>16/4/21</span>
+                        <span>1</span>
+                      </div>
+                    </div>
+                  </div>
                   <Button
                     type="button"
                     className="ui-button-compact public-date-add-button"
@@ -402,23 +415,6 @@ export default function PublicFolderPage({ params }: PageProps) {
                   >
                     + Adicionar mantenedor
                   </Button>
-                  {hasFoData && data ? (
-                    <div className="public-date-fo-card public-date-fo-inline">
-                      <div className="public-date-fo-title">FO {formatFoField(data.folder.foCode)}</div>
-                      <div className="public-date-fo-table">
-                        <div className="public-date-fo-row public-date-fo-row-labels">
-                          <span>EMISSÃO</span>
-                          <span>REVISÃO</span>
-                          <span>N°</span>
-                        </div>
-                        <div className="public-date-fo-row public-date-fo-row-values">
-                          <span>{formatFoField(data.folder.foEmission)}</span>
-                          <span>{formatFoField(data.folder.foRevision)}</span>
-                          <span>{formatFoField(data.folder.foNumber)}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ) : null}
                 </div>
               </div>
             </Card>
