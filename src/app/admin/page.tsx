@@ -9,6 +9,8 @@ import { useAdminAuth } from '@/hooks/useAdminAuth';
 import type { Folder } from '@/types/folder';
 import { Toast } from '@/components/Toast';
 
+export const dynamic = 'force-dynamic';
+
 export default function AdminDashboardPlaceholder() {
   const { user, signOut } = useAdminAuth();
   const [folders, setFolders] = useState<Folder[]>([]);
@@ -38,7 +40,7 @@ export default function AdminDashboardPlaceholder() {
     headers.set('Authorization', `Bearer ${token}`);
     headers.set('Content-Type', 'application/json');
 
-    return fetch(input, { ...init, headers });
+    return fetch(input, { ...init, headers, cache: 'no-store' });
   };
 
   const buildPrivateLink = (folderId: string, linkKey: string) => {

@@ -68,7 +68,7 @@ export default function ManageEntriesPage() {
     const headers = new Headers(init?.headers);
     headers.set('Authorization', `Bearer ${idToken}`);
     headers.set('Content-Type', 'application/json');
-    return fetch(input, { ...init, headers });
+    return fetch(input, { ...init, headers, cache: 'no-store' });
   };
 
   const buildLaunches = (folder: Folder, entries: EntryDay[]): LaunchRecord[] => {

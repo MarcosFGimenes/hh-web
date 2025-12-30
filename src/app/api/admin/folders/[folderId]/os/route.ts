@@ -5,6 +5,10 @@ import { mapOsDoc, osCollectionRef } from './helpers';
 
 type Params = { params: { folderId: string } };
 
+export const dynamic = 'force-dynamic';
+
+const noStoreHeaders = { 'Cache-Control': 'no-store' };
+
 export async function GET(_request: Request, { params }: Params) {
   try {
     await getAdminFromRequest();
@@ -13,11 +17,11 @@ export async function GET(_request: Request, { params }: Params) {
     const snapshot = await osCollectionRef(folderId).orderBy('createdAt', 'desc').get();
     const orders = snapshot.docs.map(mapOsDoc);
 
-    return NextResponse.json({ orders });
+    return NextResponse.json({ orders }, { headers: noStoreHeaders });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Erro ao listar O.S.';
     const status = message.toLowerCase().includes('token') ? 401 : 500;
-    return NextResponse.json({ error: message }, { status });
+    return NextResponse.json({ error: message }, { status, headers: noStoreHeaders });
   }
 }
 
@@ -33,7 +37,7 @@ export async function POST(request: Request, { params }: Params) {
     const description = typeof body?.description === 'string' ? body.description.trim() : '';
 
     if (!osCode || !tag || !machineName || !description) {
-      return NextResponse.json({ error: 'Todos os campos são obrigatórios.' }, { status: 400 });
+      return NextResponse.json({ error: 'Todos os campos são obrigatórios.' }, { status: 400, headers: noStoreHeaders });
     }
 
     const now = Date.now();
@@ -62,10 +66,10 @@ export async function POST(request: Request, { params }: Params) {
       updatedAt: now,
     };
 
-    return NextResponse.json({ order }, { status: 201 });
+    return NextResponse.json({ order }, { status: 201, headers: noStoreHeaders });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Erro ao criar O.S.';
     const status = message.toLowerCase().includes('token') ? 401 : 500;
-    return NextResponse.json({ error: message }, { status });
+    return NextResponse.json({ error: message }, { status, headers: noStoreHeaders });
   }
 }
