@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAdminFromRequest } from '@/lib/auth/getAdminToken';
-import { getAdminDb } from '@/lib/firebase/admin';
+import { getCompanyFolder } from '@/lib/firebase/adminFolders';
 import type { Employee } from '@/types/employee';
 import type { Service } from '@/types/service';
 import type { ServiceOrder } from '@/types/os';
@@ -9,8 +9,6 @@ import type { MaintainerOsLog } from '@/types/maintainerOsLog';
 import { parseTimeToMinutes } from '@/lib/time/base';
 
 type Params = { params: { folderId: string } };
-
-const folderRef = (folderId: string) => getAdminDb().collection('folders').doc(folderId);
 
 type Interval = { startTime: string; endTime: string };
 
@@ -79,21 +77,21 @@ const computeIntervalsMinutes = (intervals: Interval[]) =>
 
 export async function GET(_request: Request, { params }: Params) {
   try {
-    await getAdminFromRequest();
+    const { companyId } = await getAdminFromRequest();
     const { folderId } = params;
 
-    const folderDoc = await folderRef(folderId).get();
-    if (!folderDoc.exists) {
+    const folderDoc = await getCompanyFolder(folderId, companyId);
+    if (!folderDoc) {
       return NextResponse.json({ error: 'Pasta não encontrada.' }, { status: 404 });
     }
 
-    const folderData = folderDoc.data() || {};
+    const folderData = folderDoc.data || {};
 
-    const osSnapshot = await folderRef(folderId).collection('os').get();
+    const osSnapshot = await folderDoc.docRef.collection('os').get();
     const osMap = new Map<string, ServiceOrder>();
     osSnapshot.docs.forEach((doc) => osMap.set(doc.id, mapOs(doc)));
 
-    const daysSnapshot = await folderRef(folderId).collection('days').get();
+    const daysSnapshot = await folderDoc.docRef.collection('days').get();
     const dayDocs = [...daysSnapshot.docs].sort((a, b) => b.id.localeCompare(a.id));
 
     const entriesByDate = new Map<string, EntryDay>();
@@ -153,7 +151,7 @@ export async function GET(_request: Request, { params }: Params) {
       entriesByDate.set(entry.date, entry);
     });
 
-    const maintainersSnapshot = await folderRef(folderId).collection('maintainers').get();
+    const maintainersSnapshot = await folderDoc.docRef.collection('maintainers').get();
     const maintainers = await Promise.all(
       maintainersSnapshot.docs.map(async (maintainerDoc) => {
         const maintainer = mapMaintainer(maintainerDoc);

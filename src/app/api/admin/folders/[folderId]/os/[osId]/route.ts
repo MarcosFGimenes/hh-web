@@ -1,16 +1,13 @@
 import { NextResponse } from 'next/server';
 import { getAdminFromRequest } from '@/lib/auth/getAdminToken';
-import { getAdminDb } from '@/lib/firebase/admin';
+import { getCompanyFolder } from '@/lib/firebase/adminFolders';
 import type { ServiceOrder } from '@/types/os';
 
 type Params = { params: { folderId: string; osId: string } };
 
-const docRef = (folderId: string, osId: string) =>
-  getAdminDb().collection('folders').doc(folderId).collection('os').doc(osId);
-
 export async function PATCH(request: Request, { params }: Params) {
   try {
-    await getAdminFromRequest();
+    const { companyId } = await getAdminFromRequest();
     const { folderId, osId } = params;
     const body = await request.json();
 
@@ -27,7 +24,12 @@ export async function PATCH(request: Request, { params }: Params) {
 
     updates.updatedAt = Date.now();
 
-    const ref = docRef(folderId, osId);
+    const folder = await getCompanyFolder(folderId, companyId);
+    if (!folder) {
+      return NextResponse.json({ error: 'O.S. não encontrada.' }, { status: 404 });
+    }
+
+    const ref = folder.docRef.collection('os').doc(osId);
     const snapshot = await ref.get();
 
     if (!snapshot.exists) {
@@ -47,10 +49,15 @@ export async function PATCH(request: Request, { params }: Params) {
 
 export async function DELETE(_request: Request, { params }: Params) {
   try {
-    await getAdminFromRequest();
+    const { companyId } = await getAdminFromRequest();
     const { folderId, osId } = params;
 
-    const ref = docRef(folderId, osId);
+    const folder = await getCompanyFolder(folderId, companyId);
+    if (!folder) {
+      return NextResponse.json({ error: 'O.S. não encontrada.' }, { status: 404 });
+    }
+
+    const ref = folder.docRef.collection('os').doc(osId);
     const snapshot = await ref.get();
     if (!snapshot.exists) {
       return NextResponse.json({ error: 'O.S. não encontrada.' }, { status: 404 });

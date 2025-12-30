@@ -54,7 +54,7 @@ export default function AdminFoldersPage() {
     setError(null);
 
     try {
-      const response = await adminFetch('/api/admin/folders');
+      const response = await adminFetch('/api/admin/folders', { cache: 'no-store' });
       const data = await response.json();
 
       if (!response.ok) {
@@ -72,6 +72,26 @@ export default function AdminFoldersPage() {
 
   useEffect(() => {
     loadFolders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idToken]);
+
+  useEffect(() => {
+    const handleFocus = () => loadFolders();
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        loadFolders();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('online', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('online', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idToken]);
 
@@ -128,7 +148,7 @@ export default function AdminFoldersPage() {
       }
 
       const link = buildPrivateLink(data.folder.id, data.linkKey);
-      setFolders((prev) => [{ ...data.folder, lastLink: link }, ...prev]);
+      await loadFolders();
       setSuccess('Pasta criada e link privado gerado.');
       setCreatingName('');
       setCreatingCompany('');
@@ -165,7 +185,7 @@ export default function AdminFoldersPage() {
         throw new Error(data.error || 'Erro ao renomear a pasta.');
       }
 
-      setFolders((prev) => prev.map((folder) => (folder.id === folderId ? { ...folder, name: data.folder.name } : folder)));
+      await loadFolders();
       setSuccess('Pasta renomeada.');
       setEditingId(null);
       setEditingName('');
@@ -192,7 +212,7 @@ export default function AdminFoldersPage() {
         throw new Error(data.error || 'Erro ao excluir a pasta.');
       }
 
-      setFolders((prev) => prev.filter((folder) => folder.id !== folderId));
+      await loadFolders();
       setSuccess('Pasta excluída.');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao excluir.';
