@@ -186,7 +186,7 @@ export function AddOsModal({
     >
       <form className="stack os-modal-form" onSubmit={handleSubmit}>
         <div className="stack os-modal-scroll">
-          <div className="stack">
+          <div className="stack os-modal-section">
             <div className="os-new-os-action">
               <Button
                 type="button"
@@ -198,6 +198,7 @@ export function AddOsModal({
               </Button>
             </div>
 
+            <p className="os-section-title">Selecione uma O.S</p>
             <div className="os-select-list">
               {filteredOrders.map((order) => {
                 const isSelected = selectedOsId === order.id;
@@ -211,6 +212,7 @@ export function AddOsModal({
                       setCreatingNew(false);
                     }}
                   >
+                    {isSelected ? <span className="os-select-check">✓</span> : null}
                     <div className="os-select-head">
                       <span className="pill pill-strong">{order.osCode}</span>
                       {order.tag ? <span className="pill pill-soft">{order.tag}</span> : null}
@@ -226,7 +228,7 @@ export function AddOsModal({
             </div>
 
             {creatingNew ? (
-              <div className="grid">
+              <div className="grid os-modal-subsection">
                 <Input
                   label="Código O.S *"
                   value={osForm.osCode}
@@ -257,8 +259,8 @@ export function AddOsModal({
             ) : null}
           </div>
 
-          <div className="stack">
-            <div className="stack">
+          <div className="stack os-modal-section">
+            <div className="stack os-modal-subsection">
               <div className="ui-field">
                 <span className="ui-field-label">Horários já lançados hoje</span>
                 <div className="maintainer-intervals-row">
@@ -275,7 +277,7 @@ export function AddOsModal({
               </div>
             </div>
 
-            <div className="stack">
+            <div className="stack os-modal-subsection">
               <div className="os-intervals-head">
                 <p className="ui-field-label">Horários trabalhados nesta O.S ({date.split('-').reverse().join('/')})</p>
                 <Button
