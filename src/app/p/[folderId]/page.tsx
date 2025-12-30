@@ -75,6 +75,7 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [addEmployeeOpen, setAddEmployeeOpen] = useState(false);
   const [newEmployeeName, setNewEmployeeName] = useState('');
+  const [employeeNameSuggestions, setEmployeeNameSuggestions] = useState<string[]>([]);
   const [savingEmployeeId, setSavingEmployeeId] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [services, setServices] = useState<Record<string, Service[]>>({});
@@ -110,11 +111,63 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
   const [confirmReplaceOpen, setConfirmReplaceOpen] = useState(false);
   const signatureCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
+  const employeeNameStorageKey = useMemo(() => `hh-public-employee-names:${folderId}`, [folderId]);
+  const employeeNameListId = 'employee-name-suggestions';
+
+  const mergeEmployeeNames = (names: string[]) => {
+    const unique: string[] = [];
+    const seen = new Set<string>();
+    names.forEach((name) => {
+      const trimmed = name.trim();
+      if (!trimmed) return;
+      const key = trimmed.toLowerCase();
+      if (seen.has(key)) return;
+      seen.add(key);
+      unique.push(trimmed);
+    });
+    return unique;
+  };
+
+  const readStoredEmployeeNames = () => {
+    if (typeof window === 'undefined') return [];
+    const stored = window.localStorage.getItem(employeeNameStorageKey);
+    if (!stored) return [];
+    try {
+      const parsed = JSON.parse(stored);
+      return Array.isArray(parsed) ? parsed.filter((item) => typeof item === 'string') : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const saveStoredEmployeeNames = (names: string[]) => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(employeeNameStorageKey, JSON.stringify(names));
+  };
+
+  const addEmployeeNameSuggestion = (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    setEmployeeNameSuggestions((prev) => {
+      const next = mergeEmployeeNames([trimmed, ...prev]);
+      saveStoredEmployeeNames(next);
+      return next;
+    });
+  };
+
   useEffect(() => {
     if (addEmployeeOpen) {
       setNewEmployeeName('');
     }
   }, [addEmployeeOpen]);
+
+  useEffect(() => {
+    const stored = readStoredEmployeeNames();
+    const merged = mergeEmployeeNames([...stored, ...employees.map((employee) => employee.name)]);
+    setEmployeeNameSuggestions(merged);
+    saveStoredEmployeeNames(merged);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [employees, employeeNameStorageKey]);
 
   const getRecognitionConstructor = () => {
     if (typeof window === 'undefined') return null;
@@ -298,6 +351,7 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Erro ao adicionar funcionário.');
       setEmployees((prev) => [data.employee, ...prev]);
+      addEmployeeNameSuggestion(newEmployeeName);
       setAddEmployeeOpen(false);
       setNewEmployeeName('');
       setSuccess('Salvo com sucesso.');
@@ -1151,8 +1205,14 @@ export default function PublicFolderAccessPage({ params }: PageProps) {
             label="Nome"
             value={newEmployeeName}
             onChange={(event) => setNewEmployeeName(event.target.value)}
+            list={employeeNameListId}
             required
           />
+          <datalist id={employeeNameListId}>
+            {employeeNameSuggestions.map((name) => (
+              <option key={name} value={name} />
+            ))}
+          </datalist>
           <Button type="submit" disabled={!newEmployeeName.trim()}>
             Adicionar
           </Button>
