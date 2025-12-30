@@ -1,7 +1,10 @@
 export type Folder = {
   id: string;
   name: string;
+  companyId?: string | null;
   company?: string | null;
+  statusColumn?: 'entrada' | 'andamento' | 'concluido';
+  position?: number | null;
   hourRate?: number | null;
   hourRate50?: number | null;
   hourRate100?: number | null;
