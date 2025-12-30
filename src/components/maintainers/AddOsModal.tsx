@@ -62,7 +62,6 @@ export function AddOsModal({
   onSubmit,
   isSubmitting,
 }: AddOsModalProps) {
-  const [search, setSearch] = useState('');
   const [selectedOsId, setSelectedOsId] = useState('');
   const [creatingNew, setCreatingNew] = useState(false);
   const [osForm, setOsForm] = useState({ osCode: '', tag: '', machineName: '', description: '' });
@@ -72,7 +71,6 @@ export function AddOsModal({
 
   useEffect(() => {
     if (open) {
-      setSearch('');
       setSelectedOsId('');
       setCreatingNew(false);
       setOsForm({ osCode: '', tag: '', machineName: '', description: '' });
@@ -82,13 +80,7 @@ export function AddOsModal({
     }
   }, [open]);
 
-  const filteredOrders = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    if (!term) return orders;
-    return orders.filter(
-      (order) => order.osCode.toLowerCase().includes(term) || (order.tag || '').toLowerCase().includes(term)
-    );
-  }, [orders, search]);
+  const filteredOrders = useMemo(() => orders, [orders]);
 
   const validateIntervals = () => {
     const normalized: Array<{ startTime: string; endTime: string }> = [];
@@ -194,18 +186,21 @@ export function AddOsModal({
     >
       <form className="stack os-modal-form" onSubmit={handleSubmit}>
         <div className="stack os-modal-scroll">
-          <div className="stack">
-            <div className="ui-field">
-              <span className="ui-field-label">Buscar O.S (código ou tag)</span>
-              <input
-                className="ui-input"
-                type="search"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Digite para filtrar"
-              />
+          <div className="stack os-modal-section">
+            <div className="os-new-os-action">
+              <Button
+                type="button"
+                variant="secondary"
+                className="ui-button-compact os-new-os-button"
+                onClick={toggleNewOs}
+              >
+                Não encontrei — adicionar nova O.S
+              </Button>
             </div>
 
+            <div className="os-modal-divider" aria-hidden />
+
+            <p className="os-section-title">Selecione uma O.S</p>
             <div className="os-select-list">
               {filteredOrders.map((order) => {
                 const isSelected = selectedOsId === order.id;
@@ -219,10 +214,11 @@ export function AddOsModal({
                       setCreatingNew(false);
                     }}
                   >
+                    {isSelected ? <span className="os-select-check">✓</span> : null}
                     <div className="os-select-head">
                       <span className="pill pill-strong">{order.osCode}</span>
                       {order.tag ? <span className="pill pill-soft">{order.tag}</span> : null}
-                      {order.isExternal ? <span className="pill pill-soft">Criada pelo terceiro</span> : null}
+                      {order.isExternal ? <span className="pill pill-soft os-third-party-pill">Criada pelo terceiro</span> : null}
                     </div>
                     <p className="os-select-sub">
                       {[order.machineName, order.description].filter(Boolean).join(' · ') || 'Sem descrição'}
@@ -231,20 +227,10 @@ export function AddOsModal({
                 );
               })}
 
-              <button
-                type="button"
-                className={`os-select-item os-select-new ${creatingNew ? 'is-selected' : ''}`}
-                onClick={toggleNewOs}
-              >
-                <div className="os-select-head">
-                  <span className="pill pill-strong">Não encontrei — adicionar nova O.S</span>
-                </div>
-                <p className="os-select-sub">Informe código, TAG e equipamento (opcionais) e descreva brevemente.</p>
-              </button>
             </div>
 
             {creatingNew ? (
-              <div className="grid">
+              <div className="grid os-modal-subsection">
                 <Input
                   label="Código O.S *"
                   value={osForm.osCode}
@@ -275,10 +261,12 @@ export function AddOsModal({
             ) : null}
           </div>
 
-          <div className="stack">
-            <div className="stack">
+          <div className="stack os-modal-section">
+            <div className="os-modal-divider" aria-hidden />
+
+            <div className="stack os-modal-subsection">
               <div className="ui-field">
-                <span className="ui-field-label">Horários já lançados hoje</span>
+                <span className="ui-field-label os-section-title">Horários já lançados hoje</span>
                 <div className="maintainer-intervals-row">
                   {existingIntervals.length ? (
                     existingIntervals.map((interval, index) => (
@@ -293,13 +281,17 @@ export function AddOsModal({
               </div>
             </div>
 
-            <div className="stack">
+            <div className="os-modal-divider" aria-hidden />
+
+            <div className="stack os-modal-subsection">
               <div className="os-intervals-head">
-                <p className="ui-field-label">Horários trabalhados nesta O.S ({date.split('-').reverse().join('/')})</p>
+                <p className="ui-field-label os-section-title">
+                  Horários trabalhados nesta O.S ({date.split('-').reverse().join('/')})
+                </p>
                 <Button
                   type="button"
                   variant="secondary"
-                  className="ui-button-compact"
+                  className="ui-button-compact os-add-interval-button"
                   onClick={() =>
                     setIntervalRows((prev) => [
                       ...prev,
@@ -325,6 +317,7 @@ export function AddOsModal({
                       label={`Entrada ${index + 1}`}
                       value={row.startTime}
                       inputMode="numeric"
+                      className="ui-input-lg os-interval-input"
                       onChange={(event) =>
                         setIntervalRows((prev) =>
                           prev.map((item) =>
@@ -338,6 +331,7 @@ export function AddOsModal({
                       label={`Saída ${index + 1}`}
                       value={row.endTime}
                       inputMode="numeric"
+                      className="ui-input-lg os-interval-input"
                       onChange={(event) =>
                         setIntervalRows((prev) =>
                           prev.map((item) =>

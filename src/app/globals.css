@@ -664,33 +664,49 @@ main {
 
 .os-select-list {
   display: grid;
-  gap: 0.5rem;
-  max-height: 260px;
-  overflow: auto;
-  padding: 0.25rem;
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
+  gap: 0.75rem;
+  padding: 0.35rem;
+  border: 1px solid #cbd5f1;
+  border-radius: 14px;
+  background: #f8fafc;
 }
 
 .os-select-item {
   width: 100%;
   text-align: left;
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: 1px solid #c7d2fe;
   border-radius: 10px;
-  padding: 0.75rem;
+  padding: 0.95rem 1rem;
   cursor: pointer;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  position: relative;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
 }
 
 .os-select-item:hover {
   border-color: #94a3b8;
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
 }
 
 .os-select-item.is-selected {
-  border-color: var(--color-primary-strong);
-  box-shadow: 0 12px 30px rgba(37, 99, 235, 0.2);
+  border-color: #60a5fa;
+  background: #eff6ff;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+.os-select-check {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.65rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  background: #2563eb;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
 }
 
 .os-select-head {
@@ -701,7 +717,7 @@ main {
 }
 
 .os-select-sub {
-  margin: 0.25rem 0 0;
+  margin: 0.35rem 0 0;
   color: var(--color-text-body);
   font-size: 0.9rem;
 }
@@ -717,11 +733,58 @@ main {
   justify-content: flex-start;
 }
 
+.os-section-title {
+  margin: 0;
+  font-weight: 700;
+  color: var(--color-text-title);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.os-section-title::before {
+  content: '';
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: #60a5fa;
+}
+
+.os-new-os-action {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.os-new-os-button {
+  min-width: 0;
+  font-size: 0.9rem;
+  padding: 0.6rem 1.1rem;
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
 .os-modal-form {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1.25rem;
   min-height: 0;
+}
+
+.os-modal-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+
+.os-modal-subsection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.os-modal-divider {
+  border-top: 1px solid #cbd5e1;
 }
 
 .os-intervals-head {
@@ -731,11 +794,21 @@ main {
   gap: 0.5rem;
 }
 
+.os-add-interval-button {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.82rem;
+  min-height: 2.2rem;
+}
+
 .os-interval-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) auto;
   gap: 0.6rem;
   align-items: end;
+}
+
+.os-interval-input {
+  min-height: 2.75rem;
 }
 
 .os-remove-button {
@@ -746,6 +819,16 @@ main {
 .ui-modal.os-modal {
   max-height: 85vh;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.ui-modal.os-modal .ui-modal-header {
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 0.85rem 1.5rem;
+  margin: -1.25rem -1.25rem 0;
+  border-radius: 18px 18px 0 0;
 }
 
 .ui-modal-body.os-modal-body {
@@ -753,15 +836,15 @@ main {
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  padding: 1.5rem;
+  overflow-y: auto;
 }
 
 .os-modal-scroll {
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.75rem;
   min-height: 0;
-  padding-right: 0.2rem;
 }
 
 .os-modal-footer {
@@ -770,9 +853,20 @@ main {
   background: var(--color-surface);
   display: flex;
   justify-content: space-between;
-  gap: 0.75rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid var(--color-border);
+  gap: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #cbd5e1;
+}
+
+.os-modal-footer .ui-button {
+  min-height: 2.9rem;
+  padding: 0.7rem 1.35rem;
+}
+
+.os-third-party-pill {
+  background: #f1f5f9;
+  color: #475569;
+  border-color: #e2e8f0;
 }
 
 @media (max-width: 640px) {
