@@ -1,7 +1,7 @@
 "use client";
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { AdminGuard } from '@/components/AdminGuard';
@@ -10,6 +10,8 @@ import type { Folder } from '@/types/folder';
 import { Toast } from '@/components/Toast';
 
 export const dynamic = 'force-dynamic';
+
+type LayoutPayload = { backlog: string[]; progress: string[]; done: string[] };
 
 export default function AdminDashboardPlaceholder() {
   const { user, signOut } = useAdminAuth();
@@ -50,60 +52,81 @@ export default function AdminDashboardPlaceholder() {
     return `${origin.replace(/\/+$/, '')}/p/${folderId}/link?k=${linkKey}`;
   };
 
-  const persistLayout = (layout: Record<'backlog' | 'progress' | 'done', Folder[]>) => {
+  const serializeLayout = (layout: Record<'backlog' | 'progress' | 'done', Folder[]>): LayoutPayload => ({
+    backlog: layout.backlog.map((folder) => folder.id),
+    progress: layout.progress.map((folder) => folder.id),
+    done: layout.done.map((folder) => folder.id),
+  });
+
+  const persistLocalLayout = (payload: LayoutPayload) => {
     if (typeof window === 'undefined') return;
-    const payload = {
-      backlog: layout.backlog.map((folder) => folder.id),
-      progress: layout.progress.map((folder) => folder.id),
-      done: layout.done.map((folder) => folder.id),
-    };
     localStorage.setItem('hh-admin-kanban-layout', JSON.stringify(payload));
   };
 
-  const applySavedLayout = (items: Folder[]) => {
-    if (typeof window === 'undefined') {
-      return {
-        backlog: items,
-        progress: [],
-        done: [],
-      };
-    }
-
+  const readLocalLayout = (): LayoutPayload | null => {
+    if (typeof window === 'undefined') return null;
     const raw = localStorage.getItem('hh-admin-kanban-layout');
-    if (!raw) {
-      return {
-        backlog: items,
-        progress: [],
-        done: [],
-      };
-    }
+    if (!raw) return null;
 
     try {
-      const saved = JSON.parse(raw) as { backlog?: string[]; progress?: string[]; done?: string[] };
-      const map = new Map(items.map((item) => [item.id, item]));
-
-      const buildLane = (ids: string[] = []) =>
-        ids.map((id) => map.get(id)).filter(Boolean) as Folder[];
-
-      const backlog = buildLane(saved.backlog);
-      const progress = buildLane(saved.progress);
-      const done = buildLane(saved.done);
-
-      const usedIds = new Set([...backlog, ...progress, ...done].map((item) => item.id));
-      const remaining = items.filter((item) => !usedIds.has(item.id));
-
+      const saved = JSON.parse(raw) as Partial<LayoutPayload>;
+      if (!Array.isArray(saved?.backlog) || !Array.isArray(saved?.progress) || !Array.isArray(saved?.done)) return null;
       return {
-        backlog: [...backlog, ...remaining],
-        progress,
-        done,
+        backlog: saved.backlog.filter((id): id is string => typeof id === 'string'),
+        progress: saved.progress.filter((id): id is string => typeof id === 'string'),
+        done: saved.done.filter((id): id is string => typeof id === 'string'),
       };
     } catch {
+      return null;
+    }
+  };
+
+  const applyLayoutPayload = (items: Folder[], payload: LayoutPayload | null) => {
+    if (!payload) {
       return {
         backlog: items,
         progress: [],
         done: [],
       };
     }
+
+    const map = new Map(items.map((item) => [item.id, item]));
+    const buildLane = (ids: string[] = []) => ids.map((id) => map.get(id)).filter(Boolean) as Folder[];
+
+    const backlog = buildLane(payload.backlog);
+    const progress = buildLane(payload.progress);
+    const done = buildLane(payload.done);
+
+    const usedIds = new Set([...backlog, ...progress, ...done].map((item) => item.id));
+    const remaining = items.filter((item) => !usedIds.has(item.id));
+
+    return {
+      backlog: [...backlog, ...remaining],
+      progress,
+      done,
+    };
+  };
+
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const savingInFlightRef = useRef(false);
+
+  const persistCloudLayoutDebounced = (payload: LayoutPayload) => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+
+    saveTimerRef.current = setTimeout(async () => {
+      if (savingInFlightRef.current) return;
+      savingInFlightRef.current = true;
+      try {
+        await adminFetch('/api/admin/kanban-layout', {
+          method: 'PUT',
+          body: JSON.stringify({ layout: payload }),
+        });
+      } catch {
+        // Silencioso: mantém fallback local e evita travar UX.
+      } finally {
+        savingInFlightRef.current = false;
+      }
+    }, 400);
   };
 
   useEffect(() => {
@@ -116,7 +139,23 @@ export default function AdminDashboardPlaceholder() {
         if (!response.ok) throw new Error(data.error || 'Erro ao carregar pastas.');
         const fetched: Folder[] = data.folders ?? [];
         setFolders(fetched);
-        setLanes(applySavedLayout(fetched));
+
+        let payload: LayoutPayload | null = null;
+        try {
+          const layoutResponse = await adminFetch('/api/admin/kanban-layout');
+          const layoutData = await layoutResponse.json();
+          if (layoutResponse.ok && layoutData?.layout) {
+            payload = layoutData.layout as LayoutPayload;
+          }
+        } catch {
+          payload = null;
+        }
+
+        if (!payload) {
+          payload = readLocalLayout();
+        }
+
+        setLanes(applyLayoutPayload(fetched, payload));
         setLayoutHydrated(true);
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Erro ao listar pastas.';
@@ -131,7 +170,9 @@ export default function AdminDashboardPlaceholder() {
 
   useEffect(() => {
     if (!layoutHydrated) return;
-    persistLayout(lanes);
+    const payload = serializeLayout(lanes);
+    persistLocalLayout(payload);
+    persistCloudLayoutDebounced(payload);
   }, [lanes, layoutHydrated]);
 
   useEffect(() => {
@@ -142,6 +183,12 @@ export default function AdminDashboardPlaceholder() {
     }, 2500);
     return () => clearTimeout(timer);
   }, [error, success]);
+
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+  }, []);
 
   const onDragStart = (folderId: string) => setDraggingId(folderId);
 
